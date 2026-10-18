@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="مساري">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#172422" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<script>
+/* مساري — طبقة التشغيل المحلية
+   تحفظ كل البيانات في ذاكرة الجهاز (IndexedDB)، وتجهّز طلبات المساعد لتنسخها إلى Claude،
+   وتوفر النسخ الاحتياطي إلى Google Drive واستيراد الوظائف. لا يُرسل شيء إلى أي خادم. */
+(function(){
+"use strict";
+const DBN="masari-local",STORE_KV="kv",STORE_AS="assets";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone=o=>o==null?o:JSON.parse(JSON.stringify(o));
+const genId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+
+/* ---------- IndexedDB ---------- */
+function openIDB(){return new Promise((res,rej)=>{let r;try{r=indexedDB.open(DBN,1)}catch(e){rej(e);return}
+  r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains(STORE_KV))d.createObjectStore(STORE_KV);if(!d.objectStoreNames.contains(STORE_AS))d.createObjectStore(STORE_AS)};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+const idbP=openIDB();
+function tx(store,mode,fn){return idbP.then(d=>new Promise((res,rej)=>{const t=d.transaction(store,mode),s=t.objectStore(store);const r=fn(s);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)}))}
+const kvGet=(st,k)=>tx(st,"readonly",s=>s.get(k));
+const kvPut=(st,k,v)=>tx(st,"readwrite",s=>{s.put(v,k)});
+const kvDel=(st,k)=>tx(st,"readwrite",s=>{s.delete(k)});
+const kvKeys=st=>tx(st,"readonly",s=>s.getAllKeys());
+const kvClear=st=>tx(st,"readwrite",s=>{s.clear()});
+
+/* ---------- In-memory store mirrored to IndexedDB ---------- */
+let S={};            // { collection: { id: data } }
+let meta={};         // { lastBackup, lastJobsImport }
+const colL={},docL={};
+let saveTimer=null;
+function persist(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{kvPut(STORE_KV,"data",S).catch(()=>toast("تعذّر الحفظ في ذاكرة الجهاز"))},150)}
+const saveMeta=()=>kvPut(STORE_KV,"meta",meta).catch(()=>{});
+const loaded=(async()=>{
+  try{S=(await kvGet(STORE_KV,"data"))||{};meta=(await kvGet(STORE_KV,"meta"))||{}}
+  catch(e){S={};meta={};console.warn(e)}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+})();
+const snapDoc=(c,id)=>{const v=S[c]&&S[c][id];return {id,exists:!!v,data:()=>v?clone(v):undefined,metadata:{fromCache:false,hasPendingWrites:false}}};
+const snapCol=c=>{const docs=Object.keys(S[c]||{}).map(id=>snapDoc(c,id));return {docs,size:docs.length,empty:!docs.length,docChanges:()=>[],metadata:{fromCache:false,hasPendingWrites:false}}};
+function emit(c,id){(colL[c]||new Set()).forEach(fn=>{try{fn(snapCol(c))}catch(e){console.error(e)}});(docL[c+"/"+id]||new Set()).forEach(fn=>{try{fn(snapDoc(c,id))}catch(e){console.error(e)}})}
+function emitAll(){Object.keys(colL).forEach(c=>colL[c].forEach(fn=>fn(snapCol(c))));Object.keys(docL).forEach(k=>{const i=k.lastIndexOf("/");docL[k].forEach(fn=>fn(snapDoc(k.slice(0,i),k.slice(i+1))))})}
+function write(c,id,d){(S[c]=S[c]||{})[id]=clone(d);persist();emit(c,id)}
+function remove(c,id){if(S[c])delete S[c][id];persist();emit(c,id)}
+function docRef(c,id){return {id,
+  get:async()=>snapDoc(c,id),
+  set:async d=>write(c,id,d),
+  update:async d=>{const cur=S[c]&&S[c][id];if(!cur)throw {code:"not_found",message:"المستند غير موجود"};write(c,id,Object.assign(clone(cur),clone(d)))},
+  delete:async()=>remove(c,id),
+  onSnapshot(next){const k=c+"/"+id;(docL[k]=docL[k]||new Set()).add(next);setTimeout(()=>next(snapDoc(c,id)),0);return ()=>docL[k].delete(next)},
+  collection:p=>colRef(c+"/"+id+"/"+p)}}
+function colRef(c){const q={
+  doc:id=>docRef(c,id||genId()),
+  add:async d=>{const id=genId();write(c,id,d);return docRef(c,id)},
+  get:async()=>snapCol(c),
+  onSnapshot(next){(colL[c]=colL[c]||new Set()).add(next);setTimeout(()=>next(snapCol(c)),0);return ()=>colL[c].delete(next)},
+  where:()=>q,orderBy:()=>q,limit:()=>q};return q}
+const db={collection:colRef,doc(path){const i=path.lastIndexOf("/");return docRef(path.slice(0,i),path.slice(i+1))}};
+
+/* ---------- Local file store ---------- */
+const assets={
+  async upload(blob){const id=genId();await kvPut(STORE_AS,id,{blob,name:blob.name||"file",type:blob.type||"application/octet-stream",size:blob.size,at:new Date().toISOString()});return {id,url:"local:"+id,sizeBytes:blob.size,contentType:blob.type}},
+  async delete(id){await kvDel(STORE_AS,id)},
+  async list(){const keys=await kvKeys(STORE_AS);return {assets:keys.map(id=>({id,url:"local:"+id})),usage:{}}}
+};
+document.addEventListener("click",async e=>{
+  const a=e.target.closest('a[href^="local:"]');if(!a)return;e.preventDefault();
+  try{const rec=await kvGet(STORE_AS,a.getAttribute("href").slice(6));if(!rec){toast("الملف غير موجود على هذا الجهاز. استعد نسختك الاحتياطية.");return}
+    const url=URL.createObjectURL(rec.blob);const w=window.open(url,"_blank");
+    if(!w){const l=document.createElement("a");l.href=url;l.download=rec.name;document.body.appendChild(l);l.click();l.remove()}
+    setTimeout(()=>URL.revokeObjectURL(url),60000)}
+  catch(err){toast("تعذّر فتح الملف")}
+},true);
+
+/* ---------- UI helpers ---------- */
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+function modal(html,onClose){
+  const host=document.createElement("div");host.className="sheet-bg lx";
+  host.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+html+'</div>';
+  document.body.appendChild(host);
+  const close=()=>{host.remove();onClose&&onClose()};
+  host.addEventListener("click",e=>{if(e.target===host)close()});
+  host.querySelectorAll("[data-x]").forEach(b=>b.addEventListener("click",close));
+  return {el:host.querySelector(".sheet"),close,remove:()=>host.remove()};
+}
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){return false}}
+function parseLoose(t){t=String(t||"").trim();const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f)t=f[1].trim();
+  try{return JSON.parse(t)}catch(e){}
+  const a=t.search(/[\[{]/),b=Math.max(t.lastIndexOf("]"),t.lastIndexOf("}"));
+  if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}
+  throw {code:"invalid_json",message:"الرد ليس بصيغة JSON",text:t}}
+
+/* ---------- Claude bridge (copy the request, paste the answer) ---------- */
+const CLAUDE_URL="https://claude.ai/new";
+function bridge(prompt,{json=false,signal,title}={}){
+  return new Promise((resolve,reject)=>{
+    const full=prompt+(json?"\n\nمهم: أعد JSON صالحًا فقط داخل كتلة كود واحدة، بدون أي شرح قبلها أو بعدها.":"\n\nاكتب الرد النهائي فقط.");
+    let done=false;
+    const m=modal(
+      '<div class="sheet-h"><h2>'+esc(title||"اسأل Claude")+'</h2><button class="btn ghost" data-x type="button">إلغاء</button></div>'+
+      '<ol class="lx-steps"><li><b>انسخ الطلب وافتح Claude</b><span class="note">يُنسخ الطلب تلقائيًا، الصقه في محادثة جديدة.</span>'+
+      '<div class="row"><a class="btn pri" id="lxGo" href="'+CLAUDE_URL+'" target="_blank" rel="noopener">انسخ وافتح Claude</a><button class="btn" id="lxCopy" type="button">نسخ فقط</button><span id="lxCopied" class="note"></span></div>'+
+      '<details><summary class="note">عرض الطلب</summary><textarea id="lxPrompt" rows="6" readonly dir="auto">'+esc(full)+'</textarea></details></li>'+
+      '<li><b>انسخ رد Claude والصقه هنا</b>'+(json?'<span class="note">في رد Claude اضغط زر النسخ أعلى كتلة الكود.</span>':'')+
+      '<textarea id="lxAns" rows="7" dir="auto" placeholder="الصق الرد هنا"></textarea>'+
+      '<div class="row"><button class="btn" id="lxPaste" type="button">لصق</button><button class="btn pri" id="lxDone" type="button">تم</button></div><div id="lxErr" class="err"></div></li></ol>',
+      ()=>{if(!done){done=true;reject({code:"aborted",message:"أُلغي الطلب"})}});
+    const el=m.el;
+    const doCopy=async()=>{const ok=await copyText(full);el.querySelector("#lxCopied").textContent=ok?"نُسخ الطلب ✓":"انسخه يدويًا من «عرض الطلب»";if(!ok){el.querySelector("details").open=true;const ta=el.querySelector("#lxPrompt");ta.focus();ta.select()}};
+    el.querySelector("#lxGo").addEventListener("click",doCopy);
+    el.querySelector("#lxCopy").addEventListener("click",doCopy);
+    el.querySelector("#lxPaste").addEventListener("click",async()=>{try{el.querySelector("#lxAns").value=await navigator.clipboard.readText()}catch(e){el.querySelector("#lxAns").focus();toast("اضغط مطولًا داخل المربع واختر «لصق»")}});
+    el.querySelector("#lxDone").addEventListener("click",()=>{
+      const t=el.querySelector("#lxAns").value.trim();const er=el.querySelector("#lxErr");
+      if(!t){er.textContent="الصق رد Claude أولًا.";return}
+      if(json){try{parseLoose(t)}catch(e){er.textContent="الرد لا يحتوي JSON صالحًا. انسخ كتلة الكود كاملة من رد Claude.";return}}
+      done=true;m.remove();resolve(t);
+    });
+    if(signal){if(signal.aborted){done=true;m.remove();reject({code:"aborted"});return}signal.addEventListener("abort",()=>{if(!done){done=true;m.remove();reject({code:"aborted"})}})}
+  });
+}
+function flatten(input){
+  if(typeof input==="string")return input;
+  const msgs=input||[];
+  return "هذه محادثة سابقة بيني وبينك. أكمل بدورك ردًا واحدًا فقط على آخر رسالة مني، والتزم بالتعليمات في أول رسالة.\n\n"+
+    msgs.map((m,i)=>(m.role==="user"?"【أنا】":"【أنت】")+"\n"+m.content).join("\n\n");
+}
+const TITLES=[[/خطاب تقديم|cover letter/i,"خطاب تقديم"],[/رسالة بريد/,"رسالة إيميل"],[/تعديل السيرة/,"تحسين السيرة الذاتية"],[/placement test/i,"اختبار تحديد المستوى"],[/اختيار من متعدد|multiple-choice/i,"أسئلة اختبار"],[/درسًا|درس/,"درس قصير"],[/خطة مراجعة/,"خطة المراجعة"],[/role-play|مدرّب مقابلات/i,"محادثة تدريب"],[/writing examiner/i,"تصحيح الكتابة"],[/words or short phrases|Arabic meaning/i,"كلمات إنجليزية"]];
+const guessTitle=t=>{for(const [r,n] of TITLES)if(r.test(t))return "اسأل Claude: "+n;return "اسأل Claude"};
+async function sample(input,opts={}){
+  const p=flatten(input);
+  const text=await bridge(p,{signal:opts.signal,title:guessTitle(p)});
+  try{opts.onText&&opts.onText({text,delta:text})}catch(e){}
+  return {text,truncated:false};
+}
+sample.json=async(input,opts={})=>{const p=flatten(input);const t=await bridge(p,{json:true,signal:opts.signal,title:guessTitle(p)});return parseLoose(t)};
+sample.limits=async()=>({});
+
+/* ---------- window.claude shim ---------- */
+const NS={db,assets,sample};
+window.claude={use:async name=>{await loaded;return NS[name]||null}};
+
+/* ---------- Backup / restore / job import ---------- */
+const b64=blob=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(",")[1]||"");r.onerror=()=>rej(r.error);r.readAsDataURL(blob)});
+const unb64=(s,type)=>{const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type})};
+async function buildBackup(){
+  const keys=await kvKeys(STORE_AS),list=[];
+  for(const id of keys){const r=await kvGet(STORE_AS,id);if(r&&r.blob)list.push({id,name:r.name,type:r.type,at:r.at,b64:await b64(r.blob)})}
+  return {app:"masari",version:1,exportedAt:new Date().toISOString(),data:S,assets:list};
+}
+async function saveFile(name,text){
+  const file=new File([text],name,{type:"application/json"});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return "shared"}}
+  catch(e){if(e&&e.name==="AbortError")return "cancel"}
+  const url=URL.createObjectURL(file),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);return "downloaded";
+}
+async function restore(obj){
+  if(!obj||obj.app!=="masari"||typeof obj.data!=="object")throw new Error("bad");
+  S=clone(obj.data)||{};await kvPut(STORE_KV,"data",S);
+  await kvClear(STORE_AS);for(const a of obj.assets||[]){try{await kvPut(STORE_AS,a.id,{blob:unb64(a.b64,a.type),name:a.name,type:a.type,size:0,at:a.at})}catch(e){}}
+  emitAll();
+}
+const FIELD_KEYS=()=>["it","sales"].concat(((S.settings&&S.settings.fields&&S.settings.fields.list)||[]).map(f=>f.key));
+function importJobs(arr){
+  const list=Array.isArray(arr)?arr:Array.isArray(arr&&arr.jobs)?arr.jobs:[];
+  const ex=Object.entries(S.jobs||{}),urls=new Set(ex.map(([,j])=>(j.url||"").trim()).filter(Boolean)),keys=new Set(ex.map(([,j])=>((j.title||"")+"|"+(j.company||"")).toLowerCase()));
+  let n=0;const fk=FIELD_KEYS();
+  for(const x of list){if(!x||!x.title)continue;const url=String(x.url||"").trim(),key=(String(x.title)+"|"+String(x.company||"")).toLowerCase();
+    if((url&&urls.has(url))||keys.has(key))continue;
+    const id=String(x.id||"").replace(/[^\w.-]/g,"").slice(0,60)||genId();if(S.jobs&&S.jobs[id])continue;
+    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),notes:"",status:"new",addedAt:new Date().toISOString()});
+    urls.add(url);keys.add(key);n++}
+  if(n)write("activities",genId(),{text:"استوردت "+n+" وظيفة جديدة من Claude",kind:"search",at:new Date().toISOString()});
+  meta.lastJobsImport=new Date().toISOString();saveMeta();
+  return n;
+}
+function fieldsText(){const extra=((S.settings&&S.settings.fields&&S.settings.fields.list)||[]).map(f=>'"'+f.key+'" = '+f.name).join("، ");
+  return '"it" = أخصائي حاسب آلي، مهندس تقنية معلومات، حوكمة تقنية المعلومات، شبكات، أنظمة، دعم فني، أمن سيبراني؛ "sales" = مدير مبيعات، رئيس مبيعات، مساعد مدير مبيعات، مبيعات الشركات B2B'+(extra?"؛ "+extra:"")}
+function searchPrompt(){
+  const known=Object.values(S.jobs||{}).map(j=>j.url).filter(Boolean).slice(-60);
+  return "ابحث في الإنترنت عن وظائف شاغرة نُشرت خلال آخر 7 أيام، في سلطنة عُمان أولًا ثم دول الخليج، وكذلك الوظائف عن بُعد المتاحة لمقيم في عُمان، في هذه المجالات: "+fieldsText()+
+  ".\nالمصادر المقترحة: GulfTalent وBayt وNaukriGulf وIndeed عُمان وLinkedIn وإعلانات وزارة العمل والجهات الحكومية العُمانية. أضف فقط الإعلانات المفتوحة التي لها رابط حقيقي، ولا تخترع أي إعلان، وتجاهل التدريب الصيفي والوظائف غير المرتبطة."+
+  (known.length?"\nلا تكرر هذه الروابط الموجودة عندي:\n"+known.join("\n"):"")+
+  '\nأعد حتى 15 وظيفة بصيغة JSON فقط: [{"id":"معرّف قصير ثابت من الرابط","title":"المسمى","company":"الجهة","location":"المدينة أو الدولة بالعربية","field":"it أو sales أو مفتاح المجال","source":"اسم الموقع","postedAt":"YYYY-MM-DD","deadline":"YYYY-MM-DD أو فارغ","url":"الرابط","description":"ملخص المتطلبات بالعربية في سطرين"}]';
+}
+function dataMenu(){
+  const lb=meta.lastBackup?new Date(meta.lastBackup):null,days=lb?Math.floor((Date.now()-lb)/864e5):null;
+  const jobsN=Object.keys(S.jobs||{}).length;
+  const m=modal(
+    '<div class="sheet-h"><h2>بياناتي والمزامنة</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="note">بياناتك محفوظة في ذاكرة هذا الجهاز فقط، ولا تُرسل إلى أي خادم. احفظ نسخة احتياطية في Google Drive لتحميها ولتنقلها إلى الماك أو جهاز آخر.</div>'+
+    '<div class="card lx-status'+(days==null||days>7?" warn":"")+'"><b>'+(lb?"آخر نسخة احتياطية: "+lb.toLocaleDateString("ar-OM",{day:"numeric",month:"long"})+(days>0?" (قبل "+days+" يوم)":" (اليوم)"):"لم تحفظ نسخة احتياطية بعد")+'</b>'+(days==null||days>7?'<span class="note">يُنصح بحفظ نسخة أسبوعيًا على الأقل.</span>':'')+'</div>'+
+    '<div class="lx-group"><b>البحث عن الوظائف عبر Claude</b>'+
+      '<div class="row"><button class="btn pri" id="lxSearch" type="button">ابحث عن وظائف جديدة الآن</button></div>'+
+      '<div class="note">يجهّز طلب بحث بمجالاتك، تلصقه في Claude ثم تلصق النتيجة هنا فتُضاف الوظائف دون تكرار.</div>'+
+      '<div class="row"><label class="btn" for="lxJobsFile">استيراد ملف وظائف من Google Drive</label><input type="file" id="lxJobsFile" accept=".json,application/json" multiple hidden></div>'+
+      '<div class="note">ملفات البحث اليومي التي تكتبها المهمة المجدولة باسم masari-jobs-…json.</div></div>'+
+    '<div class="lx-group"><b>النسخ الاحتياطي</b>'+
+      '<div class="row"><button class="btn pri" id="lxBackup" type="button">حفظ نسخة احتياطية</button></div>'+
+      '<div class="note">على الآيفون اختر «حفظ في الملفات» ثم مجلد Google Drive. يشمل الملف كل البيانات والمستندات المرفوعة.</div>'+
+      '<div class="row"><label class="btn" for="lxRestoreFile">استعادة من نسخة احتياطية</label><input type="file" id="lxRestoreFile" accept=".json,application/json" hidden></div></div>'+
+    '<div class="note" id="lxMsg"></div><div class="note">عدد الوظائف المحفوظة: '+jobsN+'</div>');
+  const el=m.el,msg=t=>{el.querySelector("#lxMsg").textContent=t};
+  el.querySelector("#lxSearch").addEventListener("click",async()=>{
+    try{const r=await sample.json(searchPrompt());const n=importJobs(r);m.close();toast(n?"أُضيفت "+n+" وظيفة جديدة":"لا توجد وظائف جديدة غير موجودة عندك")}
+    catch(e){if(e&&e.code!=="aborted")msg("تعذّر قراءة النتيجة.")}
+  });
+  el.querySelector("#lxJobsFile").addEventListener("change",async e=>{
+    let n=0,bad=0;for(const f of e.target.files){try{n+=importJobs(parseLoose(await f.text()))}catch(err){bad++}}
+    msg((n?"أُضيفت "+n+" وظيفة جديدة.":"لا توجد وظائف جديدة.")+(bad?" تعذّر قراءة "+bad+" ملف.":""));e.target.value="";
+  });
+  el.querySelector("#lxBackup").addEventListener("click",async()=>{
+    msg("يجهّز النسخة…");
+    try{const r=await saveFile("masari-backup-"+todayISO()+".json",JSON.stringify(await buildBackup()));
+      if(r==="cancel"){msg("أُلغي الحفظ.");return}
+      meta.lastBackup=new Date().toISOString();saveMeta();msg(r==="shared"?"تم. تأكد أنك اخترت مجلد Google Drive.":"نُزّل الملف. انقله إلى Google Drive.")}
+    catch(e){msg("تعذّر إنشاء النسخة الاحتياطية.")}
+  });
+  const rf=el.querySelector("#lxRestoreFile");
+  rf.addEventListener("change",async e=>{
+    const f=e.target.files[0];if(!f)return;let obj;
+    try{obj=parseLoose(await f.text());if(obj.app!=="masari")throw 0}catch(err){msg("هذا ليس ملف نسخة احتياطية من مساري.");rf.value="";return}
+    const cnt=Object.values(obj.data||{}).reduce((a,c)=>a+Object.keys(c||{}).length,0);
+    const box=document.createElement("div");box.className="card";box.innerHTML='<b>استبدال بياناتك الحالية؟</b><span class="note">نسخة بتاريخ '+esc((obj.exportedAt||"").slice(0,10))+' فيها '+cnt+' عنصر و'+((obj.assets||[]).length)+' ملف. ستُحذف البيانات الحالية على هذا الجهاز.</span><div class="row"><button class="btn danger" id="lxYes" type="button">نعم، استعد النسخة</button><button class="btn ghost" id="lxNo" type="button">إلغاء</button></div>';
+    el.appendChild(box);box.scrollIntoView({block:"nearest"});
+    box.querySelector("#lxNo").addEventListener("click",()=>{box.remove();rf.value=""});
+    box.querySelector("#lxYes").addEventListener("click",async()=>{try{await restore(obj);m.close();toast("تمت استعادة بياناتك")}catch(err){msg("تعذّر الاستعادة.")}});
+  });
+}
+document.addEventListener("DOMContentLoaded",()=>{
+  const b=document.getElementById("dataBtn");if(b)b.addEventListener("click",dataMenu);
+  loaded.then(()=>{const lb=meta.lastBackup?Date.parse(meta.lastBackup):0,has=Object.keys(S).length;
+    if(has&&Date.now()-lb>7*864e5){const d=document.getElementById("dataBtn");d&&d.classList.add("dot")}});
+});
+if("serviceWorker" in navigator&&location.protocol==="https:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+})();
+
+</script>
+<title>مساري الوظيفي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;700&display=swap">
+<style>
+/* Layout: one-column mobile app, sticky header + bottom tab bar; content grouped by day like a logbook */
+:root{
+  --bg:#eef1f0; --surface:#ffffff; --ink:#14302e; --muted:#5d716e; --line:#d6dedc;
+  --accent:#0f6b63; --accent-soft:#d8ece9; --gold:#b9781b; --gold-soft:#f6e8d1;
+  --ok:#2e7d4f; --ok-soft:#dcf0e3; --warn:#a36a00; --bad:#b03a3a; --bad-soft:#f6dddd; --info:#2f5f9e; --info-soft:#dde7f5;
+  --display:"Readex Pro","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1918; --surface:#172422; --ink:#e3eeec; --muted:#93a8a4; --line:#2a3b39;
+  --accent:#4fbcae; --accent-soft:#1d3a37; --gold:#e3a94f; --gold-soft:#3a2e1a;
+  --ok:#6cc792; --ok-soft:#1c3427; --warn:#e0a63c; --bad:#e58080; --bad-soft:#3d2222; --info:#86aee3; --info-soft:#1e2b3d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1918; --surface:#172422; --ink:#e3eeec; --muted:#93a8a4; --line:#2a3b39;
+  --accent:#4fbcae; --accent-soft:#1d3a37; --gold:#e3a94f; --gold-soft:#3a2e1a;
+  --ok:#6cc792; --ok-soft:#1c3427; --warn:#e0a63c; --bad:#e58080; --bad-soft:#3d2222; --info:#86aee3; --info-soft:#1e2b3d; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;direction:rtl}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:12px}
+h1{font-family:var(--display);font-size:20px;margin:0;font-weight:700;letter-spacing:0}
+h1 span{color:var(--gold)}
+.sub{color:var(--muted);font-size:13px}
+main{padding-block:16px 110px}
+section[hidden],[hidden]{display:none!important}
+h2{font-family:var(--display);font-size:17px;margin:0 0 4px;font-weight:500;text-wrap:balance}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pipe{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pipe div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 8px;text-align:center}
+.pipe b{display:block;font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+.pipe small{color:var(--muted);font-size:12px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.day{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em;margin:8px 2px 0;display:flex;align-items:center;gap:8px}
+.day::after{content:"";flex:1;height:1px;background:var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h3{margin:0;font-size:16px;font-weight:600;line-height:1.4}
+.meta{color:var(--muted);font-size:13px;display:flex;gap:4px 12px;flex-wrap:wrap}
+.tag{font-size:12px;border-radius:6px;padding:1px 8px;font-weight:500}
+.f-it{background:var(--info-soft);color:var(--info)}
+.f-sales{background:var(--gold-soft);color:var(--gold)}
+.f-other{background:var(--accent-soft);color:var(--accent)}
+.st{font-size:12px;border-radius:999px;padding:2px 10px;font-weight:600;border:0;cursor:pointer}
+.s-new{background:var(--accent-soft);color:var(--accent)}
+.s-applied{background:var(--info-soft);color:var(--info)}
+.s-interview{background:var(--gold-soft);color:var(--gold)}
+.s-offer{background:var(--ok-soft);color:var(--ok)}
+.s-rejected{background:var(--bad-soft);color:var(--bad)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn svg{width:16px;height:16px}
+.empty{text-align:center;color:var(--muted);padding:28px 12px;border:1px dashed var(--line);border-radius:var(--r)}
+label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:90px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.grid2{grid-template-columns:1fr}.pipe b{font-size:19px}}
+.ai{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:14px;max-height:55vh;overflow:auto}
+.note{font-size:13px;color:var(--muted)}
+.err{color:var(--bad);font-size:13px}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+nav.tabs button{border:0;background:none;padding:8px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);cursor:pointer;min-width:0}
+nav.tabs svg{width:22px;height:22px}
+nav.tabs button[aria-selected="true"]{color:var(--accent);font-weight:600}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,20,19,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:12px}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chat{display:flex;flex-direction:column;gap:10px}
+.msg{padding:10px 12px;border-radius:12px;max-width:92%;white-space:pre-wrap;font-size:14px}
+.msg.q{background:var(--accent-soft);align-self:flex-start}
+.msg.a{background:var(--bg);border:1px solid var(--line);align-self:flex-end}
+.skill{display:flex;gap:10px;align-items:flex-start}
+.skill input{width:20px;height:20px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.skill .t{flex:1;min-width:0}
+.skill .t b{font-weight:600;font-size:15px}
+.skill .t p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.act{display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.act time{color:var(--muted);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:72px}
+.doc{display:flex;gap:12px;align-items:center}
+.doc .ic{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none;font-size:11px;font-weight:700}
+.doc .t{flex:1;min-width:0}
+.doc .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv{font-size:12px;border-radius:999px;padding:2px 10px;font-weight:600;border:0;cursor:pointer;white-space:nowrap}
+.lv-new{background:var(--line);color:var(--muted)}
+.lv-learning{background:var(--gold-soft);color:var(--gold)}
+.lv-mastered{background:var(--ok-soft);color:var(--ok)}
+.due-late{color:var(--bad)}
+.chip.add{border-style:dashed;color:var(--accent)}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:start;width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:14px;color:var(--ink)}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt .ol{flex:none;width:24px;height:24px;border-radius:50%;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:600}
+.opt .ot{flex:1;min-width:0}
+.opt.ok{background:var(--ok-soft);border-color:var(--ok)}
+.opt.bad{background:var(--bad-soft);border-color:var(--bad)}
+.en{color:var(--muted);font-size:13px;text-align:left;margin-top:2px}
+.qtext{font-size:16px;font-weight:600;line-height:1.6}
+.qtext .en{font-weight:500;font-size:14px}
+.qexp{border-radius:10px;padding:10px 12px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.qexp.good{background:var(--ok-soft)}
+.qexp.wrong{background:var(--bad-soft)}
+.score{display:flex;align-items:baseline;gap:10px}
+.score b{font-family:var(--display);font-size:40px;color:var(--accent);font-variant-numeric:tabular-nums}
+.axrow{display:flex;gap:10px;align-items:center;padding-block:8px;border-bottom:1px solid var(--line)}
+.axrow:last-child{border-bottom:0}
+.axrow .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.axrow .bar{height:6px}
+.bar i.low{background:var(--bad)}
+.bar i.mid{background:var(--gold)}
+.bar i.ok{background:var(--ok)}
+.lvlhead{display:flex;gap:12px;align-items:center}
+.lvlhead .t{display:flex;flex-direction:column;min-width:0}
+.lvlbadge{width:56px;height:56px;border-radius:14px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--display);font-size:22px;font-weight:700;flex:none}
+.cefr{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;direction:ltr}
+.cefr span{font-size:12px;text-align:center;padding:4px 0;border-radius:6px;background:var(--line);color:var(--muted);font-weight:600}
+.cefr span.past{background:var(--accent-soft);color:var(--accent)}
+.cefr span.on{background:var(--accent);color:var(--surface)}
+.ltr{direction:ltr;text-align:left}
+.flash{text-align:center;padding:14px 8px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.flash .w{font-size:28px;font-family:var(--display);direction:ltr;font-weight:700}
+.wrow{display:flex;gap:10px;align-items:center;padding-block:6px;border-bottom:1px solid var(--line)}
+.wrow:last-child{border-bottom:0}
+.wrow .t{flex:1;min-width:0}
+.wrow .t b{direction:ltr;unicode-bidi:isolate}
+.dots{display:inline-flex;gap:3px;direction:ltr}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--ok)}
+.fix{font-size:14px;display:flex;flex-direction:column;gap:2px;padding-block:6px;border-bottom:1px solid var(--line)}
+.fix:last-child{border-bottom:0}
+.fix del{color:var(--bad)}
+.fix ins{color:var(--ok);text-decoration:none;font-weight:600}
+.toast{z-index:50!important;position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+.lx-steps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:14px}
+.lx-steps li{display:flex;flex-direction:column;gap:6px}
+.lx-group{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.lx-status.warn{border-color:var(--gold);background:var(--gold-soft)}
+.sheet-bg.lx{z-index:40}
+label.btn{display:inline-flex;flex-direction:row;color:var(--ink);font-size:14px}
+details summary{cursor:pointer}
+#dataBtn{position:relative}
+#dataBtn.dot::after{content:"";position:absolute;top:3px;inset-inline-end:3px;width:9px;height:9px;border-radius:50%;background:var(--bad)}
+@media (max-width:380px){#dataBtn{padding-inline:8px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div><h1>مساري <span>الوظيفي</span></h1><div class="sub" id="todayLbl"></div></div>
+  <div class="row" style="flex-wrap:nowrap">
+  <button class="btn" id="dataBtn" type="button" aria-label="بياناتي والمزامنة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1-.5 9.5z"/><path d="M12 11v6M9.5 13.5 12 11l2.5 2.5"/></svg>بياناتي</button>
+  <button class="btn pri" id="addJobBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>وظيفة</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div id="dbWarn" class="empty" hidden>تعذّر فتح ذاكرة الجهاز. تأكد أن المتصفح لا يعمل في وضع التصفح الخاص.</div>
+
+  <!-- JOBS -->
+  <section id="tab-jobs" class="stack">
+    <div class="pipe" aria-label="ملخص الطلبات">
+      <div><b id="cNew">0</b><small>جديدة</small></div>
+      <div><b id="cApplied">0</b><small>تقدّمت</small></div>
+      <div><b id="cInterview">0</b><small>مقابلة</small></div>
+      <div><b id="cOffer">0</b><small>عروض</small></div>
+    </div>
+    <div class="chips" id="fieldChips"></div>
+    <div class="chips" id="statusChips">
+      <button class="chip" data-s="active" aria-pressed="true">النشطة</button>
+      <button class="chip" data-s="new" aria-pressed="false">جديدة</button>
+      <button class="chip" data-s="applied" aria-pressed="false">تقدّمت</button>
+      <button class="chip" data-s="interview" aria-pressed="false">مقابلة / اختبار</button>
+      <button class="chip" data-s="offer" aria-pressed="false">عرض</button>
+      <button class="chip" data-s="rejected" aria-pressed="false">مرفوضة</button>
+      <button class="chip" data-s="all" aria-pressed="false">الكل</button>
+    </div>
+    <div id="jobList" class="stack"><div class="empty">جارٍ تحميل وظائفك…</div></div>
+  </section>
+
+  <!-- DOCS -->
+  <section id="tab-docs" class="stack" hidden>
+    <div><h2>مستنداتي</h2><div class="note">السيرة الذاتية، الشهادات، خطابات التقديم. محفوظة في حسابك.</div></div>
+    <div class="card">
+      <div class="grid2">
+        <label for="docKind">نوع المستند<select id="docKind"><option>سيرة ذاتية</option><option>شهادة</option><option>خطاب تقديم</option><option>بطاقة / هوية</option><option>خبرة / توصية</option><option>أخرى</option></select></label>
+        <label for="docFile">الملف<input type="file" id="docFile"></label>
+      </div>
+      <div class="row"><button class="btn pri" id="uploadBtn" type="button">رفع المستند</button><span id="upMsg" class="note"></span></div>
+    </div>
+    <div id="docList" class="stack"></div>
+    <div class="card">
+      <h2>نبذتي المهنية</h2>
+      <div class="note">اكتب أو الصق ملخص سيرتك: المؤهل، الخبرات، المهارات. يستخدمه المساعد لكتابة خطابات التقديم وأسئلة المقابلات المناسبة لك.</div>
+      <label for="profName">الاسم<input id="profName" placeholder="الاسم كما يظهر في الخطابات"></label>
+      <label for="profText">الملخص<textarea id="profText" rows="7" placeholder="مثال: بكالوريوس هندسة حاسوب، خبرة 5 سنوات في الدعم الفني والشبكات، وخبرة في المبيعات وإدارة فريق…"></textarea></label>
+      <div class="row"><button class="btn pri" id="saveProf" type="button">حفظ النبذة</button><span id="profMsg" class="note"></span></div>
+    </div>
+  </section>
+
+  <!-- INTERVIEW -->
+  <section id="tab-interview" class="stack" hidden>
+    <div><h2>تدريب المقابلات</h2><div class="note">يسألك المساعد سؤالًا، تجيب، ثم يقيّم إجابتك ويعطيك نموذجًا أفضل.</div></div>
+    <div class="card">
+      <div class="grid2">
+        <label for="ivJob">التدرّب على<select id="ivJob"></select></label>
+        <label for="ivType">نوع الأسئلة<select id="ivType"><option value="mixed">متنوعة</option><option value="tech">فنية / تخصصية</option><option value="behav">سلوكية (STAR)</option><option value="hr">موارد بشرية وراتب</option><option value="gov">مقابلات واختبارات القطاع الحكومي</option></select></label>
+      </div>
+      <div class="row"><button class="btn pri" id="ivStart" type="button">ابدأ / سؤال جديد</button><button class="btn ghost" id="ivReset" type="button">مسح المحادثة</button></div>
+    </div>
+    <div id="ivChat" class="chat"></div>
+    <div class="card" id="ivAnswerBox" hidden>
+      <label for="ivAnswer">إجابتك<textarea id="ivAnswer" rows="4" placeholder="اكتب إجابتك كما تقولها في المقابلة"></textarea></label>
+      <div class="row"><button class="btn pri" id="ivSend" type="button">قيّم إجابتي</button></div>
+    </div>
+    <div id="ivErr" class="err"></div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="tab-skills" class="stack" hidden>
+    <div><h2>التطوير الذاتي</h2><div class="note">اختر المجال، تابع مهاراته، اعمل خطة مراجعة، واحفظ ملفات المراجعة.</div></div>
+    <div class="card" id="todayCard"><div class="row" style="justify-content:space-between"><b>مراجعة اليوم</b><span class="note" id="todayCount"></span></div><div id="todayList" class="stack" style="gap:8px"></div></div>
+    <div class="chips" id="devChips"></div>
+    <div class="card" id="addFieldBox" hidden>
+      <label for="newField">اسم المجال الجديد<input id="newField" placeholder="مثال: إدارة المشاريع، الموارد البشرية، المحاسبة"></label>
+      <div class="row"><button class="btn pri" id="addFieldSave" type="button">إضافة المجال</button><button class="btn ghost" id="addFieldCancel" type="button">إلغاء</button><span id="addFieldMsg" class="note"></span></div>
+      <div class="note">ينشئ المساعد قائمة مهارات المجال تلقائيًا، ويظهر المجال في الوظائف والمقابلات أيضًا.</div>
+    </div>
+    <div class="chips" id="devSub">
+      <button class="chip" data-v="skills" aria-pressed="true">المحاور والمهارات</button>
+      <button class="chip" data-v="quiz" aria-pressed="false">الاختبارات</button>
+      <button class="chip" data-v="plan" aria-pressed="false">خطة المراجعة</button>
+      <button class="chip" data-v="files" aria-pressed="false">ملفات المراجعة</button>
+    </div>
+    <div id="dev-skills" class="stack">
+      <div class="card"><div class="row" style="justify-content:space-between"><b id="skTitle">تقدّمك</b><span id="skPct" class="note">0٪</span></div><div class="bar"><i id="skBar" style="width:0%"></i></div></div>
+      <div id="skillGroups" class="stack"></div>
+      <div class="card"><label for="newSkill">أضف مهارة لهذا المجال<input id="newSkill" placeholder="مثال: Python، Power BI، إدارة الوقت"></label><div class="row"><button class="btn" id="newSkillAdd" type="button">إضافة المهارة</button></div></div>
+    </div>
+    <div id="dev-quiz" class="stack" hidden>
+      <div class="card" id="qzSetup">
+        <b>اختبار اختيار من متعدد</b>
+        <div class="note">اختر محورًا أو اختبارًا شاملًا. تُحفظ نتيجتك لكل محور، وتُحفظ الأسئلة التي أخطأت فيها لتراجعها لاحقًا حتى تجيبها صحيحة مرتين.</div>
+        <div class="grid2">
+          <label for="qzAxis">المحور<select id="qzAxis"></select></label>
+          <label for="qzCount">عدد الأسئلة<select id="qzCount"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>
+          <label for="qzLang">لغة الأسئلة<select id="qzLang"><option value="both">العربية والإنجليزية معًا</option><option value="ar">العربية</option><option value="en">English</option></select></label>
+          <label for="qzLevel">المستوى<select id="qzLevel"><option value="easy">أساسي: مفاهيم وتعريفات</option><option value="mid" selected>متوسط: تطبيق وسيناريوهات</option><option value="hard">متقدم: مستوى الشهادات المهنية</option></select></label>
+        </div>
+        <div class="row"><button class="btn pri" id="qzStart" type="button">ابدأ الاختبار</button><button class="btn" id="qzMist" type="button">راجع أخطائي (<span id="qzMistN">0</span>)</button><span id="qzMsg" class="note"></span></div>
+      </div>
+      <div class="card" id="qzRun" hidden></div>
+      <div class="card"><b>نتائجك حسب المحور</b><div class="note">الأضعف أولًا، فابدأ مراجعتك به.</div><div id="qzAxes"></div></div>
+    </div>
+    <div id="dev-plan" class="stack" hidden>
+      <div class="card">
+        <b>خطة مراجعة بالمساعد</b>
+        <div class="grid2">
+          <label for="plWeeks">المدة<select id="plWeeks"><option value="2">أسبوعان</option><option value="4" selected>4 أسابيع</option><option value="8">8 أسابيع</option></select></label>
+          <label for="plDays">أيام المراجعة في الأسبوع<select id="plDays"><option>3</option><option selected>4</option><option>5</option><option>6</option></select></label>
+        </div>
+        <label for="plGoal">الهدف (اختياري)<input id="plGoal" placeholder="مثال: الاستعداد لاختبار وزارة العمل، أو شهادة CCNA"></label>
+        <div class="row"><button class="btn pri" id="plGen" type="button">أنشئ الخطة</button><span id="plMsg" class="note"></span></div>
+      </div>
+      <div class="card">
+        <b>أضف موضوعًا بنفسك</b>
+        <div class="grid2"><label for="plTopic">الموضوع<input id="plTopic" placeholder="مثال: مراجعة VLAN و Subnetting"></label><label for="plDate">التاريخ<input type="date" id="plDate"></label></div>
+        <div class="row"><button class="btn" id="plAdd" type="button">إضافة للخطة</button></div>
+      </div>
+      <div class="card"><div class="row" style="justify-content:space-between"><b>إنجاز الخطة</b><span id="plPct" class="note">0٪</span></div><div class="bar"><i id="plBar" style="width:0%"></i></div></div>
+      <div id="planList" class="stack"></div>
+    </div>
+    <div id="dev-files" class="stack" hidden>
+      <div class="card">
+        <label for="rvFile">ملف مراجعة (ملخص، كتاب PDF، صور ملاحظات)<input type="file" id="rvFile"></label>
+        <label for="rvNote">وصف قصير (اختياري)<input id="rvNote" placeholder="مثال: ملخص الفصل 3 - الشبكات"></label>
+        <div class="row"><button class="btn pri" id="rvUp" type="button">رفع ملف المراجعة</button><span id="rvMsg" class="note"></span></div>
+      </div>
+      <div id="rvList" class="stack"></div>
+    </div>
+  </section>
+
+  <!-- ENGLISH -->
+  <section id="tab-en" class="stack" hidden>
+    <div><h2>اللغة الإنجليزية</h2><div class="note">حدّد مستواك حسب الإطار الأوروبي المرجعي CEFR من A1 إلى C2، ثم طوّره بالتمارين والكتابة والمحادثة وبنك الكلمات، مع تركيز على إنجليزية العمل وتقنية المعلومات والمبيعات.</div></div>
+    <div class="card">
+      <div class="lvlhead"><div class="lvlbadge" id="enLvl">—</div><div class="t"><b id="enLvlName">لم تحدد مستواك بعد</b><span class="note" id="enLvlSub"></span></div></div>
+      <div class="cefr" id="enScale"></div>
+      <div class="row"><button class="btn pri" id="enPlace" type="button">اختبار تحديد المستوى</button><span id="enPlaceMsg" class="note"></span></div>
+      <div id="enHist" class="note"></div>
+    </div>
+    <div class="card" id="enRun" hidden></div>
+    <div class="chips" id="enSub">
+      <button class="chip" data-v="practice" aria-pressed="true">تمارين</button>
+      <button class="chip" data-v="words" aria-pressed="false">بنك الكلمات</button>
+      <button class="chip" data-v="writing" aria-pressed="false">الكتابة</button>
+      <button class="chip" data-v="chat" aria-pressed="false">المحادثة</button>
+    </div>
+    <div id="en-practice" class="stack">
+      <div class="card">
+        <b>تمرين اختيار من متعدد</b>
+        <div class="grid2">
+          <label for="enSkill">المهارة<select id="enSkill"></select></label>
+          <label for="enLevel">المستوى<select id="enLevel"><option>A1</option><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option><option>C2</option></select></label>
+          <label for="enCount">عدد الأسئلة<select id="enCount"><option>5</option><option selected>10</option></select></label>
+        </div>
+        <div class="row"><button class="btn pri" id="enStart" type="button">ابدأ التمرين</button><span id="enMsg" class="note"></span></div>
+      </div>
+      <div class="card"><b>نتائجك حسب المهارة</b><div class="note">الأضعف أولًا.</div><div id="enSkills"></div></div>
+    </div>
+    <div id="en-words" class="stack" hidden>
+      <div class="card"><div class="row" style="justify-content:space-between"><b>مراجعة الكلمات</b><span class="note" id="wStats"></span></div><div id="wCard"></div></div>
+      <div class="card">
+        <b>أضف كلمة</b>
+        <div class="grid2"><label for="wWord">الكلمة أو العبارة<input id="wWord" dir="ltr" placeholder="e.g. stakeholder"></label><label for="wMean">المعنى (اتركه فارغًا ليكتبه المساعد)<input id="wMean" placeholder="صاحب مصلحة"></label></div>
+        <div class="row"><button class="btn" id="wAdd" type="button">إضافة</button></div>
+        <div class="grid2"><label for="wTopic">أو اطلب كلمات في موضوع<input id="wTopic" placeholder="مثال: حوكمة تقنية المعلومات، التفاوض، المقابلات"></label><div style="display:flex;align-items:flex-end"><button class="btn pri" id="wSuggest" type="button">اقترح 10 كلمات بمستواي</button></div></div>
+        <div id="wMsg" class="note"></div>
+      </div>
+      <div id="wList" class="stack"></div>
+    </div>
+    <div id="en-writing" class="stack" hidden>
+      <div class="card">
+        <label for="wrTask">نوع الكتابة<select id="wrTask"><option>رسالة متابعة إلى الموارد البشرية بعد التقديم</option><option>فقرة خطاب تقديم لوظيفة</option><option>وصف مشروع حوكمة تقنية معلومات عملت عليه</option><option>تقرير حادثة تقنية IT incident report</option><option>رسالة عرض مبيعات لعميل</option><option>تعريف بنفسك في مقابلة</option><option>موضوع حر</option></select></label>
+        <div class="row"><button class="btn" id="wrIdea" type="button">اقترح عليّ موضوعًا</button></div>
+        <div id="wrPrompt" class="note"></div>
+        <label for="wrText">اكتب بالإنجليزية<textarea id="wrText" dir="ltr" rows="7" placeholder="Write here…"></textarea></label>
+        <div class="row"><button class="btn pri" id="wrCheck" type="button">صحّح كتابتي وقيّم مستواي</button></div>
+        <div id="wrOut" class="stack"></div>
+      </div>
+      <div class="card"><b>كتاباتي السابقة</b><div id="wrList"></div></div>
+    </div>
+    <div id="en-chat" class="stack" hidden>
+      <div class="card">
+        <label for="enScen">موقف المحادثة<select id="enScen"><option>مقابلة عمل لوظيفة في تقنية المعلومات</option><option>مقابلة عمل لوظيفة مدير مبيعات</option><option>عرض تقرير حوكمة تقنية المعلومات في اجتماع إدارة</option><option>التفاوض مع عميل على عرض سعر</option><option>حديث عام مع زميل عمل جديد</option><option>مكالمة مع الموارد البشرية حول عرض وظيفي</option></select></label>
+        <div class="row"><button class="btn pri" id="enChatStart" type="button">ابدأ المحادثة</button><button class="btn" id="enChatEnd" type="button">أنهِ وقيّمني</button><button class="btn ghost" id="enChatReset" type="button">مسح</button></div>
+        <div class="note">يصحح المدرب أخطاءك في كل رسالة، ويشرح السبب بالعربية، ثم يكمل الحديث.</div>
+      </div>
+      <div id="enChat" class="chat"></div>
+      <div class="card" id="enChatBox" hidden>
+        <label for="enChatIn">ردك بالإنجليزية<textarea id="enChatIn" dir="ltr" rows="3"></textarea></label>
+        <div class="row"><button class="btn pri" id="enChatSend" type="button">إرسال</button></div>
+      </div>
+      <div id="enChatErr" class="err"></div>
+    </div>
+  </section>
+
+  <!-- ACTIVITY -->
+  <section id="tab-act" class="stack" hidden>
+    <div><h2>سجل الأنشطة</h2><div class="note">كل ما تفعله في البحث عن عمل، مرتب بالتاريخ.</div></div>
+    <div class="pipe" style="grid-template-columns:repeat(3,1fr)">
+      <div><b id="aWeek">0</b><small>نشاط هذا الأسبوع</small></div>
+      <div><b id="aApplied">0</b><small>طلبات هذا الشهر</small></div>
+      <div><b id="aPractice">0</b><small>تدريب ومراجعة</small></div>
+    </div>
+    <div class="card">
+      <label for="actText">أضف نشاطًا<input id="actText" placeholder="مثال: حضرت ورشة كتابة السيرة الذاتية"></label>
+      <div class="row"><button class="btn pri" id="actAdd" type="button">إضافة</button></div>
+    </div>
+    <div id="actList" class="stack"></div>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist"><div class="in">
+  <button role="tab" data-tab="jobs" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg>الوظائف</button>
+  <button role="tab" data-tab="docs" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>مستنداتي</button>
+  <button role="tab" data-tab="interview" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>المقابلات</button>
+  <button role="tab" data-tab="skills" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 8l10 5 10-5z"/><path d="M6 10v5c3 2.5 9 2.5 12 0v-5"/></svg>التطوير</button>
+  <button role="tab" data-tab="en" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>الإنجليزية</button>
+  <button role="tab" data-tab="act" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>الأنشطة</button>
+</div></nav>
+
+<div id="sheetHost"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STATUS={new:"جديدة",applied:"تقدّمت",interview:"مقابلة / اختبار",offer:"عرض",rejected:"مرفوضة"};
+const BASEF={it:"تقنية المعلومات",sales:"إدارة المبيعات"};let FIELD={...BASEF,other:"أخرى"};let fieldsDoc={list:[],extra:{}};let devField="it",devView="skills",plan=[];
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const fmtDate=iso=>{try{return new Date(iso+(iso.length===10?"T12:00:00":"")).toLocaleDateString("ar-OM",{day:"numeric",month:"long",year:"numeric"})}catch(e){return iso}};
+const dayLabel=iso=>{
+  if(!iso)return "بدون تاريخ";
+  const t=new Date(todayISO()+"T12:00:00"),d=new Date(iso.slice(0,10)+"T12:00:00");
+  const diff=Math.round((t-d)/864e5);
+  if(diff===0)return "اليوم"; if(diff===1)return "أمس";
+  if(diff>1&&diff<7)return "قبل "+diff+" أيام · "+fmtDate(iso.slice(0,10));
+  return fmtDate(iso.slice(0,10));
+};
+$("#todayLbl").textContent=new Date().toLocaleDateString("ar-OM",{weekday:"long",day:"numeric",month:"long"});
+
+let db=null,sample=null,assets=null;
+let jobs=[],docs=[],acts=[],skillDone={},profile={};
+let fField="all",fStatus="active";
+
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+async function copy(text,btn){try{await navigator.clipboard.writeText(text);toast("تم النسخ")}catch(e){const r=document.createRange();const el=btn.closest(".sheet").querySelector(".ai");r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast("حدّد النص وانسخه")}}
+async function logAct(text,kind){if(!db)return;try{await db.collection("activities").add({text,kind:kind||"note",at:new Date().toISOString()})}catch(e){}}
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll("nav.tabs button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  document.querySelectorAll("main section").forEach(s=>s.hidden=s.id!=="tab-"+b.dataset.tab);
+  $("#addJobBtn").hidden=b.dataset.tab!=="jobs";
+  try{localStorage.setItem("tab",b.dataset.tab)}catch(e){}
+  window.scrollTo(0,0);
+}));
+try{const t=localStorage.getItem("tab");if(t){const b=document.querySelector('nav.tabs button[data-tab="'+t+'"]');b&&b.click()}}catch(e){}
+
+/* ---------- Jobs ---------- */
+function chipGroup(sel,attr,set){document.querySelectorAll(sel+" .chip").forEach(c=>c.addEventListener("click",()=>{document.querySelectorAll(sel+" .chip").forEach(x=>x.setAttribute("aria-pressed",x===c));set(c.dataset[attr]);renderJobs()}))}
+function renderFieldChips(){const h=$("#fieldChips");h.innerHTML=[["all","كل المجالات"]].concat(Object.entries(FIELD)).map(([k,n])=>'<button class="chip" data-f="'+esc(k)+'" aria-pressed="'+(fField===k)+'">'+esc(n)+'</button>').join("")}
+$("#fieldChips").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;fField=c.dataset.f;renderFieldChips();renderJobs()});
+renderFieldChips();
+chipGroup("#statusChips","s",v=>fStatus=v);
+
+function renderJobs(){
+  const c={new:0,applied:0,interview:0,offer:0};jobs.forEach(j=>{if(c[j.status]!=null)c[j.status]++});
+  $("#cNew").textContent=c.new;$("#cApplied").textContent=c.applied;$("#cInterview").textContent=c.interview;$("#cOffer").textContent=c.offer;
+  let list=jobs.filter(j=>(fField==="all"||j.field===fField)&&(fStatus==="all"||(fStatus==="active"?j.status!=="rejected":j.status===fStatus)));
+  list.sort((a,b)=>(b.postedAt||b.addedAt||"").localeCompare(a.postedAt||a.addedAt||""));
+  const host=$("#jobList");
+  if(!list.length){host.innerHTML='<div class="empty">لا توجد وظائف هنا بعد. اضغط «+ وظيفة» لإضافة إعلان، أو اضغط «بياناتي» لتطلب من Claude البحث عن وظائف جديدة.</div>';fillIvJobs();return}
+  let html="",last=null;
+  list.forEach(j=>{
+    const lbl=dayLabel(j.postedAt||j.addedAt);
+    if(lbl!==last){html+='<div class="day">'+esc(lbl)+'</div>';last=lbl}
+    html+='<article class="card" data-id="'+esc(j.id)+'">'+
+      '<div class="row" style="justify-content:space-between;align-items:flex-start"><h3>'+esc(j.title)+'</h3><button class="st s-'+esc(j.status)+'" data-act="status" type="button" aria-label="تغيير الحالة">'+esc(STATUS[j.status]||j.status)+'</button></div>'+
+      '<div class="meta"><span>'+esc(j.company||"")+'</span>'+(j.location?'<span>'+esc(j.location)+'</span>':'')+'<span class="tag f-'+(j.field==="it"||j.field==="sales"?j.field:"other")+'">'+esc(FIELD[j.field]||"أخرى")+'</span>'+(j.source?'<span>المصدر: '+esc(j.source)+'</span>':'')+'</div>'+
+      (j.deadline?'<div class="meta"><span style="color:var(--warn)">آخر موعد: '+esc(fmtDate(j.deadline))+'</span></div>':'')+
+      (j.notes?'<div class="note">'+esc(j.notes)+'</div>':'')+
+      '<div class="row">'+(j.url?'<a class="btn" href="'+esc(j.url)+'" target="_blank" rel="noopener">فتح الإعلان</a>':'')+
+      '<button class="btn pri" data-act="prep" type="button">جهّز طلب التقديم</button>'+
+      '<button class="btn ghost" data-act="edit" type="button">تعديل</button></div>'+
+    '</article>';
+  });
+  host.innerHTML=html;fillIvJobs();
+}
+$("#jobList").addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;
+  const j=jobs.find(x=>x.id===b.closest(".card").dataset.id);if(!j)return;
+  if(b.dataset.act==="status")statusSheet(j);
+  if(b.dataset.act==="prep")prepSheet(j);
+  if(b.dataset.act==="edit")jobForm(j);
+});
+
+function openSheet(inner){
+  const host=$("#sheetHost");
+  host.innerHTML='<div class="sheet-bg"><div class="sheet" role="dialog" aria-modal="true">'+inner+'</div></div>';
+  const bg=host.firstChild;bg.addEventListener("click",e=>{if(e.target===bg)closeSheet()});
+  bg.querySelectorAll("[data-close]").forEach(x=>x.addEventListener("click",closeSheet));
+  return bg.querySelector(".sheet");
+}
+let sheetCtl=null;
+function closeSheet(){if(sheetCtl){sheetCtl.abort();sheetCtl=null}$("#sheetHost").innerHTML=""}
+const closeBtn='<button class="btn ghost" data-close type="button" aria-label="إغلاق">إغلاق</button>';
+
+function statusSheet(j){
+  const s=openSheet('<div class="sheet-h"><h2>حالة الطلب</h2>'+closeBtn+'</div><div class="note">'+esc(j.title)+' · '+esc(j.company||"")+'</div><div class="row">'+
+    Object.keys(STATUS).map(k=>'<button class="st s-'+k+'" data-s="'+k+'" type="button" style="padding:8px 14px;font-size:14px">'+STATUS[k]+'</button>').join("")+'</div>');
+  s.querySelectorAll("[data-s]").forEach(b=>b.addEventListener("click",async()=>{
+    const ns=b.dataset.s;closeSheet();if(ns===j.status)return;
+    const upd={status:ns};if(ns==="applied")upd.appliedAt=new Date().toISOString();
+    try{await db.collection("jobs").doc(j.id).update(upd);
+      const words={applied:"تقدّمت إلى",interview:"وصلت لمرحلة المقابلة/الاختبار في",offer:"حصلت على عرض من",rejected:"تم رفض الطلب في",new:"أعدت فتح"};
+      logAct((words[ns]||"تحديث")+" «"+j.title+"» — "+(j.company||""),ns==="applied"?"applied":"status");toast("تم تحديث الحالة")}
+    catch(e){toast("تعذّر الحفظ، حاول مرة أخرى")}
+  }));
+}
+
+function jobForm(j){
+  const isNew=!j;j=j||{field:"it",status:"new",postedAt:todayISO()};
+  const s=openSheet('<div class="sheet-h"><h2>'+(isNew?"إضافة وظيفة":"تعديل الوظيفة")+'</h2>'+closeBtn+'</div>'+
+  '<label for="jfTitle">المسمى الوظيفي<input id="jfTitle" value="'+esc(j.title)+'"></label>'+
+  '<div class="grid2"><label for="jfCo">الجهة / الشركة<input id="jfCo" value="'+esc(j.company)+'"></label><label for="jfLoc">الموقع<input id="jfLoc" value="'+esc(j.location)+'" placeholder="مسقط"></label></div>'+
+  '<div class="grid2"><label for="jfField">المجال<select id="jfField">'+Object.keys(FIELD).map(k=>'<option value="'+k+'"'+(j.field===k?" selected":"")+'>'+FIELD[k]+'</option>').join("")+'</select></label>'+
+  '<label for="jfSrc">المصدر<input id="jfSrc" value="'+esc(j.source)+'" placeholder="LinkedIn، Bayt، وزارة العمل…"></label></div>'+
+  '<div class="grid2"><label for="jfPosted">تاريخ النشر<input type="date" id="jfPosted" value="'+esc((j.postedAt||"").slice(0,10))+'"></label><label for="jfDead">آخر موعد للتقديم<input type="date" id="jfDead" value="'+esc(j.deadline||"")+'"></label></div>'+
+  '<label for="jfUrl">رابط الإعلان<input id="jfUrl" type="url" dir="ltr" value="'+esc(j.url)+'" placeholder="https://"></label>'+
+  '<label for="jfDesc">وصف الوظيفة أو المتطلبات (اختياري، يحسّن خطاب التقديم)<textarea id="jfDesc" rows="3">'+esc(j.description)+'</textarea></label>'+
+  '<label for="jfNotes">ملاحظاتي<input id="jfNotes" value="'+esc(j.notes)+'"></label>'+
+  '<div class="row" style="justify-content:space-between"><button class="btn pri" id="jfSave" type="button">حفظ</button>'+(isNew?'':'<button class="btn danger" id="jfDel" type="button">حذف الوظيفة</button>')+'</div><div id="jfErr" class="err"></div>');
+  s.querySelector("#jfSave").addEventListener("click",async()=>{
+    const v=id=>s.querySelector(id).value.trim();
+    const data={title:v("#jfTitle"),company:v("#jfCo"),location:v("#jfLoc"),field:v("#jfField"),source:v("#jfSrc"),postedAt:v("#jfPosted"),deadline:v("#jfDead"),url:v("#jfUrl"),description:v("#jfDesc"),notes:v("#jfNotes")};
+    if(!data.title){s.querySelector("#jfErr").textContent="اكتب المسمى الوظيفي أولًا.";return}
+    try{
+      if(isNew){data.status="new";data.addedAt=new Date().toISOString();await db.collection("jobs").add(data);logAct("أضفت وظيفة «"+data.title+"»","added")}
+      else await db.collection("jobs").doc(j.id).update(data);
+      closeSheet();toast("تم الحفظ")
+    }catch(e){s.querySelector("#jfErr").textContent="تعذّر الحفظ. تحقق من الاتصال وحاول مرة أخرى."}
+  });
+  const del=s.querySelector("#jfDel");
+  if(del)del.addEventListener("click",async()=>{
+    if(del.dataset.confirm!=="1"){del.dataset.confirm="1";del.textContent="اضغط مرة أخرى للتأكيد";return}
+    try{await db.collection("jobs").doc(j.id).delete();closeSheet();toast("تم حذف الوظيفة")}catch(e){toast("تعذّر الحذف")}
+  });
+}
+$("#addJobBtn").addEventListener("click",()=>{if(!db){toast("البيانات غير متاحة في هذا العرض");return}jobForm(null)});
+
+function profileText(){return (profile.name?"الاسم: "+profile.name+"\n":"")+(profile.text||"لم يكتب المتقدم نبذة بعد؛ اكتب خطابًا عامًا مناسبًا واترك أقواسًا [ ] لما يجب أن يملأه.")}
+
+function prepSheet(j){
+  const s=openSheet('<div class="sheet-h"><h2>تجهيز طلب التقديم</h2>'+closeBtn+'</div><div class="note">'+esc(j.title)+' · '+esc(j.company||"")+'</div>'+
+  '<div class="row"><button class="btn pri" data-k="letter" type="button">خطاب تقديم</button><button class="btn" data-k="cv" type="button">نقاط لتعديل السيرة</button><button class="btn" data-k="email" type="button">رسالة إيميل قصيرة</button><button class="btn" data-k="lang" type="button">بالإنجليزية</button></div>'+
+  '<div class="ai" id="aiOut">اختر ما تريد تجهيزه. يُكتب حسب نبذتك المهنية في «مستنداتي».</div>'+
+  '<div class="row"><button class="btn" id="aiCopy" type="button" disabled>نسخ النص</button>'+(j.url?'<a class="btn" href="'+esc(j.url)+'" target="_blank" rel="noopener">فتح الإعلان للتقديم</a>':'')+'<button class="btn" id="markApplied" type="button">تقدّمت ✓</button></div><div class="note">بعد التقديم من موقع الإعلان، اضغط «تقدّمت» ليُسجَّل في متابعتك.</div>');
+  let lang="ar";
+  const out=s.querySelector("#aiOut"),cp=s.querySelector("#aiCopy");
+  s.querySelectorAll("[data-k]").forEach(b=>b.addEventListener("click",async()=>{
+    if(b.dataset.k==="lang"){lang=lang==="ar"?"en":"ar";b.textContent=lang==="ar"?"بالإنجليزية":"بالعربية";toast(lang==="ar"?"اللغة: العربية":"Language: English");return}
+    if(!sample){out.textContent="المساعد الذكي غير متاح في هذا العرض.";return}
+    const tasks={letter:"اكتب خطاب تقديم (cover letter) احترافيًا ومختصرًا (180-250 كلمة) لهذه الوظيفة، يربط خبرات المتقدم بمتطلبات الوظيفة.",cv:"اقترح 6 إلى 8 نقاط محددة لتعديل السيرة الذاتية لتناسب هذه الوظيفة: كلمات مفتاحية، مهارات يجب إبرازها، وإنجازات بصياغة مقترحة.",email:"اكتب رسالة بريد إلكتروني قصيرة (80-120 كلمة) لإرسال السيرة الذاتية لهذه الوظيفة، مع سطر عنوان."};
+    const prompt=tasks[b.dataset.k]+"\nاللغة المطلوبة: "+(lang==="ar"?"العربية الفصحى":"English")+".\nاكتب النص النهائي فقط بدون مقدمات أو تعليق، وبدون تنسيق Markdown.\n\nالوظيفة:\nالمسمى: "+j.title+"\nالجهة: "+(j.company||"")+"\nالموقع: "+(j.location||"")+"\nالوصف/المتطلبات: "+(j.description||"غير متوفر")+"\n\nبيانات المتقدم:\n"+profileText();
+    if(sheetCtl)sheetCtl.abort();sheetCtl=new AbortController();
+    out.textContent="جارٍ الكتابة…";cp.disabled=true;
+    try{const r=await sample(prompt,{signal:sheetCtl.signal,onText:({text})=>{out.textContent=text}});out.textContent=r.text;cp.disabled=false;out.dir=lang==="en"?"ltr":"rtl"}
+    catch(e){if(e&&e.code==="aborted")return;out.textContent=e&&e.code==="not_granted"?"لم يُسمح للمساعد بالعمل. فعّله من إعدادات الصفحة.":e&&e.code==="rate_limited"?"المساعد مشغول الآن، حاول بعد دقيقة.":"تعذّر توليد النص. حاول مرة أخرى."}
+  }));
+  cp.addEventListener("click",()=>copy(out.textContent,cp));
+  s.querySelector("#markApplied").addEventListener("click",async()=>{
+    try{await db.collection("jobs").doc(j.id).update({status:"applied",appliedAt:new Date().toISOString()});logAct("تقدّمت إلى «"+j.title+"» — "+(j.company||""),"applied");closeSheet();toast("سُجّل التقديم")}catch(e){toast("تعذّر الحفظ")}
+  });
+}
+
+/* ---------- Docs ---------- */
+function renderDocs(){
+  const host=$("#docList");
+  const mine=docs.filter(d=>d.kind!=="ملف مراجعة");
+  if(!mine.length){host.innerHTML='<div class="empty">لم ترفع مستندات بعد. ابدأ بسيرتك الذاتية.</div>';return}
+  const sorted=[...mine].sort((a,b)=>(b.addedAt||"").localeCompare(a.addedAt||""));
+  host.innerHTML=sorted.map(d=>{const ext=(d.name||"").split(".").pop().slice(0,4).toUpperCase();
+    return '<div class="card doc" data-id="'+esc(d.id)+'"><div class="ic">'+esc(ext||"ملف")+'</div><div class="t"><b>'+esc(d.name)+'</b><span class="note">'+esc(d.kind||"")+' · '+esc(fmtDate((d.addedAt||"").slice(0,10)))+'</span></div>'+
+    (d.url?'<a class="btn" href="'+esc(d.url)+'" target="_blank" rel="noopener">فتح</a>':'')+'<button class="btn ghost danger" data-del type="button">حذف</button></div>'}).join("");
+}
+$("#docList").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-del]");if(!b)return;
+  if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="تأكيد الحذف";return}
+  const d=docs.find(x=>x.id===b.closest(".card").dataset.id);if(!d)return;
+  try{if(assets&&d.assetId){try{await assets.delete(d.assetId)}catch(e){}}await db.collection("docs").doc(d.id).delete();toast("تم حذف المستند")}catch(e){toast("تعذّر الحذف")}
+});
+$("#uploadBtn").addEventListener("click",async()=>{
+  const f=$("#docFile").files[0],msg=$("#upMsg");
+  if(!f){msg.textContent="اختر ملفًا أولًا.";return}
+  if(!assets||!db){msg.textContent="رفع الملفات غير متاح في هذا العرض.";return}
+  if(f.size>20*1024*1024){msg.textContent="حجم الملف أكبر من 20 ميغابايت.";return}
+  msg.textContent="جارٍ الرفع…";$("#uploadBtn").disabled=true;
+  try{const a=await assets.upload(f);
+    await db.collection("docs").add({name:f.name,kind:$("#docKind").value,assetId:a.id,url:a.url,size:a.sizeBytes||f.size,addedAt:new Date().toISOString()});
+    logAct("رفعت مستند «"+f.name+"» ("+$("#docKind").value+")","doc");
+    msg.textContent="تم الرفع.";$("#docFile").value=""}
+  catch(e){msg.textContent="تعذّر الرفع. الأنواع المدعومة: PDF والصور والملفات النصية."}
+  $("#uploadBtn").disabled=false;
+});
+$("#saveProf").addEventListener("click",async()=>{
+  if(!db)return;const p={name:$("#profName").value.trim(),text:$("#profText").value.trim(),updatedAt:new Date().toISOString()};
+  try{await db.doc("settings/profile").set(p);$("#profMsg").textContent="تم الحفظ."}catch(e){$("#profMsg").textContent="تعذّر الحفظ."}
+});
+
+/* ---------- Interview ---------- */
+let ivMsgs=[];
+function fillIvJobs(){
+  const sel=$("#ivJob"),cur=sel.value;
+  const opts=[["f:it","أخصائي حاسب آلي / مهندس تقنية معلومات (عام)"],["f:sales","مدير مبيعات (عام)"]].concat(fieldsDoc.list.map(f=>["f:"+f.key,f.name+" (عام)"])).concat(jobs.filter(j=>j.status!=="rejected").map(j=>["j:"+j.id,j.title+" — "+(j.company||"")]));
+  sel.innerHTML=opts.map(o=>'<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>').join("");
+  if(cur&&opts.some(o=>o[0]===cur))sel.value=cur;
+}
+function ivTarget(){const v=$("#ivJob").value;if(v.startsWith("j:")){const j=jobs.find(x=>x.id===v.slice(2));if(j)return "وظيفة "+j.title+" لدى "+(j.company||"")+(j.description?" (المتطلبات: "+j.description+")":"")}if(v==="f:sales")return "وظيفة مدير مبيعات متخصص";if(v.startsWith("f:")&&v!=="f:it"&&FIELD[v.slice(2)])return "وظيفة في مجال "+FIELD[v.slice(2)];return "وظيفة أخصائي حاسب آلي / مهندس تقنية معلومات"}
+const IVTYPE={mixed:"متنوعة",tech:"فنية تخصصية",behav:"سلوكية بأسلوب STAR",hr:"موارد بشرية وتوقعات الراتب والدوافع",gov:"مقابلات واختبارات التوظيف في القطاع الحكومي العُماني"};
+function renderIv(){
+  $("#ivChat").innerHTML=ivMsgs.map(m=>'<div class="msg '+(m.role==="assistant"?"q":"a")+'">'+esc(m.content)+'</div>').join("");
+  $("#ivAnswerBox").hidden=!ivMsgs.length||ivMsgs[ivMsgs.length-1].role!=="assistant";
+}
+async function ivCall(userMsg){
+  if(!sample){$("#ivErr").textContent="المساعد الذكي غير متاح في هذا العرض.";return}
+  $("#ivErr").textContent="";
+  const sys="أنت مدرّب مقابلات وظيفية خبير في سوق العمل العُماني والخليجي. تدرّب المتقدم على "+ivTarget()+". نوع الأسئلة: "+IVTYPE[$("#ivType").value]+".\nبيانات المتقدم: "+profileText()+"\nالقواعد: عند طلب سؤال جديد، اطرح سؤالًا واحدًا فقط بوضوح دون إجابته. عند تلقي إجابة، قيّمها بدرجة من 10، ثم اذكر نقاط القوة باختصار، وما ينقص، ثم نموذج إجابة أفضل مختصر، ثم اختم بسؤال المتابعة التالي. اكتب بالعربية، بدون Markdown أو رموز تنسيق.";
+  const msgs=[{role:"user",content:sys+"\n\nابدأ."}].concat(ivMsgs.slice(-10));
+  if(msgs.length>1&&msgs[1].role==="assistant"){}
+  msgs.push({role:"user",content:userMsg});
+  // ensure alternation
+  const clean=[];msgs.forEach(m=>{if(clean.length&&clean[clean.length-1].role===m.role)clean[clean.length-1]={role:m.role,content:clean[clean.length-1].content+"\n\n"+m.content};else clean.push({...m})});
+  const bubble={role:"assistant",content:"…"};ivMsgs.push(bubble);renderIv();
+  const node=$("#ivChat").lastChild;$("#ivStart").disabled=true;$("#ivSend").disabled=true;
+  try{const r=await sample(clean,{cache:false,onText:({text})=>{node.textContent=text}});bubble.content=r.text}
+  catch(e){ivMsgs.pop();$("#ivErr").textContent=e&&e.code==="rate_limited"?"المساعد مشغول، حاول بعد دقيقة.":e&&e.code==="not_granted"?"لم يُسمح للمساعد بالعمل في هذه الصفحة.":"تعذّر الاتصال بالمساعد. حاول مرة أخرى."}
+  $("#ivStart").disabled=false;$("#ivSend").disabled=false;renderIv();
+}
+$("#ivStart").addEventListener("click",()=>{ivCall("اطرح عليّ سؤال مقابلة جديدًا.")});
+$("#ivSend").addEventListener("click",async()=>{
+  const a=$("#ivAnswer").value.trim();if(!a)return;
+  ivMsgs.push({role:"user",content:a});$("#ivAnswer").value="";
+  const first=ivMsgs.filter(m=>m.role==="user").length===1;
+  await ivCall("هذه إجابتي: "+a);
+  if(first)logAct("تدرّبت على مقابلة: "+$("#ivJob").selectedOptions[0].textContent,"practice");
+});
+$("#ivReset").addEventListener("click",()=>{ivMsgs=[];renderIv()});
+fillIvJobs();
+
+/* ---------- Development ---------- */
+const GENERAL={g:"أساسيات التوظيف",items:[
+  ["cv","سيرة ذاتية متوافقة مع أنظمة الفرز ATS","كلمات مفتاحية، تنسيق بسيط، إنجازات بالأرقام."],
+  ["linkedin","ملف LinkedIn قوي","عنوان مهني، نبذة، مهارات، وتوصيات."],
+  ["star","الإجابة بأسلوب STAR","الموقف، المهمة، الإجراء، النتيجة."],
+  ["intro","عرّف عن نفسك في دقيقتين","إجابة «حدثنا عن نفسك» بثقة واختصار."],
+  ["gov","اختبارات التوظيف الحكومية في عُمان","آلية وزارة العمل، الاختبارات التحريرية، والمقابلات الشخصية."],
+  ["salary","التفاوض على الراتب والعرض","متى تذكر الرقم، وكيف تقيّم البدلات والمزايا."],
+  ["followup","المتابعة بعد التقديم والمقابلة","رسائل الشكر والمتابعة ومتى ترسلها."]]};
+const BASESK={
+ it:[["net","الشبكات: TCP/IP وVLAN والتوجيه","أساسيات بمستوى CCNA تُسأل في أغلب المقابلات."],
+  ["ad","Windows Server وActive Directory","المستخدمون والصلاحيات وGroup Policy وDNS/DHCP."],
+  ["sec","أساسيات الأمن السيبراني","جدار الحماية، النسخ الاحتياطي، التعامل مع الحوادث."],
+  ["cloud","الحوسبة السحابية","مفاهيم Azure وAWS وMicrosoft 365."],
+  ["itil","إدارة خدمات تقنية المعلومات ITIL","الحوادث، الطلبات، التغيير، واتفاقيات مستوى الخدمة."],
+  ["trouble","منهجية حل المشكلات الفنية","كيف تشرح خطوات التشخيص في المقابلة."]],
+ sales:[["pipeline","إدارة خط المبيعات Pipeline","المراحل، التوقعات، ومعدلات التحويل."],
+  ["crm","أنظمة CRM","Salesforce أو Dynamics أو Zoho وتقارير الأداء."],
+  ["kpi","مؤشرات أداء فريق المبيعات","الأهداف، العمولات، ومتابعة الفريق."],
+  ["b2b","البيع للشركات B2B والمناقصات","البحث عن العملاء، العروض الفنية والمالية."],
+  ["nego","التفاوض وإغلاق الصفقات","التعامل مع الاعتراضات وتقنيات الإغلاق."],
+  ["team","قيادة فريق المبيعات","التوظيف، التدريب، والتحفيز."]]
+};
+const GOV=[
+  ["g_concepts","مفاهيم حوكمة تقنية المعلومات","الفرق بين الحوكمة والإدارة، معيار ISO/IEC 38500، ومواءمة التقنية مع استراتيجية المؤسسة."],
+  ["g_cobit","إطار COBIT 2019","المبادئ، أهداف الحوكمة والإدارة الأربعون (EDM وAPO وBAI وDSS وMEA)، عوامل التصميم، ومستويات القدرة."],
+  ["g_itil","ITIL 4 وإدارة الخدمات","نظام قيمة الخدمة SVS، الأبعاد الأربعة، المبادئ التوجيهية السبعة، والممارسات."],
+  ["g_risk","إدارة مخاطر تقنية المعلومات","ISO 31000 وISO/IEC 27005، سجل المخاطر، شهية المخاطر، وخيارات المعالجة."],
+  ["g_27001","أمن المعلومات ISO/IEC 27001:2022","نظام إدارة أمن المعلومات ISMS، بيان قابلية التطبيق، وضوابط الملحق A."],
+  ["g_bcm","استمرارية الأعمال والتعافي من الكوارث","ISO 22301، تحليل أثر الأعمال BIA، مؤشرا RTO وRPO، وخطط DRP."],
+  ["g_audit","التدقيق والرقابة والامتثال","تدقيق نظم المعلومات (CISA)، إطار COSO، نموذج الخطوط الثلاثة، والأدلة والتقارير."],
+  ["g_data","حوكمة البيانات وحماية الخصوصية","DAMA-DMBOK، تصنيف البيانات، ملكية البيانات، وقانون حماية البيانات الشخصية في عُمان."],
+  ["g_strategy","الاستراتيجية والأداء وقيمة الاستثمار","الخطة الاستراتيجية لتقنية المعلومات، IT Balanced Scorecard، مؤشرات KPI وKRI، وإدارة المحافظ."],
+  ["g_policy","السياسات والأدوار والهياكل","كتابة السياسات والإجراءات، مصفوفة RACI، اللجنة التوجيهية لتقنية المعلومات، وفصل المهام."],
+  ["g_vendor","إدارة الموردين والعقود والسحابة","اتفاقيات مستوى الخدمة SLA، مخاطر الطرف الثالث، وحوكمة الخدمات السحابية."],
+  ["g_oman","الأطر الوطنية في سلطنة عُمان","سياسات وزارة النقل والاتصالات وتقنية المعلومات، التحول الرقمي الحكومي، ورؤية عُمان 2040."]];
+const devFields=()=>Object.entries(FIELD).filter(([k])=>k!=="other");
+function fieldSkills(f){return (f==="it"?GOV:[]).concat(BASESK[f]||[]).concat((fieldsDoc.extra&&fieldsDoc.extra[f])||[])}
+function allSkills(){const out=[...GENERAL.items];devFields().forEach(([k])=>out.push(...fieldSkills(k)));return out}
+function renderDev(){
+  if(!FIELD[devField]||devField==="other")devField="it";
+  $("#devChips").innerHTML=devFields().map(([k,n])=>'<button class="chip" data-d="'+esc(k)+'" aria-pressed="'+(devField===k)+'">'+esc(n)+'</button>').join("")+'<button class="chip" data-d="+" aria-pressed="false">+ مجال جديد</button>';
+  document.querySelectorAll("#devSub .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.v===devView));
+  ["skills","quiz","plan","files"].forEach(v=>$("#dev-"+v).hidden=v!==devView);
+  // today across all fields
+  const tdy=todayISO(),due=plan.filter(x=>!x.done&&x.date&&x.date<=tdy).sort((a,b)=>a.date.localeCompare(b.date));
+  $("#todayCount").textContent=due.length?due.length+" جلسة":"";
+  $("#todayList").innerHTML=due.length?due.slice(0,8).map(x=>'<div class="skill" data-id="'+esc(x.id)+'"><input type="checkbox" id="td-'+esc(x.id)+'" data-td><div class="t"><label for="td-'+esc(x.id)+'" style="display:block;color:var(--ink)"><b>'+esc(x.topic)+'</b></label><p>'+esc(FIELD[x.field||"it"]||"")+(x.date<tdy?' · <span class="due-late">متأخرة منذ '+esc(fmtDate(x.date))+'</span>':' · اليوم')+'</p></div></div>').join(""):'<div class="note">لا توجد مراجعة مستحقة اليوم. أنشئ خطة مراجعة لأي مجال لتظهر جلساتك هنا.</div>';
+  // skills
+  const groups=(devField==="it"?[{g:"حوكمة تقنية المعلومات · IT Governance",items:GOV},{g:"المهارات الفنية",items:(BASESK.it||[]).concat((fieldsDoc.extra&&fieldsDoc.extra.it)||[])}]:[{g:FIELD[devField],items:fieldSkills(devField)}]).concat([GENERAL]);
+  let total=0,done=0;
+  $("#skillGroups").innerHTML=groups.map(gr=>'<div class="card"><h2>'+esc(gr.g)+'</h2>'+(gr.items.length?gr.items.map(it=>{total++;const d=!!skillDone[it[0]];if(d)done++;
+    return '<div class="skill"><input type="checkbox" id="sk-'+esc(it[0])+'" data-k="'+esc(it[0])+'"'+(d?" checked":"")+'><div class="t"><label for="sk-'+esc(it[0])+'" style="display:block;color:var(--ink)"><b>'+esc(it[1])+'</b></label>'+(it[2]?'<p>'+esc(it[2])+'</p>':'')+'</div><button class="btn ghost" data-learn="'+esc(it[0])+'" type="button">اشرح لي</button></div>'}).join(""):'<div class="note">جارٍ تجهيز مهارات هذا المجال، أو أضفها يدويًا بالأسفل.</div>')+'</div>').join("");
+  const p=total?Math.round(done/total*100):0;$("#skTitle").textContent="تقدّمك في "+FIELD[devField];$("#skPct").textContent=p+"٪ ("+done+" من "+total+")";$("#skBar").style.width=p+"%";
+  // plan
+  const pl=plan.filter(x=>(x.field||"it")===devField).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const pd=pl.filter(x=>x.done).length,pp=pl.length?Math.round(pd/pl.length*100):0;
+  $("#plPct").textContent=pp+"٪ ("+pd+" من "+pl.length+")";$("#plBar").style.width=pp+"%";
+  if(!pl.length)$("#planList").innerHTML='<div class="empty">لا توجد خطة لهذا المجال بعد. أنشئها بالمساعد أو أضف موضوعًا بنفسك.</div>';
+  else{const t=todayISO();let html="",last=null;
+    pl.forEach(x=>{const l=x.date===t?"اليوم":fmtDate(x.date||"");if(l!==last){if(last!==null)html+='</div>';html+='<div class="day"'+(x.date&&x.date<t&&!x.done?' style="color:var(--bad)"':'')+'>'+esc(l)+'</div><div class="card">';last=l}
+      html+='<div class="skill" data-id="'+esc(x.id)+'"><input type="checkbox" id="pl-'+esc(x.id)+'" data-pl'+(x.done?" checked":"")+'><div class="t"><label for="pl-'+esc(x.id)+'" style="display:block;color:var(--ink)'+(x.done?';text-decoration:line-through;opacity:.6':'')+'"><b>'+esc(x.topic)+'</b></label>'+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+'</div><button class="btn ghost" data-plex type="button">اشرح</button><button class="btn ghost danger" data-pldel type="button" aria-label="حذف">×</button></div>'});
+    $("#planList").innerHTML=html+'</div>'}
+  renderQuizPanel();
+  // files
+  const rv=docs.filter(d=>d.kind==="ملف مراجعة"&&(d.field||"it")===devField).sort((a,b)=>(b.addedAt||"").localeCompare(a.addedAt||""));
+  $("#rvList").innerHTML=rv.length?rv.map(d=>{const ext=(d.name||"").split(".").pop().slice(0,4).toUpperCase();
+    return '<div class="card doc" data-id="'+esc(d.id)+'"><div class="ic">'+esc(ext||"ملف")+'</div><div class="t"><b>'+esc(d.name)+'</b><span class="note">'+esc(d.note||"")+(d.note?" · ":"")+esc(fmtDate((d.addedAt||"").slice(0,10)))+'</span></div>'+(d.url?'<a class="btn" href="'+esc(d.url)+'" target="_blank" rel="noopener">فتح</a>':'')+'<button class="btn ghost danger" data-del type="button">حذف</button></div>'}).join(""):'<div class="empty">لا توجد ملفات مراجعة في '+esc(FIELD[devField])+' بعد.</div>';
+}
+$("#devChips").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;if(c.dataset.d==="+"){$("#addFieldBox").hidden=false;$("#newField").focus();return}devField=c.dataset.d;qz=null;$("#qzRun").hidden=true;$("#qzSetup").hidden=false;renderDev()});
+$("#devSub").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;devView=c.dataset.v;renderDev()});
+$("#addFieldCancel").addEventListener("click",()=>{$("#addFieldBox").hidden=true});
+function parseJSON(t){const m=String(t).match(/[\[{][\s\S]*[\]}]/);return JSON.parse(m?m[0]:t)}
+async function saveFields(next){fieldsDoc=next;await db.doc("settings/fields").set({list:next.list,extra:next.extra||{}})}
+$("#addFieldSave").addEventListener("click",async()=>{
+  const name=$("#newField").value.trim(),msg=$("#addFieldMsg");if(!name||!db)return;
+  if(Object.values(FIELD).includes(name)){msg.textContent="المجال موجود.";return}
+  const key="f"+Date.now().toString(36);
+  try{await saveFields({list:[...fieldsDoc.list,{key,name}],extra:{...(fieldsDoc.extra||{}),[key]:[]}});
+    devField=key;$("#newField").value="";$("#addFieldBox").hidden=true;logAct("أضفت مجالًا جديدًا: "+name,"skill");toast("أُضيف المجال");
+    if(sample){try{const r=await sample("أعطني 6 مهارات أساسية يحتاجها الباحث عن عمل في مجال «"+name+"» في سوق العمل العُماني والخليجي. أعد JSON فقط بهذا الشكل: [{\"t\":\"اسم المهارة\",\"d\":\"وصف في سطر\"}] بالعربية.");
+      const arr=parseJSON(r.text).slice(0,8).map((x,i)=>[key+"_"+i,String(x.t||""),String(x.d||"")]).filter(x=>x[1]);
+      await saveFields({list:fieldsDoc.list,extra:{...(fieldsDoc.extra||{}),[key]:[...((fieldsDoc.extra||{})[key]||[]),...arr]}})}catch(e){}}
+  }catch(e){msg.textContent="تعذّر الحفظ."}
+});
+$("#newSkillAdd").addEventListener("click",async()=>{
+  const t=$("#newSkill").value.trim();if(!t||!db)return;const ex=fieldsDoc.extra||{};
+  try{await saveFields({list:fieldsDoc.list,extra:{...ex,[devField]:[...(ex[devField]||[]),["u"+Date.now().toString(36),t,""]]}});$("#newSkill").value="";toast("أُضيفت المهارة")}catch(e){toast("تعذّر الحفظ")}
+});
+$("#skillGroups").addEventListener("change",async e=>{
+  const k=e.target.dataset.k;if(!k||!db)return;skillDone={...skillDone,[k]:e.target.checked};renderDev();
+  try{await db.doc("settings/skills").set({done:skillDone});if(e.target.checked){const it=allSkills().find(i=>i[0]===k);if(it)logAct("أتقنت مهارة: "+it[1],"skill")}}catch(err){toast("تعذّر الحفظ")}
+});
+function lessonSheet(title,firstPrompt,morePrompt){
+  const s=openSheet('<div class="sheet-h"><h2>'+esc(title)+'</h2>'+closeBtn+'</div><div class="ai" id="lesson">جارٍ تحضير الدرس…</div><div class="row"><button class="btn" id="lessonMore" type="button">أسئلة مقابلة عن هذا الموضوع</button></div>');
+  const out=s.querySelector("#lesson");
+  async function run(q){
+    if(!sample){out.textContent="المساعد الذكي غير متاح في هذا العرض.";return}
+    if(sheetCtl)sheetCtl.abort();sheetCtl=new AbortController();out.textContent="جارٍ التحضير…";
+    try{const r=await sample(q,{signal:sheetCtl.signal,onText:({text})=>{out.textContent=text}});out.textContent=r.text}
+    catch(err){if(err&&err.code==="aborted")return;out.textContent="تعذّر تحضير الدرس، حاول مرة أخرى."}
+  }
+  run(firstPrompt);s.querySelector("#lessonMore").addEventListener("click",()=>run(morePrompt));
+}
+const lessonP=(t,d)=>"أنت مدرّب مهني. اكتب درسًا عمليًا قصيرًا (250-350 كلمة) بالعربية عن: "+t+(d?" ("+d+")":"")+". في سياق مجال "+FIELD[devField]+" لباحث عن عمل في عُمان. اجعله نقاطًا مرقمة واضحة مع مثال تطبيقي، وأنهِ بثلاث نصائح سريعة. اذكر كل مصطلح مهني بالعربية ثم بالإنجليزية بين قوسين، واختم بقائمة: أهم 5 مصطلحات (عربي – English). بدون Markdown أو رموز تنسيق.";
+const qP=t=>"اكتب بالعربية 5 أسئلة مقابلة شائعة عن: "+t+" في مجال "+FIELD[devField]+"، ولكل سؤال إجابة نموذجية مختصرة في 2-3 أسطر. بدون Markdown.";
+$("#skillGroups").addEventListener("click",e=>{
+  const b=e.target.closest("[data-learn]");if(!b)return;const it=allSkills().find(i=>i[0]===b.dataset.learn);if(it)lessonSheet(it[1],lessonP(it[1],it[2]),qP(it[1]));
+});
+// quiz
+let quizzes=[],mistakes=[],qz=null;
+async function askJSON(prompt){if(sample.json)return await sample.json(prompt,{modelTier:"default"});const r=await sample(prompt,{modelTier:"default"});return parseJSON(r.text)}
+const axesFor=f=>fieldSkills(f).map(x=>x[1]);
+function renderQuizPanel(){
+  const sel=$("#qzAxis"),cur=sel.value,ax=axesFor(devField);
+  sel.innerHTML='<option value="*">كل المحاور (اختبار شامل)</option>'+ax.map(a=>'<option value="'+esc(a)+'">'+esc(a)+'</option>').join("");
+  if(cur&&(cur==="*"||ax.includes(cur)))sel.value=cur;
+  $("#qzMistN").textContent=mistakes.filter(m=>(m.field||"it")===devField).length;
+  const st={};ax.forEach(a=>st[a]={c:0,t:0,last:null});
+  quizzes.filter(q=>(q.field||"it")===devField).sort((a,b)=>(a.at||"").localeCompare(b.at||"")).forEach(q=>Object.entries(q.perAxis||{}).forEach(([a,v])=>{if(!st[a])st[a]={c:0,t:0,last:null};st[a].c+=+v[0]||0;st[a].t+=+v[1]||0;if(+v[1])st[a].last=Math.round(v[0]/v[1]*100)}));
+  const rows=Object.entries(st).sort((x,y)=>(x[1].t?x[1].c/x[1].t:-1)-(y[1].t?y[1].c/y[1].t:-1));
+  $("#qzAxes").innerHTML=rows.map(([a,v])=>{const p=v.t?Math.round(v.c/v.t*100):null,cls=p==null?"":p>=80?"ok":p>=60?"mid":"low";
+    return '<div class="axrow"><div class="t"><b>'+esc(a)+'</b><span class="note">'+(p==null?"لم تُختبر بعد":"المعدل "+p+"٪ · آخر نتيجة "+v.last+"٪ · "+v.t+" سؤال")+'</span><div class="bar"><i class="'+cls+'" style="width:'+(p||0)+'%"></i></div></div><button class="btn ghost" data-axq="'+esc(a)+'" type="button">اختبرني</button></div>'}).join("");
+}
+function normQ(x,axes){
+  if(!x||typeof x!=="object")return null;const S=v=>String(v??"");
+  const q={ar:S(x.q&&x.q.ar),en:S(x.q&&x.q.en)};
+  const oa=x.o&&Array.isArray(x.o.ar)?x.o.ar.map(S):[],oe=x.o&&Array.isArray(x.o.en)?x.o.en.map(S):[];
+  const len=Math.max(oa.length,oe.length),a=+x.a;
+  if((!q.ar&&!q.en)||len<2||!(a>=0&&a<len))return null;
+  let axis=S(x.axis);if(!axes.includes(axis))axis=axes.find(ax=>axis&&(ax.includes(axis)||axis.includes(ax)))||axes[0];
+  return {axis,q,o:{ar:oa,en:oe},a,x:{ar:S(x.x&&x.x.ar),en:S(x.x&&x.x.en)}};
+}
+async function startQuiz(axis){
+  const msg=$("#qzMsg");if(!sample){msg.textContent="المساعد غير متاح في هذا العرض.";return}
+  const n=+$("#qzCount").value,lang=$("#qzLang").value,lvl=$("#qzLevel").value,all=axesFor(devField),axes=axis==="*"?all:[axis];
+  const lvlTxt={easy:"أساسي (مفاهيم وتعريفات)",mid:"متوسط (تطبيق وسيناريوهات عملية)",hard:"متقدم بمستوى أسئلة الشهادات المهنية مثل CGEIT وCOBIT 2019 Foundation وITIL 4 Foundation وISO/IEC 27001 Lead Implementer وCISA"}[lvl];
+  const langTxt=lang==="both"?"اكتب كل نص بالعربية في ar وبالإنجليزية في en معًا، بترجمة دقيقة بالمصطلحات المهنية المعتمدة.":lang==="ar"?"اكتب النصوص بالعربية فقط في حقول ar، واترك حقول en نصوصًا فارغة، وضع المصطلح الإنجليزي بين قوسين عند الحاجة.":"Write all text in English only in the en fields and leave every ar field as an empty string.";
+  msg.textContent="يجهّز المساعد الأسئلة…";$("#qzStart").disabled=true;
+  const batches=[];for(let left=n;left>0;left-=10)batches.push(Math.min(10,left));
+  try{
+    const items=[];
+    for(const b of batches){
+      const p="أنت خبير في "+FIELD[devField]+(devField==="it"?" ومتخصص في حوكمة تقنية المعلومات":"")+" وتعدّ اختبارات مراجعة. اكتب "+b+" أسئلة اختيار من متعدد، لكل سؤال 4 خيارات وإجابة صحيحة واحدة فقط. المستوى: "+lvlTxt+". المحاور: "+axes.join(" | ")+". وزّع الأسئلة على المحاور بالتساوي، واجعل الخيارات الخاطئة معقولة، ونوّع موضع الإجابة الصحيحة. التزم بالإصدارات الرسمية الحالية للأطر (مثل COBIT 2019 وITIL 4 وISO/IEC 27001:2022) ولا تخترع أرقامًا أو بنودًا غير مؤكدة."+(items.length?" لا تكرر هذه الأسئلة: "+items.map(x=>x.q.ar||x.q.en).join(" / "):"")+"\n"+langTxt+"\nأعد JSON فقط: مصفوفة عناصر بالشكل {\"axis\":\"اسم المحور كما ورد بالضبط\",\"q\":{\"ar\":\"\",\"en\":\"\"},\"o\":{\"ar\":[\"\",\"\",\"\",\"\"],\"en\":[\"\",\"\",\"\",\"\"]},\"a\":رقم_الإجابة_الصحيحة_من_0_إلى_3,\"x\":{\"ar\":\"شرح مختصر لسبب صحة الإجابة\",\"en\":\"\"}}";
+      const arr=await askJSON(p);(Array.isArray(arr)?arr:[]).forEach(x=>{const it=normQ(x,axes);if(it)items.push(it)});
+    }
+    if(!items.length)throw new Error("empty");
+    qz={items,i:0,score:0,answered:false,mode:"ai",axis,lang,per:{},wrongs:[]};msg.textContent="";renderQ();
+  }catch(e){msg.textContent=e&&e.code==="rate_limited"?"المساعد مشغول، حاول بعد دقيقة.":"تعذّر تجهيز الأسئلة. حاول مرة أخرى أو قلّل عدد الأسئلة."}
+  $("#qzStart").disabled=false;
+}
+function bi(o,L){let h="";if(L!=="en"&&o.ar)h+='<div>'+esc(o.ar)+'</div>';if(L!=="ar"&&o.en)h+='<div class="en" dir="ltr">'+esc(o.en)+'</div>';return h||'<div>'+esc(o.ar||o.en||"")+'</div>'}
+function resetQuiz(){qz=null;$("#qzRun").hidden=true;$("#qzSetup").hidden=false}
+function renderQ(){
+  const box=$("#qzRun");box.hidden=false;$("#qzSetup").hidden=true;
+  if(qz.i>=qz.items.length){finishQuiz();return}
+  const it=qz.items[qz.i],L=qz.lang,len=Math.max(it.o.ar.length,it.o.en.length);
+  box.innerHTML='<div class="row" style="justify-content:space-between"><span class="note">'+(qz.mode==="mist"?"مراجعة الأخطاء · ":"")+'سؤال '+(qz.i+1)+' من '+qz.items.length+'</span><span class="note">الصحيحة: '+qz.score+'</span></div><div class="bar"><i style="width:'+Math.round(qz.i/qz.items.length*100)+'%"></i></div>'+
+    '<span class="tag f-other" style="align-self:flex-start">'+esc(it.axis)+'</span><div class="qtext">'+bi(it.q,L)+'</div>'+
+    '<div class="stack" style="gap:8px">'+Array.from({length:len},(_,k)=>'<button class="opt" data-o="'+k+'" type="button"><span class="ol">'+("أبجدهو"[k]||k+1)+'</span><span class="ot">'+bi({ar:it.o.ar[k]||"",en:it.o.en[k]||""},L)+'</span></button>').join("")+'</div>'+
+    '<div id="qzExp" hidden></div><div class="row"><button class="btn pri" id="qzNext" type="button" hidden>'+(qz.i+1<qz.items.length?"السؤال التالي":"عرض النتيجة")+'</button><button class="btn ghost" id="qzQuit" type="button">إنهاء الاختبار</button></div>';
+}
+async function finishQuiz(){
+  const box=$("#qzRun"),t=qz.items.length,p=t?Math.round(qz.score/t*100):0,axName=qz.axis==="*"?"شامل":qz.axis;
+  box.innerHTML='<div class="score"><b>'+p+'٪</b><span>'+qz.score+' من '+t+' إجابة صحيحة</span></div><div class="note">'+(p>=80?"ممتاز، مستواك جيد في هذا المحور.":p>=60?"جيد، راجع الأسئلة التي أخطأت فيها.":"هذا المحور يحتاج مراجعة. اقرأ درسه من «المحاور والمهارات» ثم أعد الاختبار.")+'</div>'+
+    (Object.keys(qz.per).length>1?'<div class="stack" style="gap:4px">'+Object.entries(qz.per).map(([a,v])=>'<div class="row" style="justify-content:space-between"><span>'+esc(a)+'</span><span class="note">'+v[0]+' / '+v[1]+'</span></div>').join("")+'</div>':'')+
+    '<div class="row"><button class="btn pri" id="qzAgain" type="button">اختبار جديد</button>'+(qz.wrongs.length?'<button class="btn" id="qzRetryWrong" type="button">أعد الأسئلة الخاطئة ('+qz.wrongs.length+')</button>':'')+'</div>';
+  if(!db||!t||qz.mode==="retry"||qz.saved)return;qz.saved=true;
+  try{
+    await db.collection("quizzes").add({field:devField,axis:qz.mode==="mist"?"مراجعة الأخطاء":axName,score:qz.score,total:t,perAxis:qz.per,lang:qz.lang,at:new Date().toISOString()});
+    if(qz.mode==="ai")for(const w of qz.wrongs.slice(0,20))await db.collection("mistakes").add({field:devField,axis:w.axis,q:w.q,o:w.o,a:w.a,x:w.x,streak:0,addedAt:new Date().toISOString()});
+    logAct((qz.mode==="mist"?"راجعت أخطاء اختبارات ":"اختبار ")+FIELD[devField]+(qz.mode==="mist"?"":" ("+axName+")")+": "+qz.score+" من "+t,"study");
+  }catch(e){toast("تعذّر حفظ النتيجة")}
+}
+$("#qzRun").addEventListener("click",async e=>{
+  if(!qz)return;
+  const o=e.target.closest(".opt");
+  if(o&&!qz.answered){
+    qz.answered=true;const k=+o.dataset.o,it=qz.items[qz.i],ok=k===it.a;
+    document.querySelectorAll("#qzRun .opt").forEach(b=>{b.disabled=true;const kk=+b.dataset.o;if(kk===it.a)b.classList.add("ok");else if(kk===k)b.classList.add("bad")});
+    const pa=qz.per[it.axis]||[0,0];pa[1]++;if(ok){pa[0]++;qz.score++}else qz.wrongs.push(it);qz.per[it.axis]=pa;
+    const ex=$("#qzExp");ex.hidden=false;ex.className="qexp "+(ok?"good":"wrong");
+    ex.innerHTML='<b>'+(ok?"إجابة صحيحة · Correct":"إجابة غير صحيحة · Incorrect")+'</b>'+((it.x.ar||it.x.en)?bi(it.x,qz.lang):"");
+    $("#qzNext").hidden=false;
+    if(qz.mode==="mist"&&it.mid&&db){try{if(ok){const m=mistakes.find(x=>x.id===it.mid),stk=((m&&m.streak)||0)+1;if(stk>=2)await db.collection("mistakes").doc(it.mid).delete();else await db.collection("mistakes").doc(it.mid).update({streak:stk})}else await db.collection("mistakes").doc(it.mid).update({streak:0})}catch(err){}}
+    return;
+  }
+  if(e.target.closest("#qzNext")){qz.i++;qz.answered=false;renderQ();return}
+  if(e.target.closest("#qzQuit")){const done=qz.i+(qz.answered?1:0);if(done>0){qz.items=qz.items.slice(0,done);qz.i=done;finishQuiz()}else resetQuiz();return}
+  if(e.target.closest("#qzAgain")){resetQuiz();return}
+  if(e.target.closest("#qzRetryWrong")){qz={items:qz.wrongs,i:0,score:0,answered:false,mode:"retry",axis:qz.axis,lang:qz.lang,per:{},wrongs:[]};renderQ()}
+});
+$("#qzStart").addEventListener("click",()=>startQuiz($("#qzAxis").value));
+$("#qzAxes").addEventListener("click",e=>{const b=e.target.closest("[data-axq]");if(!b)return;$("#qzAxis").value=b.dataset.axq;window.scrollTo(0,0);startQuiz(b.dataset.axq)});
+$("#qzMist").addEventListener("click",()=>{
+  const m=mistakes.filter(x=>(x.field||"it")===devField).sort((a,b)=>(a.addedAt||"").localeCompare(b.addedAt||"")).slice(0,+$("#qzCount").value);
+  if(!m.length){$("#qzMsg").textContent="لا توجد أخطاء محفوظة في هذا المجال.";return}
+  qz={items:m.map(x=>({mid:x.id,axis:String(x.axis||""),q:{ar:(x.q&&x.q.ar)||"",en:(x.q&&x.q.en)||""},o:{ar:(x.o&&x.o.ar)||[],en:(x.o&&x.o.en)||[]},a:+x.a,x:{ar:(x.x&&x.x.ar)||"",en:(x.x&&x.x.en)||""}})),i:0,score:0,answered:false,mode:"mist",axis:"*",lang:$("#qzLang").value,per:{},wrongs:[]};
+  $("#qzMsg").textContent="";renderQ();
+});
+// plan
+$("#plDate").value=todayISO();
+$("#plAdd").addEventListener("click",async()=>{
+  const t=$("#plTopic").value.trim();if(!t||!db)return;
+  try{await db.collection("plan").add({field:devField,topic:t,date:$("#plDate").value||todayISO(),done:false,addedAt:new Date().toISOString()});$("#plTopic").value="";toast("أُضيف للخطة")}catch(e){toast("تعذّر الحفظ")}
+});
+$("#plGen").addEventListener("click",async()=>{
+  const msg=$("#plMsg");if(!sample||!db){msg.textContent="المساعد غير متاح في هذا العرض.";return}
+  const weeks=+$("#plWeeks").value,days=+$("#plDays").value,goal=$("#plGoal").value.trim();
+  const mine=fieldSkills(devField).map(x=>x[1]).join("، ");
+  msg.textContent="يجهّز المساعد الخطة…";$("#plGen").disabled=true;
+  try{
+    const r=await sample("أنت مخطط تعلّم. اصنع خطة مراجعة في مجال «"+FIELD[devField]+"» لمدة "+weeks+" أسابيع، بمعدل "+days+" جلسات في الأسبوع (المجموع "+(weeks*days)+" جلسة). "+(goal?"الهدف: "+goal+". ":"")+"المهارات المهمة: "+mine+". "+(devField==="it"?"ركّز الخطة أساسًا على منهج حوكمة تقنية المعلومات بمحاوره (المفاهيم وISO/IEC 38500، COBIT 2019، ITIL 4، المخاطر، ISO/IEC 27001، الاستمرارية، التدقيق، حوكمة البيانات، الاستراتيجية، السياسات، الموردين، الأطر الوطنية في عُمان)، واجعل آخر جلسة كل أسبوع اختبار اختيار من متعدد باللغتين على محاور ذلك الأسبوع. ":"")+"ابدأ بالأساسيات وتدرّج، واجعل آخر جلسة كل أسبوع مراجعة شاملة أو اختبارًا ذاتيًا. أعد JSON فقط: [{\"w\":رقم_الأسبوع,\"s\":رقم_الجلسة_في_الأسبوع,\"topic\":\"موضوع الجلسة (قصير)\",\"notes\":\"ماذا تذاكر بالضبط في سطر\"}] بالعربية.",{modelTier:"default"});
+    const arr=parseJSON(r.text);
+    const gaps=days>=6?[0,1,2,3,4,5]:days===5?[0,1,2,3,4]:days===4?[0,1,3,4]:[0,2,4];
+    const start=new Date(todayISO()+"T12:00:00");start.setDate(start.getDate()+1);
+    let n=0;
+    for(const x of arr){const w=Math.max(1,+x.w||1),si=Math.max(1,+x.s||1);const d=new Date(start);d.setDate(start.getDate()+(w-1)*7+(gaps[si-1]??(si-1)));
+      const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      await db.collection("plan").add({field:devField,topic:String(x.topic||""),notes:String(x.notes||""),date:iso,done:false,addedAt:new Date().toISOString()});n++}
+    logAct("أنشأت خطة مراجعة في "+FIELD[devField]+" ("+n+" جلسة)","plan");msg.textContent="تمت إضافة "+n+" جلسة.";
+  }catch(e){msg.textContent=e&&e.code==="rate_limited"?"المساعد مشغول، حاول بعد دقيقة.":"تعذّر إنشاء الخطة. حاول مرة أخرى."}
+  $("#plGen").disabled=false;
+});
+$("#todayList").addEventListener("change",async e=>{
+  if(!e.target.matches("[data-td]"))return;const x=plan.find(p=>p.id===e.target.closest("[data-id]").dataset.id);if(!x)return;
+  try{await db.collection("plan").doc(x.id).update({done:true});logAct("راجعت: "+x.topic,"study");toast("أحسنت، سُجّلت المراجعة")}catch(err){toast("تعذّر الحفظ")}
+});
+$("#planList").addEventListener("change",async e=>{
+  if(!e.target.matches("[data-pl]"))return;const x=plan.find(p=>p.id===e.target.closest("[data-id]").dataset.id);if(!x)return;
+  try{await db.collection("plan").doc(x.id).update({done:e.target.checked});if(e.target.checked)logAct("راجعت: "+x.topic,"study")}catch(err){toast("تعذّر الحفظ")}
+});
+$("#planList").addEventListener("click",async e=>{
+  const row=e.target.closest("[data-id]");if(!row)return;const x=plan.find(p=>p.id===row.dataset.id);if(!x)return;
+  if(e.target.closest("[data-plex]"))lessonSheet(x.topic,lessonP(x.topic,x.notes),qP(x.topic));
+  const del=e.target.closest("[data-pldel]");
+  if(del){if(del.dataset.confirm!=="1"){del.dataset.confirm="1";del.textContent="تأكيد";return}try{await db.collection("plan").doc(x.id).delete()}catch(err){toast("تعذّر الحذف")}}
+});
+// review files
+$("#rvUp").addEventListener("click",async()=>{
+  const f=$("#rvFile").files[0],msg=$("#rvMsg");
+  if(!f){msg.textContent="اختر ملفًا أولًا.";return}
+  if(!assets||!db){msg.textContent="رفع الملفات غير متاح في هذا العرض.";return}
+  if(f.size>20*1024*1024){msg.textContent="حجم الملف أكبر من 20 ميغابايت.";return}
+  msg.textContent="جارٍ الرفع…";$("#rvUp").disabled=true;
+  try{const a=await assets.upload(f);
+    await db.collection("docs").add({name:f.name,kind:"ملف مراجعة",field:devField,note:$("#rvNote").value.trim(),assetId:a.id,url:a.url,size:a.sizeBytes||f.size,addedAt:new Date().toISOString()});
+    logAct("رفعت ملف مراجعة «"+f.name+"» في "+FIELD[devField],"doc");msg.textContent="تم الرفع.";$("#rvFile").value="";$("#rvNote").value=""}
+  catch(e){msg.textContent="تعذّر الرفع. الأنواع المدعومة: PDF والصور والملفات النصية."}
+  $("#rvUp").disabled=false;
+});
+$("#rvList").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-del]");if(!b)return;
+  if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="تأكيد الحذف";return}
+  const d=docs.find(x=>x.id===b.closest(".card").dataset.id);if(!d)return;
+  try{if(assets&&d.assetId){try{await assets.delete(d.assetId)}catch(e){}}await db.collection("docs").doc(d.id).delete();toast("تم حذف الملف")}catch(e){toast("تعذّر الحذف")}
+});
+
+/* ---------- English ---------- */
+const CEFR=["A1","A2","B1","B2","C1","C2"],CEFR_AR={A1:"مبتدئ",A2:"أساسي",B1:"متوسط",B2:"فوق المتوسط",C1:"متقدم",C2:"متمكّن"};
+const CEFR_DESC={A1:"تفهم وتستخدم عبارات يومية بسيطة جدًا.",A2:"تتواصل في مواقف روتينية بجمل بسيطة.",B1:"تتعامل مع أغلب مواقف العمل المألوفة وتكتب نصًا مترابطًا بسيطًا.",B2:"تتحدث بطلاقة مقبولة مع الناطقين بها وتكتب نصوصًا واضحة ومفصلة.",C1:"تستخدم اللغة بمرونة وفاعلية في العمل والمواقف المهنية المعقدة.",C2:"تفهم كل ما تسمعه أو تقرؤه تقريبًا وتعبّر بدقة عالية."};
+const EN_SKILL={grammar:"القواعد · Grammar",vocab:"المفردات · Vocabulary",reading:"الفهم والقراءة · Reading",business:"إنجليزية الأعمال · Business",it:"إنجليزية التقنية والحوكمة · IT",sales:"إنجليزية المبيعات · Sales",interview:"إنجليزية المقابلات · Interviews"};
+const EN_FOCUS={grammar:"English grammar (tenses, conditionals, passive, articles, prepositions, relative clauses) in workplace sentences",vocab:"general and professional vocabulary, collocations and phrasal verbs",reading:"short reading comprehension: each question has a 2-4 sentence workplace passage in p",business:"business English: emails, meetings, reports, formal register",it:"IT English and IT governance terms (COBIT, ITIL, ISO 27001, risk, audit, incidents, SLAs)",sales:"sales English: prospecting, pitching, negotiation, objection handling, client emails",interview:"job interview English: common questions, strong answer phrases, polite expressions"};
+let enTests=[],enPractice=[],words=[],enWriting=[],enQ=null,enView="practice",enMsgs=[];
+$("#enSkill").innerHTML=Object.entries(EN_SKILL).map(([k,n])=>'<option value="'+k+'">'+n+'</option>').join("");
+const byAtDesc=(a,b)=>(b.at||b.addedAt||"").localeCompare(a.at||a.addedAt||"");
+const curLevel=()=>{const t=[...enTests].sort(byAtDesc)[0];return t&&CEFR.includes(t.level)?t:null};
+const addDays=n=>{const d=new Date(todayISO()+"T12:00:00");d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const canSpeak=(()=>{try{return "speechSynthesis" in window}catch(e){return false}})();
+function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){toast("النطق غير متاح في هذا المتصفح")}}
+const sayBtn=t=>canSpeak?'<button class="btn ghost" data-say="'+esc(t)+'" type="button" aria-label="استمع للنطق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>':'';
+document.addEventListener("click",e=>{const b=e.target.closest("[data-say]");if(b)speak(b.dataset.say)});
+function aiErr(e){return e&&e.code==="rate_limited"?"المساعد مشغول، حاول بعد دقيقة.":e&&e.code==="not_granted"?"لم يُسمح للمساعد بالعمل في هذه الصفحة.":"تعذّر الاتصال بالمساعد. حاول مرة أخرى."}
+
+function renderEn(){
+  const t=curLevel(),lv=t&&t.level,li=lv?CEFR.indexOf(lv):-1;
+  $("#enLvl").textContent=lv||"—";
+  $("#enLvlName").textContent=lv?"مستواك "+lv+" · "+CEFR_AR[lv]:"لم تحدد مستواك بعد";
+  $("#enLvlSub").textContent=lv?CEFR_DESC[lv]+" آخر اختبار: "+fmtDate((t.at||"").slice(0,10))+". أعد الاختبار كل شهر لتقيس تقدمك.":"ابدأ باختبار تحديد المستوى: 18 سؤالًا من A1 إلى C2 في قرابة 15 دقيقة.";
+  $("#enScale").innerHTML=CEFR.map((c,i)=>'<span class="'+(i===li?"on":i<li?"past":"")+'">'+c+'</span>').join("");
+  const hist=[...enTests].sort((a,b)=>(a.at||"").localeCompare(b.at||"")).slice(-6);
+  $("#enHist").textContent=hist.length>1?"تطوّر مستواك: "+hist.map(h=>h.level).join(" ← "):"";
+  const pl=$("#enLevel");if(!pl.dataset.touched&&lv)pl.value=lv;
+  document.querySelectorAll("#enSub .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.v===enView));
+  ["practice","words","writing","chat"].forEach(v=>$("#en-"+v).hidden=v!==enView);
+  const st={};Object.keys(EN_SKILL).forEach(k=>st[k]={c:0,t:0,n:0});
+  enPractice.forEach(p=>{if(st[p.skill]){st[p.skill].c+=+p.score||0;st[p.skill].t+=+p.total||0;st[p.skill].n++}});
+  $("#enSkills").innerHTML=Object.entries(st).sort((x,y)=>(x[1].t?x[1].c/x[1].t:-1)-(y[1].t?y[1].c/y[1].t:-1)).map(([k,v])=>{const p=v.t?Math.round(v.c/v.t*100):null,cls=p==null?"":p>=80?"ok":p>=60?"mid":"low";
+    return '<div class="axrow"><div class="t"><b>'+esc(EN_SKILL[k])+'</b><span class="note">'+(p==null?"لم تتمرن بعد":"المعدل "+p+"٪ · "+v.n+" تمرين")+'</span><div class="bar"><i class="'+cls+'" style="width:'+(p||0)+'%"></i></div></div><button class="btn ghost" data-ensk="'+k+'" type="button">تمرّن</button></div>'}).join("");
+  renderWords();
+  const wl=[...enWriting].sort(byAtDesc).slice(0,10);
+  $("#wrList").innerHTML=wl.length?wl.map(w=>'<div class="wrow"><div class="t"><b style="direction:rtl">'+esc(w.task||"")+'</b><div class="note">'+esc(fmtDate((w.at||"").slice(0,10)))+(w.score!=null?" · الدرجة "+esc(w.score)+"/100":"")+'</div></div>'+(w.level?'<span class="lv lv-learning">'+esc(w.level)+'</span>':'')+'</div>').join(""):'<div class="note">لم تكتب شيئًا بعد.</div>';
+}
+document.querySelector("#enSub").addEventListener("click",e=>{const c=e.target.closest(".chip");if(!c)return;enView=c.dataset.v;renderEn()});
+$("#enLevel").addEventListener("change",()=>{$("#enLevel").dataset.touched="1"});
+$("#enSkills").addEventListener("click",e=>{const b=e.target.closest("[data-ensk]");if(!b)return;$("#enSkill").value=b.dataset.ensk;startEnPractice()});
+
+function normEn(x){if(!x||typeof x!=="object")return null;const S=v=>String(v??"");const o=Array.isArray(x.o)?x.o.map(S):[],a=+x.a;
+  if(!S(x.q)||o.length<2||!(a>=0&&a<o.length))return null;return {lvl:CEFR.includes(S(x.lvl))?S(x.lvl):"",skill:S(x.skill),p:S(x.p),q:S(x.q),o,a,x:S(x.x)}}
+$("#enPlace").addEventListener("click",async()=>{
+  const msg=$("#enPlaceMsg");if(!sample){msg.textContent="المساعد غير متاح في هذا العرض.";return}
+  msg.textContent="يجهّز المساعد الاختبار…";$("#enPlace").disabled=true;
+  try{
+    const arr=await askJSON("Create an English CEFR placement test: exactly 18 multiple-choice questions, 3 for each level A1, A2, B1, B2, C1, C2, ordered from easiest to hardest. Mix grammar, vocabulary and short reading comprehension (for reading, put a 1-3 sentence passage in p, otherwise p is an empty string). Use workplace contexts where natural. 4 options each with exactly one correct answer; vary its position. Questions and options in English. x = a short explanation in Arabic of why the answer is correct (mention the rule). Return JSON only: [{\"lvl\":\"B1\",\"skill\":\"grammar\",\"p\":\"\",\"q\":\"...\",\"o\":[\"\",\"\",\"\",\"\"],\"a\":0,\"x\":\"...\"}]");
+    const items=(Array.isArray(arr)?arr:[]).map(normEn).filter(Boolean);
+    if(items.length<10)throw new Error("few");
+    items.sort((a,b)=>CEFR.indexOf(a.lvl)-CEFR.indexOf(b.lvl));
+    enQ={items,i:0,score:0,answered:false,mode:"place",per:{},wrongs:[]};msg.textContent="";renderEnQ();
+  }catch(e){msg.textContent=e&&e.message==="few"?"لم يكتمل الاختبار، حاول مرة أخرى.":aiErr(e)}
+  $("#enPlace").disabled=false;
+});
+async function startEnPractice(){
+  const msg=$("#enMsg");if(!sample){msg.textContent="المساعد غير متاح في هذا العرض.";return}
+  const sk=$("#enSkill").value,lv=$("#enLevel").value,n=+$("#enCount").value;
+  msg.textContent="يجهّز المساعد التمرين…";$("#enStart").disabled=true;
+  try{
+    const arr=await askJSON("Create "+n+" English multiple-choice practice questions at CEFR level "+lv+" focused on "+EN_FOCUS[sk]+". The learner is an Arabic speaker in Oman working toward IT governance and sales management jobs. 4 options, exactly one correct, vary its position, plausible distractors. p is a short passage only when needed, else an empty string. x = short Arabic explanation of the correct answer, including the key English term. Return JSON only: [{\"p\":\"\",\"q\":\"...\",\"o\":[\"\",\"\",\"\",\"\"],\"a\":0,\"x\":\"...\"}]");
+    const items=(Array.isArray(arr)?arr:[]).map(normEn).filter(Boolean);if(!items.length)throw new Error("few");
+    enQ={items,i:0,score:0,answered:false,mode:"practice",skill:sk,level:lv,per:{},wrongs:[]};msg.textContent="";renderEnQ();
+  }catch(e){msg.textContent=e&&e.message==="few"?"تعذّر تجهيز الأسئلة، حاول مرة أخرى.":aiErr(e)}
+  $("#enStart").disabled=false;
+}
+$("#enStart").addEventListener("click",startEnPractice);
+function renderEnQ(){
+  const box=$("#enRun");box.hidden=false;
+  if(enQ.i>=enQ.items.length){finishEnQ();return}
+  const it=enQ.items[enQ.i],lab=enQ.mode==="place"?"اختبار تحديد المستوى":enQ.mode==="retry"?"إعادة الأسئلة الخاطئة":EN_SKILL[enQ.skill]+" · "+enQ.level;
+  box.innerHTML='<div class="row" style="justify-content:space-between"><span class="note">'+esc(lab)+' · سؤال '+(enQ.i+1)+' من '+enQ.items.length+'</span>'+(enQ.mode==="place"?'':'<span class="note">الصحيحة: '+enQ.score+'</span>')+'</div><div class="bar"><i style="width:'+Math.round(enQ.i/enQ.items.length*100)+'%"></i></div>'+
+    (it.p?'<div class="ai ltr" dir="ltr">'+esc(it.p)+'</div>':'')+'<div class="qtext ltr" dir="ltr">'+esc(it.q)+'</div>'+
+    '<div class="stack" style="gap:8px">'+it.o.map((o,k)=>'<button class="opt" data-o="'+k+'" type="button" dir="ltr"><span class="ol">'+"ABCDEF"[k]+'</span><span class="ot ltr">'+esc(o)+'</span></button>').join("")+'</div>'+
+    '<div id="enExp" hidden></div><div class="row"><button class="btn pri" id="enNext" type="button" hidden>'+(enQ.i+1<enQ.items.length?"التالي":"عرض النتيجة")+'</button><button class="btn ghost" id="enQuit" type="button">إنهاء</button></div>';
+  box.scrollIntoView({block:"start",behavior:"smooth"});
+}
+async function finishEnQ(){
+  const box=$("#enRun"),t=enQ.items.length,p=t?Math.round(enQ.score/t*100):0;
+  if(enQ.mode==="place"){
+    let lvl="A1";for(const c of CEFR){const v=enQ.per[c]||[0,0];if(v[1]&&v[0]/v[1]>=0.6)lvl=c;else break}
+    box.innerHTML='<div class="lvlhead"><div class="lvlbadge">'+lvl+'</div><div class="t"><b>مستواك التقديري: '+lvl+' · '+CEFR_AR[lvl]+'</b><span class="note">'+CEFR_DESC[lvl]+'</span></div></div><div class="note">أجبت '+enQ.score+' من '+t+' إجابة صحيحة. '+(lvl!=="C2"?"هدفك القادم: "+CEFR[CEFR.indexOf(lvl)+1]+". تمرّن يوميًا على المفردات والكتابة، وأعد الاختبار بعد شهر.":"مستوى ممتاز، حافظ عليه بالكتابة والمحادثة.")+'</div><div class="cefr">'+CEFR.map(c=>{const v=enQ.per[c]||[0,0];return '<span class="'+(v[1]&&v[0]/v[1]>=0.6?"past":"")+'">'+c+' '+v[0]+'/'+v[1]+'</span>'}).join("")+'</div><div class="row"><button class="btn pri" id="enClose" type="button">تم</button>'+(enQ.wrongs.length?'<button class="btn" id="enRetry" type="button">راجع الأسئلة الخاطئة ('+enQ.wrongs.length+')</button>':'')+'</div>';
+    $("#enLevel").value=lvl;$("#enLevel").dataset.touched="";
+    if(db&&!enQ.saved){enQ.saved=true;try{await db.collection("enTests").add({level:lvl,score:enQ.score,total:t,perLevel:enQ.per,at:new Date().toISOString()});logAct("اختبار تحديد مستوى الإنجليزية: "+lvl,"study")}catch(e){toast("تعذّر حفظ النتيجة")}}
+    return;
+  }
+  box.innerHTML='<div class="score"><b>'+p+'٪</b><span>'+enQ.score+' من '+t+'</span></div><div class="note">'+(p>=80?"ممتاز. جرّب المستوى الأعلى.":p>=60?"جيد. راجع الأخطاء ثم أعد التمرين.":"تمرّن أكثر على هذه المهارة، أو جرّب مستوى أسهل.")+'</div><div class="row"><button class="btn pri" id="enClose" type="button">تم</button>'+(enQ.wrongs.length?'<button class="btn" id="enRetry" type="button">أعد الخاطئة ('+enQ.wrongs.length+')</button>':'')+'</div>';
+  if(enQ.mode==="practice"&&db&&!enQ.saved){enQ.saved=true;try{await db.collection("enPractice").add({skill:enQ.skill,level:enQ.level,score:enQ.score,total:t,at:new Date().toISOString()});logAct("تمرين إنجليزية ("+EN_SKILL[enQ.skill]+" "+enQ.level+"): "+enQ.score+" من "+t,"study")}catch(e){toast("تعذّر حفظ النتيجة")}}
+}
+$("#enRun").addEventListener("click",e=>{
+  if(!enQ)return;const o=e.target.closest(".opt");
+  if(o&&!enQ.answered){enQ.answered=true;const k=+o.dataset.o,it=enQ.items[enQ.i],ok=k===it.a;
+    document.querySelectorAll("#enRun .opt").forEach(b=>{b.disabled=true;const kk=+b.dataset.o;if(kk===it.a)b.classList.add("ok");else if(kk===k)b.classList.add("bad")});
+    const key=enQ.mode==="place"?it.lvl:"all",pa=enQ.per[key]||[0,0];pa[1]++;if(ok){pa[0]++;enQ.score++}else enQ.wrongs.push(it);enQ.per[key]=pa;
+    const ex=$("#enExp");ex.hidden=false;ex.className="qexp "+(ok?"good":"wrong");ex.innerHTML='<b>'+(ok?"إجابة صحيحة · Correct":"إجابة غير صحيحة · Incorrect")+'</b>'+(it.x?'<div>'+esc(it.x)+'</div>':'');
+    $("#enNext").hidden=false;return}
+  if(e.target.closest("#enNext")){enQ.i++;enQ.answered=false;renderEnQ();return}
+  if(e.target.closest("#enQuit")){const d=enQ.i+(enQ.answered?1:0);if(d>0&&enQ.mode!=="place"){enQ.items=enQ.items.slice(0,d);enQ.i=d;finishEnQ()}else{enQ=null;$("#enRun").hidden=true}return}
+  if(e.target.closest("#enClose")){enQ=null;$("#enRun").hidden=true;return}
+  if(e.target.closest("#enRetry")){enQ={items:enQ.wrongs,i:0,score:0,answered:false,mode:"retry",per:{},wrongs:[]};renderEnQ()}
+});
+
+/* words */
+const WINT=[1,2,4,7,15,30];
+function renderWords(){
+  const t=todayISO(),due=words.filter(w=>(w.next||t)<=t).sort((a,b)=>(a.next||"").localeCompare(b.next||"")),mast=words.filter(w=>(w.box||0)>=5).length;
+  $("#wStats").textContent=words.length+" كلمة · أتقنت "+mast+" · للمراجعة "+due.length;
+  const fc=$("#wCard");
+  if(!due.length)fc.innerHTML='<div class="note">لا توجد كلمات للمراجعة الآن. أضف كلمات جديدة أو عد غدًا.</div>';
+  else if(fc.dataset.cur!==due[0].id||!fc.querySelector(".flash")){const w=due[0];fc.dataset.cur=w.id;
+    fc.innerHTML='<div class="flash" data-id="'+esc(w.id)+'"><div class="w">'+esc(w.w)+'</div>'+sayBtn(w.w)+'<div id="wBack" hidden><div style="font-size:18px;font-weight:600">'+esc(w.ar||"")+'</div>'+(w.ex?'<div class="en" dir="ltr" style="text-align:center">'+esc(w.ex)+'</div>':'')+'</div><div class="row" style="justify-content:center"><button class="btn pri" data-wshow type="button">أظهر المعنى</button><button class="btn" data-wok type="button" hidden>عرفتها</button><button class="btn" data-wno type="button" hidden>لم أعرفها</button></div></div>'}
+  const list=[...words].sort(byAtDesc).slice(0,80);
+  $("#wList").innerHTML=list.length?'<div class="card">'+list.map(w=>'<div class="wrow" data-id="'+esc(w.id)+'"><div class="t"><b>'+esc(w.w)+'</b><div class="note">'+esc(w.ar||"")+'</div></div><span class="dots" aria-label="مستوى الحفظ">'+[0,1,2,3,4].map(i=>'<i class="'+(i<(w.box||0)?"on":"")+'"></i>').join("")+'</span>'+sayBtn(w.w)+'<button class="btn ghost danger" data-wdel type="button" aria-label="حذف">×</button></div>').join("")+'</div>':'';
+}
+$("#wCard").addEventListener("click",async e=>{
+  const f=e.target.closest(".flash");if(!f)return;const w=words.find(x=>x.id===f.dataset.id);if(!w)return;
+  if(e.target.closest("[data-wshow]")){f.querySelector("#wBack").hidden=false;e.target.closest("[data-wshow]").hidden=true;f.querySelector("[data-wok]").hidden=false;f.querySelector("[data-wno]").hidden=false;return}
+  const ok=!!e.target.closest("[data-wok]"),no=!!e.target.closest("[data-wno]");if(!ok&&!no)return;
+  const b=ok?Math.min((w.box||0)+1,5):0;
+  try{await db.collection("words").doc(w.id).update({box:b,next:addDays(ok?WINT[b]:1)});if(ok&&b===5)logAct("أتقنت كلمة: "+w.w,"study")}catch(err){toast("تعذّر الحفظ")}
+});
+$("#wList").addEventListener("click",async e=>{const b=e.target.closest("[data-wdel]");if(!b)return;if(b.dataset.confirm!=="1"){b.dataset.confirm="1";b.textContent="تأكيد";return}try{await db.collection("words").doc(b.closest("[data-id]").dataset.id).delete()}catch(err){toast("تعذّر الحذف")}});
+const hasWord=w=>words.some(x=>(x.w||"").toLowerCase()===w.toLowerCase());
+async function addWord(w,ar,ex){if(!db||!w||hasWord(w))return false;await db.collection("words").add({w,ar:ar||"",ex:ex||"",box:0,next:todayISO(),addedAt:new Date().toISOString()});return true}
+$("#wAdd").addEventListener("click",async()=>{
+  const w=$("#wWord").value.trim();let ar=$("#wMean").value.trim(),ex="";const msg=$("#wMsg");if(!w)return;
+  if(hasWord(w)){msg.textContent="الكلمة موجودة في بنكك.";return}
+  if(!ar&&sample){msg.textContent="يكتب المساعد المعنى…";try{const r=await askJSON("Give the Arabic meaning of the English word or phrase \""+w+"\" as used at work, and one short example sentence. Return JSON only: {\"ar\":\"المعنى\",\"ex\":\"Example sentence.\"}");ar=String(r&&r.ar||"");ex=String(r&&r.ex||"")}catch(e){}}
+  try{await addWord(w,ar,ex);$("#wWord").value="";$("#wMean").value="";msg.textContent="أُضيفت الكلمة."}catch(e){msg.textContent="تعذّر الحفظ."}
+});
+$("#wSuggest").addEventListener("click",async()=>{
+  const msg=$("#wMsg");if(!sample){msg.textContent="المساعد غير متاح في هذا العرض.";return}
+  const topic=$("#wTopic").value.trim()||"IT governance and sales management workplace English",lv=(curLevel()||{}).level||$("#enLevel").value;
+  msg.textContent="يختار المساعد الكلمات…";$("#wSuggest").disabled=true;
+  try{const arr=await askJSON("Suggest 10 useful English words or short phrases for an Arabic-speaking professional at CEFR level "+lv+" (slightly above their level) on the topic: "+topic+". Avoid these words: "+words.slice(0,150).map(x=>x.w).join(", ")+". Return JSON only: [{\"w\":\"word\",\"ar\":\"المعنى بالعربية\",\"ex\":\"A short workplace example sentence.\"}]");
+    let n=0;for(const x of (Array.isArray(arr)?arr:[])){if(x&&x.w&&await addWord(String(x.w),String(x.ar||""),String(x.ex||"")))n++}
+    msg.textContent="أُضيفت "+n+" كلمة إلى بنكك.";if(n)logAct("أضفت "+n+" كلمات إنجليزية ("+topic+")","study");
+  }catch(e){msg.textContent=aiErr(e)}
+  $("#wSuggest").disabled=false;
+});
+
+/* writing */
+$("#wrIdea").addEventListener("click",async()=>{
+  if(!sample){$("#wrPrompt").textContent="المساعد غير متاح في هذا العرض.";return}
+  $("#wrPrompt").textContent="…";
+  try{const r=await askJSON("Write one realistic English writing task for this type: "+$("#wrTask").value+". Target CEFR level "+(((curLevel()||{}).level)||"B1")+". Context: a job seeker in Oman in IT governance or sales management. Return JSON only: {\"en\":\"The task in English (2-3 sentences, with word count)\",\"ar\":\"ترجمة المهمة بالعربية\"}");
+    $("#wrPrompt").innerHTML='<div class="ltr" dir="ltr" style="color:var(--ink)">'+esc(r.en||"")+'</div><div>'+esc(r.ar||"")+'</div>';$("#wrPrompt").dataset.task=r.en||""}
+  catch(e){$("#wrPrompt").textContent=aiErr(e)}
+});
+$("#wrCheck").addEventListener("click",async()=>{
+  const txt=$("#wrText").value.trim(),out=$("#wrOut");if(txt.split(/\s+/).length<15){out.innerHTML='<div class="err">اكتب 15 كلمة على الأقل ليكون التقييم دقيقًا.</div>';return}
+  if(!sample){out.innerHTML='<div class="err">المساعد غير متاح في هذا العرض.</div>';return}
+  out.innerHTML='<div class="note">يصحح المساعد كتابتك…</div>';$("#wrCheck").disabled=true;
+  try{const r=await askJSON("You are an English writing examiner. Evaluate this text written by an Arabic-speaking professional. Task type: "+$("#wrTask").value+". "+($("#wrPrompt").dataset.task?"Task: "+$("#wrPrompt").dataset.task+". ":"")+"Text:\n\"\"\"\n"+txt+"\n\"\"\"\nReturn JSON only: {\"level\":\"CEFR level A1-C2\",\"score\":0-100,\"corrected\":\"the full corrected and improved text\",\"mistakes\":[{\"orig\":\"wrong part\",\"fix\":\"correction\",\"why\":\"سبب الخطأ بالعربية باختصار\"}],\"feedback\":\"تقييم عام بالعربية في 2-3 جمل مع أهم ما يجب تحسينه\",\"vocab\":[{\"w\":\"better word or phrase to learn\",\"ar\":\"معناها\"}]} Give at most 8 mistakes and 5 vocab items.");
+    const lv=CEFR.includes(String(r.level))?String(r.level):"",sc=Math.max(0,Math.min(100,+r.score||0)),mist=Array.isArray(r.mistakes)?r.mistakes:[],voc=Array.isArray(r.vocab)?r.vocab:[];
+    out.innerHTML='<div class="row">'+(lv?'<span class="lv lv-learning">المستوى التقديري '+esc(lv)+'</span>':'')+'<span class="note">الدرجة '+sc+' / 100</span></div>'+(r.feedback?'<div>'+esc(r.feedback)+'</div>':'')+
+      (mist.length?'<b>الأخطاء</b><div>'+mist.map(m=>'<div class="fix"><div class="ltr" dir="ltr"><del>'+esc(m.orig)+'</del> → <ins>'+esc(m.fix)+'</ins></div><span class="note">'+esc(m.why||"")+'</span></div>').join("")+'</div>':'')+
+      '<b>النص بعد التصحيح</b><div class="ai ltr" dir="ltr">'+esc(r.corrected||"")+'</div>'+
+      (voc.length?'<b>كلمات أفضل لتتعلمها</b><div class="note ltr" dir="ltr">'+voc.map(v=>esc(v.w)).join(" · ")+'</div><div class="row"><button class="btn" id="wrVocab" type="button">أضفها لبنك الكلمات</button></div>':'');
+    const vb=$("#wrVocab");if(vb)vb.addEventListener("click",async()=>{let n=0;for(const v of voc){if(v&&v.w&&await addWord(String(v.w),String(v.ar||""),""))n++}vb.disabled=true;vb.textContent="أُضيفت "+n+" كلمة"});
+    if(db){await db.collection("enWriting").add({task:$("#wrTask").value,text:txt,level:lv,score:sc,corrected:String(r.corrected||""),at:new Date().toISOString()});logAct("كتابة بالإنجليزية ("+$("#wrTask").value+")"+(lv?": "+lv:""),"study")}
+  }catch(e){out.innerHTML='<div class="err">'+aiErr(e)+'</div>'}
+  $("#wrCheck").disabled=false;
+});
+
+/* conversation */
+function renderEnChat(){
+  $("#enChat").innerHTML=enMsgs.map(m=>'<div class="msg '+(m.role==="assistant"?"q":"a")+' ltr" dir="auto">'+esc(m.content)+'</div>').join("");
+  $("#enChatBox").hidden=!enMsgs.length||enMsgs[enMsgs.length-1].role!=="assistant";
+}
+async function enCall(userMsg){
+  if(!sample){$("#enChatErr").textContent="المساعد غير متاح في هذا العرض.";return}
+  $("#enChatErr").textContent="";const lv=((curLevel()||{}).level)||"B1";
+  const sys="You are a friendly English conversation coach role-playing this scenario: "+$("#enScen").value+". The learner is an Arabic speaker from Oman at CEFR level "+lv+". Rules: speak English at a level slightly above "+lv+". If the learner's last message has mistakes, start with one line 'Correction: <the corrected sentence>' followed by a very short reason in Arabic in parentheses. Then continue the role-play naturally in 2-4 sentences and end with one question. When the learner writes END, stop the role-play and give an evaluation in Arabic: estimated CEFR level, strengths, the 3 most important mistakes, and 5 useful phrases for this situation (English with Arabic meaning). No Markdown.";
+  const msgs=[{role:"user",content:sys+"\n\nStart the role-play now with your first line."}].concat(enMsgs.slice(-12));msgs.push({role:"user",content:userMsg});
+  const clean=[];msgs.forEach(m=>{if(clean.length&&clean[clean.length-1].role===m.role)clean[clean.length-1]={role:m.role,content:clean[clean.length-1].content+"\n\n"+m.content};else clean.push({...m})});
+  const bubble={role:"assistant",content:"…"};enMsgs.push(bubble);renderEnChat();const node=$("#enChat").lastChild;
+  ["#enChatStart","#enChatSend","#enChatEnd"].forEach(x=>$(x).disabled=true);
+  try{const r=await sample(clean,{cache:false,onText:({text})=>{node.textContent=text}});bubble.content=r.text}
+  catch(e){enMsgs.pop();$("#enChatErr").textContent=aiErr(e)}
+  ["#enChatStart","#enChatSend","#enChatEnd"].forEach(x=>$(x).disabled=false);renderEnChat();
+}
+$("#enChatStart").addEventListener("click",()=>{enMsgs=[];enCall("Begin.");logAct("محادثة إنجليزية: "+$("#enScen").value,"practice")});
+$("#enChatSend").addEventListener("click",()=>{const t=$("#enChatIn").value.trim();if(!t)return;enMsgs.push({role:"user",content:t});$("#enChatIn").value="";enCall(t)});
+$("#enChatEnd").addEventListener("click",()=>{if(!enMsgs.length)return;enMsgs.push({role:"user",content:"END"});enCall("END")});
+$("#enChatReset").addEventListener("click",()=>{enMsgs=[];renderEnChat()});
+renderEn();
+
+/* ---------- Activity ---------- */
+function renderActs(){
+  const now=new Date(),wk=new Date(now-7*864e5),m0=new Date(now.getFullYear(),now.getMonth(),1);
+  $("#aWeek").textContent=acts.filter(a=>new Date(a.at)>=wk).length;
+  $("#aApplied").textContent=acts.filter(a=>a.kind==="applied"&&new Date(a.at)>=m0).length;
+  $("#aPractice").textContent=acts.filter(a=>a.kind==="practice"||a.kind==="study").length;
+  const host=$("#actList");
+  if(!acts.length){host.innerHTML='<div class="empty">ستظهر هنا أنشطتك تلقائيًا عند التقديم ورفع المستندات والتدريب.</div>';return}
+  const sorted=[...acts].sort((a,b)=>(b.at||"").localeCompare(a.at||""));
+  let html="",last=null;
+  sorted.slice(0,80).forEach(a=>{const l=dayLabel(a.at);if(l!==last){if(last!==null)html+='</div>';html+='<div class="day">'+esc(l)+'</div><div class="card">';last=l}
+    let t="";try{t=new Date(a.at).toLocaleTimeString("ar-OM",{hour:"numeric",minute:"2-digit"})}catch(e){}
+    html+='<div class="act"><time>'+esc(t)+'</time><span>'+esc(a.text)+'</span></div>'});
+  host.innerHTML=html+'</div>';
+}
+$("#actAdd").addEventListener("click",async()=>{const t=$("#actText").value.trim();if(!t||!db)return;await logAct(t,"note");$("#actText").value="";toast("أُضيف النشاط")});
+
+renderDev();renderActs();renderDocs();
+
+/* ---------- Connect ---------- */
+const snapDocs=snap=>snap.docs.map(d=>({id:d.id,...d.data()}));
+(async()=>{
+  if(!window.claude||!claude.use){$("#dbWarn").hidden=false;$("#jobList").innerHTML="";return}
+  claude.use("sample").then(s=>{sample=s}).catch(()=>{});
+  claude.use("assets").then(a=>{assets=a}).catch(()=>{});
+  db=await claude.use("db").catch(()=>null);
+  if(!db){$("#dbWarn").hidden=false;$("#jobList").innerHTML="";return}
+  const onErr=()=>toast("تعذّر تحميل بعض البيانات");
+  db.collection("jobs").onSnapshot(s=>{jobs=snapDocs(s);renderJobs()},onErr);
+  db.collection("docs").onSnapshot(s=>{docs=snapDocs(s);renderDocs();renderDev()},onErr);
+  db.collection("activities").onSnapshot(s=>{acts=snapDocs(s);renderActs()},onErr);
+  db.doc("settings/fields").onSnapshot(d=>{fieldsDoc=d.exists?{list:[],extra:{},...d.data()}:{list:[],extra:{}};FIELD={...BASEF};fieldsDoc.list.forEach(f=>FIELD[f.key]=f.name);FIELD.other="أخرى";renderFieldChips();renderJobs();renderDev()},onErr);
+  db.collection("plan").onSnapshot(s=>{plan=snapDocs(s);renderDev()},onErr);
+  db.collection("quizzes").onSnapshot(s=>{quizzes=snapDocs(s);renderDev()},onErr);
+  db.collection("mistakes").onSnapshot(s=>{mistakes=snapDocs(s);renderDev()},onErr);
+  db.collection("enTests").onSnapshot(s=>{enTests=snapDocs(s);renderEn()},onErr);
+  db.collection("enPractice").onSnapshot(s=>{enPractice=snapDocs(s);renderEn()},onErr);
+  db.collection("words").onSnapshot(s=>{words=snapDocs(s);renderEn()},onErr);
+  db.collection("enWriting").onSnapshot(s=>{enWriting=snapDocs(s);renderEn()},onErr);
+  db.doc("settings/skills").onSnapshot(d=>{skillDone=(d.exists&&d.data().done)||{};renderDev()},onErr);
+  db.doc("settings/profile").onSnapshot(d=>{profile=d.exists?d.data():{};
+    if(document.activeElement!==$("#profName"))$("#profName").value=profile.name||"";
+    if(document.activeElement!==$("#profText"))$("#profText").value=profile.text||"";},onErr);
+})();
+})();
+</script>
+</body>
+</html>
