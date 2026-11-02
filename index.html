@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="مساري">
@@ -571,6 +572,15 @@ main section.slide-p{animation:slideP .32s cubic-bezier(.2,.8,.2,1)}
   .mq.run>.mq-in,main section.slide-n,main section.slide-p,.sheet,.toast,.opt.ok,.opt.bad,.card.hub .hub-cell:first-child b{animation:none!important}
   .mq.run{-webkit-mask-image:none;mask-image:none;text-overflow:ellipsis}
 }
+
+/* ---------- native app feel: no zoom, no stray selection ---------- */
+html{touch-action:pan-x pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none}
+body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+*{-webkit-tap-highlight-color:transparent}
+button,a,.btn,.chip,nav.tabs,header.top,.hub-cell,.lrow,.opt,.st,label,.pipe,.tag,.lv,#advisorFab,.mq{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select,.ai,.lesson-body,.msg,.qexp,.note[dir],.ct .note{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+input,textarea,select{font-size:16px!important}
+img,svg{-webkit-user-drag:none;user-drag:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -1968,6 +1978,12 @@ const curIdx=()=>tabs().findIndex(b=>b.getAttribute("aria-selected")==="true");
 const anySheet=()=>!!document.querySelector(".sheet-bg");
 let lastIdx=Math.max(0,curIdx());
 
+/* ---- block zoom: pinch, double-tap, trackpad, keyboard ---- */
+["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});
+document.addEventListener("dblclick",e=>{if(!e.target.closest("input,textarea"))e.preventDefault()},{passive:false});
+window.addEventListener("wheel",e=>{if(e.ctrlKey)e.preventDefault()},{passive:false});
+document.addEventListener("keydown",e=>{if((e.metaKey||e.ctrlKey)&&["=","+","-","_","0"].includes(e.key))e.preventDefault()});
 /* ---- page transitions ---- */
 function animateSection(dir){
   if(reduce)return;const sec=document.querySelector("main section:not([hidden])");if(!sec)return;
