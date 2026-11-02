@@ -2,6 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
+<meta name="app-version" content="3.1">
+<script>window.MASARI_VERSION="3.1";window.MASARI_BUILD="2 نوفمبر 2026";</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -223,7 +225,8 @@ function dataMenu(){
       '<div class="row"><button class="btn pri" id="lxBackup" type="button">حفظ نسخة احتياطية</button></div>'+
       '<div class="note">على الآيفون اختر «حفظ في الملفات» ثم مجلد Google Drive. يشمل الملف كل البيانات والمستندات المرفوعة.</div>'+
       '<div class="row"><label class="btn" for="lxRestoreFile">استعادة من نسخة احتياطية</label><input type="file" id="lxRestoreFile" accept=".json,application/json" hidden></div></div>'+
-    '<div class="note" id="lxMsg"></div><div class="note">عدد الوظائف المحفوظة: '+jobsN+'</div>');
+    '<div class="note" id="lxMsg"></div><div class="note">عدد الوظائف المحفوظة: '+jobsN+'</div>'+
+    '<div class="app-ver"><b>مساري الوظيفي · الإصدار '+esc(window.MASARI_VERSION||"")+'</b><span>'+esc(window.MASARI_BUILD||"")+'</span><span>تصميم وتطوير: م. ماجد الرميمي</span></div>');
   const el=m.el,msg=t=>{el.querySelector("#lxMsg").textContent=t};
   el.querySelector("#lxSearch").addEventListener("click",async()=>{
     try{const r=await sample.json(searchPrompt());const n=importJobs(r);m.close();toast(n?"أُضيفت "+n+" وظيفة جديدة":"لا توجد وظائف جديدة غير موجودة عندك")}
@@ -581,6 +584,8 @@ button,a,.btn,.chip,nav.tabs,header.top,.hub-cell,.lrow,.opt,.st,label,.pipe,.ta
 input,textarea,select,.ai,.lesson-body,.msg,.qexp,.note[dir],.ct .note{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 input,textarea,select{font-size:16px!important}
 img,svg{-webkit-user-drag:none;user-drag:none}
+.app-ver{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.app-ver b{color:var(--accent);font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
