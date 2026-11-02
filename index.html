@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="app-version" content="3.3">
-<script>window.MASARI_VERSION="3.3";window.MASARI_BUILD="2 نوفمبر 2026";</script>
+<meta name="app-version" content="3.4">
+<script>window.MASARI_VERSION="3.4";window.MASARI_BUILD="2 نوفمبر 2026";</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -602,6 +602,59 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .src-k.k-whatsapp{background:var(--ok-soft);color:var(--ok)}
 .src-auto{font-size:11.5px;color:var(--muted)}
 .src-auto.on{color:var(--ok);font-weight:600}
+
+/* ---------- v3.4: badges, match, board, filters, CV, gov exams, goal ---------- */
+.v34-badges{display:flex;flex-wrap:wrap;gap:6px}
+.bd{font:inherit;font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid transparent;background:var(--accent-soft);color:var(--accent);line-height:1.5}
+button.bd{cursor:pointer}
+.bd-red{background:var(--bad);color:#fff;animation:pop .5s ease}
+.bd-amber{background:var(--gold-soft);color:var(--warn);border-color:var(--gold)}
+.bd-green{background:var(--ok-soft);color:var(--ok)}
+.bd-gray{background:var(--line);color:var(--muted)}
+.bd-match.hi{background:var(--ok);color:#fff}.bd-match.mid{background:var(--gold-soft);color:var(--warn);border-color:var(--gold)}.bd-match.lo{background:var(--line);color:var(--muted)}
+.bd-om{background:rgba(200,30,40,.08);color:#b3262f;border-color:rgba(200,30,40,.2)}
+.bd-gov{background:var(--info-soft,var(--accent-soft));color:var(--info,var(--accent))}
+.bd-ev{background:var(--accent);color:#fff}
+.bd-fu{background:var(--gold);color:#3a2a08}
+.mt-big{display:flex;align-items:center;gap:14px;border-radius:16px;padding:14px 16px;background:var(--accent-soft)}
+.mt-big b{font-size:40px;line-height:1}.mt-big.hi{background:var(--ok-soft)}.mt-big.hi b{color:var(--ok)}.mt-big.mid{background:var(--gold-soft)}.mt-big.mid b{color:var(--warn)}.mt-big.lo{background:var(--line)}.mt-big.lo b{color:var(--muted)}
+.mt-l{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}.mt-l.ok li::marker{color:var(--ok)}.mt-l.miss li::marker{color:var(--bad)}
+.more-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:380px){.more-grid{grid-template-columns:1fr}}
+.more-it{font:inherit;text-align:start;display:flex;flex-direction:column;gap:3px;padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--sh1);cursor:pointer;transition:transform .12s}
+.more-it:active{transform:scale(.97)}.more-it b{font-size:14.5px}.more-it span{font-size:12.5px;color:var(--muted)}
+.flt-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flt-bar select{width:auto;flex:1 1 130px;min-width:0;padding-block:8px}
+.flt-t{display:inline-flex!important;flex-direction:row!important;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.flt-t input{width:auto;margin:0;accent-color:var(--accent)}
+.flt-t:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
+.flt-view{display:flex;gap:6px}
+#matchAll{flex:1 1 100%}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,78%);gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+@media (min-width:760px){.board{grid-auto-columns:minmax(220px,1fr)}}
+.bcol{scroll-snap-align:start;background:var(--surface-2,rgba(0,0,0,.03));border:1px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px;border-top:4px solid var(--accent)}
+.bcol-applied{border-top-color:var(--info,#2f6fb0)}.bcol-interview{border-top-color:var(--gold)}.bcol-offer{border-top-color:var(--ok)}.bcol-rejected{border-top-color:var(--muted)}
+.bcol-h{display:flex;justify-content:space-between;align-items:center}.bcol-h span{font-size:12px;background:var(--line);border-radius:999px;padding:1px 8px}
+.bcard{background:var(--surface);border-radius:12px;padding:10px;box-shadow:var(--sh1);display:flex;flex-direction:column;gap:5px;min-width:0}
+.bcard>b{font-size:14px;overflow-wrap:anywhere}
+.bmove{display:flex;justify-content:space-between;gap:4px}.bmove .btn{padding:4px 10px;min-height:32px}
+.bempty{text-align:center;padding:14px 0}
+.v34hub .up-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scroll-snap-type:x mandatory}
+.up-it{font:inherit;flex:0 0 auto;width:165px;scroll-snap-align:start;text-align:start;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--sh1);cursor:pointer}
+.up-it span:last-child{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.up-k{font-size:11.5px;font-weight:700;color:var(--accent)}
+.up-dl{border-color:var(--bad)}.up-dl .up-k{color:var(--bad)}.up-fu .up-k{color:var(--warn)}
+.ring{width:56px;height:56px;flex:none}.ring-bg{fill:none;stroke:var(--line);stroke-width:7}.ring-fg{fill:none;stroke:var(--accent);stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .6s ease}
+.goal-mini{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}.goal-mini .ring{width:30px;height:30px}
+.goal-row{display:flex;align-items:center;gap:12px}.goal-row .t{flex:1;display:flex;flex-direction:column;min-width:0}
+.goal-set{display:flex!important;flex-direction:column;font-size:12px;width:72px}
+.cv-prev{border:1px solid var(--line);border-radius:12px;padding:16px;background:#fff;color:#111;max-height:340px;overflow:auto}
+.cvp h1{font-size:20px;margin:0 0 2px}.cvp h2{font-size:14.5px;text-transform:uppercase;letter-spacing:.02em;border-bottom:1.5px solid #222;padding-bottom:2px;margin:14px 0 6px}
+.cvp h3{font-size:13.5px;margin:8px 0 2px}.cvp p{margin:2px 0;font-size:13px}.cvp ul{margin:2px 0;padding-inline-start:18px}.cvp li{font-size:13px;margin:1px 0}
+#cvText{font-family:ui-monospace,Menlo,monospace;font-size:14px!important;line-height:1.6}
+.g-timer{font-variant-numeric:tabular-nums;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 10px}
+.g-timer.low{background:var(--bad);color:#fff}
+@media (prefers-reduced-motion:reduce){.bd-red{animation:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -693,6 +746,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <button class="chip" data-v="skills" aria-pressed="true">المحاور والمهارات</button>
       <button class="chip" data-v="lessons" aria-pressed="false">الدروس</button>
       <button class="chip" data-v="quiz" aria-pressed="false">الاختبارات</button>
+      <button class="chip" data-v="gov" aria-pressed="false">الاختبارات الحكومية</button>
       <button class="chip" data-v="plan" aria-pressed="false">خطة المراجعة</button>
       <button class="chip" data-v="files" aria-pressed="false">ملفات المراجعة</button>
     </div>
@@ -702,6 +756,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <div class="card"><label for="newSkill">أضف مهارة لهذا المجال<input id="newSkill" placeholder="مثال: Python، Power BI، إدارة الوقت"></label><div class="row"><button class="btn" id="newSkillAdd" type="button">إضافة المهارة</button></div></div>
     </div>
     <div id="dev-lessons" class="stack" hidden></div>
+    <div id="dev-gov" class="stack" hidden></div>
     <div id="dev-quiz" class="stack" hidden>
       <div class="card" id="qzSetup">
         <b>اختبار اختيار من متعدد</b>
@@ -1111,7 +1166,7 @@ function renderDev(){
   if(!FIELD[devField]||devField==="other")devField="it";
   $("#devChips").innerHTML=devFields().map(([k,n])=>'<button class="chip" data-d="'+esc(k)+'" aria-pressed="'+(devField===k)+'">'+esc(n)+'</button>').join("")+'<button class="chip" data-d="+" aria-pressed="false">+ مجال جديد</button>';
   document.querySelectorAll("#devSub .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.v===devView));
-  ["skills","lessons","quiz","plan","files"].forEach(v=>$("#dev-"+v).hidden=v!==devView);
+  ["skills","lessons","quiz","gov","plan","files"].forEach(v=>$("#dev-"+v).hidden=v!==devView);
   // today across all fields
   const tdy=todayISO(),due=plan.filter(x=>!x.done&&x.date&&x.date<=tdy).sort((a,b)=>a.date.localeCompare(b.date));
   $("#todayCount").textContent=due.length?due.length+" جلسة":"";
@@ -2096,6 +2151,411 @@ document.addEventListener("DOMContentLoaded",()=>{
   loadSources();
   window.claude.use("db").then(db=>{if(db)db.collection("jobs").onSnapshot(updateBadge)});
   L.loaded.then(markSeen);
+});
+})();
+
+/* مساري 3.4 — المواعيد، التطابق، السيرة الذاتية، المتابعات، لوحة الطلبات، الاختبارات الحكومية، الهدف الأسبوعي، الفلاتر */
+(function(){
+"use strict";
+const L=window.MasariLocal,SH=window.MasariShare;if(!L||!SH)return;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const S=()=>L.S(),toast=L.toast,now=()=>new Date().toISOString(),today=L.todayISO;
+const jobsArr=()=>Object.entries(S().jobs||{}).map(([id,j])=>Object.assign({id},j));
+const prof=()=>((S().settings||{}).profile)||{};
+const dayMs=864e5;
+const daysTo=iso=>{if(!iso)return null;const t=Date.parse(String(iso).slice(0,10)+"T12:00:00");if(isNaN(t))return null;const n=new Date();n.setHours(12,0,0,0);return Math.round((t-n.getTime())/dayMs)};
+const fmtD=iso=>{try{return new Date(String(iso).slice(0,10)+"T12:00:00").toLocaleDateString("ar-OM",{weekday:"short",day:"numeric",month:"long"})}catch(e){return iso}};
+const STATUS_ORDER=["new","applied","interview","offer","rejected"];
+const STATUS_AR={new:"جديدة",applied:"تقدّمت",interview:"مقابلة / اختبار",offer:"عرض",rejected:"مرفوضة"};
+const FIELD_AR=f=>({it:"تقنية المعلومات",sales:"إدارة المبيعات"}[f]||(((S().settings||{}).fields||{}).list||[]).find(x=>x.key===f)?.name||"أخرى");
+
+/* =============== 1. Deadlines, events, calendar (.ics) =============== */
+function icsEsc(s){return String(s||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n")}
+function icsText({title,date,time,durMin=60,desc,loc,alarms=["-P1D","-PT2H"]}){
+  const d=String(date).replace(/-/g,"");const stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
+  let start,end;
+  if(time){const [h,m]=time.split(":").map(Number);const s=new Date(date+"T00:00:00");s.setHours(h,m||0);const e=new Date(s.getTime()+durMin*6e4);
+    const f=x=>x.getFullYear()+String(x.getMonth()+1).padStart(2,"0")+String(x.getDate()).padStart(2,"0")+"T"+String(x.getHours()).padStart(2,"0")+String(x.getMinutes()).padStart(2,"0")+"00";
+    start="DTSTART:"+f(s);end="DTEND:"+f(e)}
+  else{const n=new Date(date+"T12:00:00");n.setDate(n.getDate()+1);start="DTSTART;VALUE=DATE:"+d;end="DTEND;VALUE=DATE:"+n.toISOString().slice(0,10).replace(/-/g,"")}
+  const al=alarms.map(a=>"BEGIN:VALARM\r\nTRIGGER:"+a+"\r\nACTION:DISPLAY\r\nDESCRIPTION:"+icsEsc(title)+"\r\nEND:VALARM").join("\r\n");
+  return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Masari//AR","CALSCALE:GREGORIAN","BEGIN:VEVENT","UID:"+L.genId()+"@masari","DTSTAMP:"+stamp,start,end,"SUMMARY:"+icsEsc(title),desc?"DESCRIPTION:"+icsEsc(desc):"",loc?"LOCATION:"+icsEsc(loc):"",al,"END:VEVENT","END:VCALENDAR"].filter(Boolean).join("\r\n");
+}
+async function addToCalendar(o){
+  const file=new File([icsText(o)],"masari-"+(o.date||"event")+".ics",{type:"text/calendar"});
+  const url=URL.createObjectURL(file);const a=document.createElement("a");a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  toast("اختر «إضافة إلى التقويم» من النافذة التي تظهر");
+}
+const EVT={interview:"مقابلة شخصية",test:"اختبار تحريري",skills:"اختبار مهارات",other:"موعد"};
+function eventForm(jobId,ev){
+  const j=jobId?(S().jobs||{})[jobId]:null;ev=ev||{};const isNew=!ev.id;
+  const m=L.modal('<div class="sheet-h"><h2>'+(isNew?"موعد جديد":"تعديل الموعد")+'</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    (j?'<div class="note">'+esc(j.title)+' · '+esc(j.company||"")+'</div>':'')+
+    '<div class="grid2"><label for="evType">النوع<select id="evType">'+Object.entries(EVT).map(([k,v])=>'<option value="'+k+'"'+(ev.type===k?" selected":"")+'>'+v+'</option>').join("")+'</select></label>'+
+    '<label for="evPlace">المكان<input id="evPlace" value="'+esc(ev.place)+'" placeholder="وزارة العمل، أو عن بُعد"></label></div>'+
+    '<div class="grid2"><label for="evDate">التاريخ<input id="evDate" type="date" value="'+esc(ev.date||today())+'"></label><label for="evTime">الوقت<input id="evTime" type="time" value="'+esc(ev.time||"09:00")+'"></label></div>'+
+    '<label for="evNotes">ملاحظات<input id="evNotes" value="'+esc(ev.notes)+'" placeholder="أحضر البطاقة والشهادات الأصلية"></label>'+
+    '<div class="row"><button class="btn pri" id="evSave" type="button">حفظ وأضف إلى التقويم</button><button class="btn" id="evOnly" type="button">حفظ فقط</button>'+(isNew?'':'<button class="btn ghost danger" id="evDel" type="button">حذف</button>')+'</div>'+
+    '<span class="note">الإضافة إلى تقويم الآيفون تضبط تنبيهين: قبل يوم وقبل ساعتين.</span>');
+  const el=m.el,v=id=>el.querySelector(id).value.trim();
+  const save=async cal=>{const d={jobId:jobId||"",type:v("#evType"),place:v("#evPlace"),date:v("#evDate"),time:v("#evTime"),notes:v("#evNotes"),at:ev.at||now()};
+    if(!d.date){toast("اختر التاريخ");return}const id=ev.id||L.genId();L.write("events",id,d);
+    if(j&&(j.status==="new"||j.status==="applied")&&d.type!=="other"){L.update("jobs",jobId,{status:"interview",statusAt:now()});L.write("activities",L.genId(),{text:"موعد "+EVT[d.type]+" في «"+j.title+"» يوم "+fmtD(d.date),kind:"status",at:now()})}
+    m.close();toast("حُفظ الموعد");
+    if(cal)addToCalendar({title:EVT[d.type]+(j?": "+j.title+" — "+(j.company||""):""),date:d.date,time:d.time,desc:[d.notes,j&&j.url].filter(Boolean).join("\n"),loc:d.place})};
+  el.querySelector("#evSave").addEventListener("click",()=>save(true));
+  el.querySelector("#evOnly").addEventListener("click",()=>save(false));
+  const del=el.querySelector("#evDel");if(del)del.addEventListener("click",()=>{if(del.dataset.c!=="1"){del.dataset.c="1";del.textContent="تأكيد";return}L.remove("events",ev.id);m.close()});
+}
+const eventsArr=()=>Object.entries(S().events||{}).map(([id,e])=>Object.assign({id},e)).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+
+/* =============== 2. Match score =============== */
+function matchPrompt(list){
+  const p=prof();
+  return "أنت خبير توظيف في سلطنة عُمان والخليج. قارن بين بيانات المتقدم وكل وظيفة، وأعطِ نسبة تطابق واقعية (0-100) بناءً على المتطلبات المذكورة فقط، دون مجاملة.\n\nبيانات المتقدم:\n"+(p.name?"الاسم: "+p.name+"\n":"")+(p.text||"لم يكتب نبذة بعد")+"\n\nالوظائف:\n"+
+    list.map(j=>"["+j.id+"] "+j.title+" — "+(j.company||"")+" ("+(j.location||"")+")\nالمتطلبات: "+(j.description||"غير مذكورة، قدّر من المسمى")).join("\n\n")+
+    '\n\nأعد JSON فقط: [{"id":"المعرّف بين القوسين","score":0-100,"matched":["نقطة قوة مطابقة"],"missing":["مهارة أو شهادة ناقصة بالعربية مع المصطلح الإنجليزي"],"advice":"نصيحة واحدة قصيرة: هل تقدّم، وماذا تبرز في الطلب"}]';
+}
+async function runMatch(list){
+  if(!list.length){toast("لا توجد وظائف لحساب التطابق");return}
+  if(!(prof().text||"").trim()){toast("اكتب «نبذتي المهنية» في مستنداتي أولًا ليكون التطابق دقيقًا")}
+  let arr;try{arr=await L.sample.json(matchPrompt(list.slice(0,12)),{title:"حساب نسبة التطابق"})}catch(e){return}
+  let n=0;for(const r of (Array.isArray(arr)?arr:[arr])){if(!r||!r.id)continue;const id=String(r.id).replace(/[\[\]\s]/g,"");if(!(S().jobs||{})[id])continue;
+    L.update("jobs",id,{match:{score:Math.max(0,Math.min(100,+r.score||0)),matched:(r.matched||[]).slice(0,5).map(String),missing:(r.missing||[]).slice(0,5).map(String),advice:String(r.advice||""),at:now()}});n++}
+  toast(n?"حُسب التطابق لـ "+n+" وظيفة":"لم أفهم الرد، حاول مرة أخرى");
+}
+function matchSheet(id){
+  const j=(S().jobs||{})[id];if(!j)return;const mt=j.match;
+  const m=L.modal('<div class="sheet-h"><h2>نسبة التطابق</h2><button class="btn ghost" data-x type="button">إغلاق</button></div><div class="note">'+esc(j.title)+' · '+esc(j.company||"")+'</div>'+
+    (mt?'<div class="mt-big '+(mt.score>=70?"hi":mt.score>=50?"mid":"lo")+'"><b>'+mt.score+'٪</b><span>'+(mt.score>=70?"فرصتك جيدة، قدّم":mt.score>=50?"مقبولة، أبرز نقاط قوتك":"ضعيفة، قدّم إذا كانت تهمك")+'</span></div>'+
+      (mt.matched.length?'<b>نقاط قوتك</b><ul class="mt-l ok">'+mt.matched.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'')+
+      (mt.missing.length?'<b>ما ينقصك</b><ul class="mt-l miss">'+mt.missing.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':'')+
+      (mt.advice?'<div class="ap-how">'+esc(mt.advice)+'</div>':'')
+     :'<div class="note">لم يُحسب التطابق لهذه الوظيفة بعد.</div>')+
+    '<div class="row"><button class="btn pri" id="mtRun" type="button">'+(mt?"أعد الحساب":"احسب مع Claude")+'</button>'+(mt&&mt.missing.length?'<button class="btn" id="mtLearn" type="button">أضف النواقص لخطة التعلم</button>':'')+'</div>');
+  m.el.querySelector("#mtRun").addEventListener("click",async()=>{m.close();await runMatch([Object.assign({id},j)]);matchSheet(id)});
+  const lb=m.el.querySelector("#mtLearn");if(lb)lb.addEventListener("click",()=>{const t=today();mt.missing.forEach((x,i)=>{const d=new Date(t+"T12:00:00");d.setDate(d.getDate()+i+1);L.write("plan",L.genId(),{field:j.field==="sales"?"sales":"it",topic:x,notes:"من متطلبات: "+j.title,date:d.toISOString().slice(0,10),done:false,addedAt:now()})});m.close();toast("أُضيفت "+mt.missing.length+" مواضيع إلى خطة المراجعة")});
+}
+
+/* =============== 3. CV builder (ATS) =============== */
+function cvRender(txt,dir){
+  const lines=String(txt||"").split(/\r?\n/);let h="",inUl=false;const close=()=>{if(inUl){h+="</ul>";inUl=false}};
+  for(const raw of lines){const l=raw.trim();if(!l){close();continue}
+    if(l.startsWith("# ")){close();h+="<h1>"+esc(l.slice(2))+"</h1>"}
+    else if(l.startsWith("## ")){close();h+="<h2>"+esc(l.slice(3))+"</h2>"}
+    else if(l.startsWith("### ")){close();h+="<h3>"+esc(l.slice(4))+"</h3>"}
+    else if(/^[-•*] /.test(l)){if(!inUl){h+="<ul>";inUl=true}h+="<li>"+esc(l.slice(2))+"</li>"}
+    else{close();h+="<p>"+esc(l)+"</p>"}}
+  close();return '<div class="cvp" dir="'+dir+'">'+h+'</div>';
+}
+const CV_FORMAT="استخدم هذا التنسيق النصي بالضبط (سطر لكل عنصر):\n# الاسم الكامل\nالمسمى المهني المستهدف\nالبريد | الهاتف | المدينة | LinkedIn\n## عنوان القسم (الملخص المهني، الخبرات، التعليم، الشهادات، المهارات، اللغات)\n### المسمى — الجهة (من – إلى)\n- إنجاز يبدأ بفعل قوي ويحتوي رقمًا إن أمكن\nالتزم بسيرة متوافقة مع أنظمة الفرز ATS: عمود واحد، بلا جداول أو رموز، كلمات مفتاحية من المجال. لا تخترع خبرات أو شهادات غير مذكورة؛ ضع [ ] حيث تنقص معلومة.";
+function cvPrompt(lang,job){
+  const p=prof();const contact=[p.email,p.phone,p.city,p.linkedin].filter(Boolean).join(" | ");
+  return (job?"اكتب نسخة مخصصة من السيرة الذاتية لهذه الوظيفة، تبرز ما يطابق متطلباتها:\nالوظيفة: "+job.title+" — "+(job.company||"")+"\nالمتطلبات: "+(job.description||"غير مذكورة")+"\n\n":"اكتب سيرة ذاتية احترافية كاملة.\n")+
+    "اللغة: "+(lang==="en"?"English":"العربية")+".\nالمجالات المستهدفة: أخصائي حاسب آلي / مهندس تقنية معلومات وحوكمة تقنية المعلومات، ومدير مبيعات.\nبيانات المتقدم:\nالاسم: "+(p.name||"[الاسم]")+"\nالتواصل: "+(contact||"[البريد | الهاتف | المدينة]")+"\nالنبذة: "+(p.text||"[لم تُكتب]")+
+    ((S().settings||{}).cv&&S().settings.cv[lang]?"\n\nالسيرة الحالية للاستفادة منها:\n"+S().settings.cv[lang]:"")+"\n\n"+CV_FORMAT+"\nاكتب السيرة فقط بدون أي تعليق.";
+}
+function cvSheet(job){
+  const cv=(S().settings||{}).cv||{};let lang=job?"en":(cv.lang||"ar");
+  const data=Object.assign({},job?(job.cv||{}):cv);
+  const cur=()=>data[lang]||"";
+  const m=L.modal('<div class="sheet-h"><h2>'+(job?"سيرة مخصصة لهذه الوظيفة":"سيرتي الذاتية")+'</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    (job?'<div class="note">'+esc(job.title)+' · '+esc(job.company||"")+'</div>':'<div class="note">سيرة بقالب متوافق مع أنظمة الفرز الآلي ATS. اكتبها مع Claude ثم عدّلها كما تريد.</div>')+
+    '<div class="chips" id="cvLang"><button class="chip" data-l="ar" type="button">العربية</button><button class="chip" data-l="en" type="button">English</button></div>'+
+    '<textarea id="cvText" rows="14" dir="auto" placeholder="# الاسم\nالمسمى المهني\n## الملخص المهني\n…"></textarea>'+
+    '<div class="row"><button class="btn pri" id="cvGen" type="button">اكتبها مع Claude</button><button class="btn" id="cvSave" type="button">حفظ</button><button class="btn" id="cvPrint" type="button">طباعة / PDF</button><button class="btn" id="cvShare" type="button">مشاركة النص</button></div>'+
+    '<span class="note">لإرفاقها PDF: «طباعة / PDF» ← مشاركة ← «حفظ في الملفات»، ثم ارفعها في «مستنداتي» كسيرة ذاتية.</span>'+
+    '<div id="cvPrev"></div>');
+  const el=m.el,ta=el.querySelector("#cvText");
+  const paint=()=>{el.querySelectorAll("#cvLang .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.l===lang));ta.value=cur();ta.dir=lang==="en"?"ltr":"rtl";el.querySelector("#cvPrev").innerHTML=ta.value?'<div class="cv-prev">'+cvRender(ta.value,lang==="en"?"ltr":"rtl")+'</div>':''};
+  const save=()=>{data[lang]=ta.value.trim();if(job){const c={ar:data.ar||"",en:data.en||""};L.update("jobs",job.id,{cv:c});job.cv=c}else{L.write("settings","cv",{ar:data.ar||"",en:data.en||"",lang,updatedAt:now()})}};
+  paint();
+  el.querySelector("#cvLang").addEventListener("click",e=>{const c=e.target.closest("[data-l]");if(!c)return;save();lang=c.dataset.l;paint()});
+  ta.addEventListener("input",()=>{el.querySelector("#cvPrev").innerHTML=ta.value?'<div class="cv-prev">'+cvRender(ta.value,lang==="en"?"ltr":"rtl")+'</div>':''});
+  el.querySelector("#cvGen").addEventListener("click",async()=>{try{const r=await L.sample(cvPrompt(lang,job));ta.value=r.text.trim().replace(/^```\w*\n?|```$/g,"");save();paint();toast("جاهزة، راجعها واملأ أي [ ]")}catch(e){}});
+  el.querySelector("#cvSave").addEventListener("click",()=>{save();toast("حُفظت السيرة")});
+  el.querySelector("#cvPrint").addEventListener("click",()=>{save();SH.printHTML(cvRender(ta.value,lang==="en"?"ltr":"rtl"))});
+  el.querySelector("#cvShare").addEventListener("click",async()=>{save();try{await navigator.share({title:"CV",text:ta.value})}catch(e){}});
+}
+
+/* =============== 4. Follow-ups =============== */
+const dueFollowups=()=>jobsArr().filter(j=>j.status==="applied"&&j.appliedAt&&(Date.now()-Date.parse(j.appliedAt))>7*dayMs&&!(j.followUpAt&&Date.now()-Date.parse(j.followUpAt)<7*dayMs));
+function followText(j){const p=prof();const d=j.appliedAt?new Date(j.appliedAt).toLocaleDateString("en-GB",{day:"numeric",month:"long"}):"recently";
+  return "Dear Hiring Team,\n\nI hope you are well. I applied for the "+j.title+" position"+(j.company?" at "+j.company:"")+" on "+d+", and I would like to follow up on my application.\n\nI remain very interested in this role and would welcome the opportunity to discuss how my experience can add value to your team. Please let me know if you need any further information.\n\nThank you for your time and consideration.\n\nKind regards,\n"+(window.MasariSignature?window.MasariSignature():(p.name||""));}
+function followSheet(id){
+  const j=(S().jobs||{})[id];if(!j)return;const txt=followText(Object.assign({id},j));
+  const m=L.modal('<div class="sheet-h"><h2>رسالة متابعة</h2><button class="btn ghost" data-x type="button">إغلاق</button></div><div class="note">'+esc(j.title)+' · '+esc(j.company||"")+' · تقدّمت قبل '+Math.floor((Date.now()-Date.parse(j.appliedAt))/dayMs)+' يومًا</div>'+
+    '<textarea id="fuText" rows="10" dir="ltr">'+esc(txt)+'</textarea><div id="fuRow"></div>'+
+    '<div class="row"><button class="btn pri" id="fuDone" type="button">أرسلتها ✓</button><button class="btn ghost" id="fuSnooze" type="button">ذكّرني بعد أسبوع</button></div>');
+  const el=m.el,ta=el.querySelector("#fuText");
+  const row=SH.textSendRow(()=>ta.value,"Follow-up: "+j.title);
+  if(j.applyEmail){const b=document.createElement("button");b.className="btn pri";b.type="button";b.textContent="بريد إلى "+j.applyEmail;b.addEventListener("click",()=>{location.href="mailto:"+encodeURIComponent(j.applyEmail)+"?subject="+encodeURIComponent("Follow-up: "+j.title)+"&body="+encodeURIComponent(ta.value)});row.prepend(b)}
+  if(j.contactPhone){const a=document.createElement("a");a.className="btn";a.target="_blank";a.rel="noopener";a.textContent="واتساب المسؤول";let d=String(j.contactPhone).replace(/\D/g,"");if(d.length===8)d="968"+d;a.href="https://wa.me/"+d+"?text="+encodeURIComponent(ta.value);row.prepend(a)}
+  el.querySelector("#fuRow").appendChild(row);
+  el.querySelector("#fuDone").addEventListener("click",()=>{L.update("jobs",id,{followUpAt:now(),followUps:(j.followUps||0)+1});L.write("activities",L.genId(),{text:"أرسلت رسالة متابعة: «"+j.title+"»",kind:"contact",at:now()});m.close();toast("سُجّلت المتابعة")});
+  el.querySelector("#fuSnooze").addEventListener("click",()=>{L.update("jobs",id,{followUpAt:now()});m.close()});
+}
+
+/* =============== 5. Job card enhancements (badges + more menu) =============== */
+function badgesFor(j){
+  let h="";const d=daysTo(j.deadline);
+  if(d!=null&&j.status!=="rejected"&&j.status!=="offer"){h+=d<0?'<span class="bd bd-gray">انتهى التقديم</span>':'<span class="bd '+(d<=3?"bd-red":d<=7?"bd-amber":"bd-green")+'">'+(d===0?"آخر يوم اليوم":d===1?"باقي يوم واحد":d===2?"باقي يومان":"باقي "+d+(d<=10?" أيام":" يومًا"))+'</span>'}
+  if(j.match)h+='<button class="bd bd-match '+(j.match.score>=70?"hi":j.match.score>=50?"mid":"lo")+'" data-v34="match" type="button">تطابق '+j.match.score+'٪</button>';
+  if(isOmani(j))h+='<span class="bd bd-om">للعُمانيين</span>';
+  if(isGov(j))h+='<span class="bd bd-gov">حكومي</span>';
+  const ev=eventsArr().find(e=>e.jobId===j.id&&e.date>=today());if(ev)h+='<span class="bd bd-ev">'+esc(EVT[ev.type])+' '+esc(fmtD(ev.date))+'</span>';
+  if(j.status==="applied"&&dueFollowups().some(x=>x.id===j.id))h+='<button class="bd bd-fu" data-v34="follow" type="button">حان وقت المتابعة</button>';
+  return h;
+}
+function enhanceCards(){
+  document.querySelectorAll("#jobList article.card[data-id]").forEach(a=>{
+    const j=(S().jobs||{})[a.dataset.id];if(!j)return;j.id=a.dataset.id;
+    let b=a.querySelector(".v34-badges");if(!b){b=document.createElement("div");b.className="v34-badges";const meta=a.querySelector(".meta");meta?meta.after(b):a.appendChild(b)}
+    const html=badgesFor(j);if(b.dataset.h!==html){b.innerHTML=html;b.dataset.h=html}b.hidden=!html;
+    const row=a.querySelector(".row:last-child");if(row&&!row.querySelector("[data-v34='more']")){const m=document.createElement("button");m.className="btn ghost";m.type="button";m.dataset.v34="more";m.textContent="المزيد";row.appendChild(m)}
+  });
+  applyFilters();
+}
+function moreSheet(id){
+  const j=(S().jobs||{})[id];if(!j)return;
+  const m=L.modal('<div class="sheet-h"><h2>'+esc(j.title)+'</h2><button class="btn ghost" data-x type="button">إغلاق</button></div><div class="note">'+esc(j.company||"")+'</div>'+
+    '<div class="more-grid">'+
+    '<button class="more-it" data-a="match" type="button"><b>نسبة التطابق</b><span>'+(j.match?j.match.score+"٪ · أعد الحساب":"قارن الوظيفة بسيرتك")+'</span></button>'+
+    '<button class="more-it" data-a="event" type="button"><b>موعد مقابلة أو اختبار</b><span>مع تنبيه في تقويم الآيفون</span></button>'+
+    (j.deadline?'<button class="more-it" data-a="dl" type="button"><b>ذكّرني بآخر موعد</b><span>'+esc(fmtD(j.deadline))+' · تنبيه قبل يومين</span></button>':'')+
+    '<button class="more-it" data-a="cv" type="button"><b>سيرة مخصصة</b><span>نسخة من سيرتك لهذه الوظيفة</span></button>'+
+    (j.status==="applied"?'<button class="more-it" data-a="follow" type="button"><b>رسالة متابعة</b><span>تذكير لطيف لجهة التوظيف</span></button>':'')+
+    '</div>');
+  m.el.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;m.close();const a=b.dataset.a,J=Object.assign({id},j);
+    if(a==="match")matchSheet(id);if(a==="event")eventForm(id);if(a==="cv")cvSheet(J);if(a==="follow")followSheet(id);
+    if(a==="dl")addToCalendar({title:"آخر موعد للتقديم: "+j.title+" — "+(j.company||""),date:j.deadline,desc:(j.howToApply||"")+"\n"+(j.url||""),alarms:["-P2D","-PT9H"]})});
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("#jobList [data-v34], #board [data-v34]");if(!b)return;const card=b.closest("[data-id]");if(!card)return;const id=card.dataset.id;
+  if(b.dataset.v34==="more")moreSheet(id);if(b.dataset.v34==="match")matchSheet(id);if(b.dataset.v34==="follow")followSheet(id);
+});
+
+/* =============== 7. Filters =============== */
+const RX={muscat:/مسقط|السيب|بوشر|مطرح|العامرات|قريات|المعبيلة|الخوض|الغبرة|muscat|seeb|bawshar|muttrah|amerat|qurum|ghubrah/i,
+  batinah:/صحار|الباطنة|صحم|الخابورة|السويق|بركاء|الرستاق|المصنعة|شناص|sohar|batinah|barka|suwaiq|rustaq|saham|shinas/i,
+  salalah:/صلالة|ظفار|salalah|dhofar/i,remote:/عن بُعد|عن بعد|remote|work from home/i,
+  abroad:/الإمارات|دبي|أبوظبي|أبو ظبي|الشارقة|السعودية|الرياض|جدة|قطر|الدوحة|الكويت|البحرين|المنامة|\bUAE\b|Dubai|Abu Dhabi|Sharjah|Saudi|KSA|Riyadh|Jeddah|Qatar|Doha|Kuwait|Bahrain|Manama/i,
+  oman:/عُمان|عمان|oman/i};
+const txt=j=>[j.location,j.title,j.company,j.description,j.howToApply,j.source].join(" ");
+function locOf(j){const t=[j.location,j.title,j.description].join(" ");if(RX.remote.test(t))return "remote";if(RX.muscat.test(t))return "muscat";if(RX.batinah.test(t))return "batinah";if(RX.salalah.test(t))return "salalah";if(RX.abroad.test(t))return "abroad";return "oman"}
+const isOmani=j=>/للعمانيين|للعُمانيين|للمواطنين|عمانيين فقط|عُمانيين فقط|omani nationals?|omanis? only|omani only|omanisation candidates/i.test(txt(j));
+const isGov=j=>/وزارة|ديوان|هيئة|بلدية|حكوم|مجلس|شرطة|جامعة السلطان|ministry|government|authority|council|royal court/i.test([j.company,j.source].join(" "));
+let F={loc:"all",sector:"all",omani:false,hi:false,view:"list"};
+try{F=Object.assign(F,JSON.parse(localStorage.getItem("masari-filters")||"{}"))}catch(e){}
+const saveF=()=>{try{localStorage.setItem("masari-filters",JSON.stringify(F))}catch(e){}};
+function passes(j){
+  if(F.loc!=="all"&&locOf(j)!==F.loc)return false;
+  if(F.sector==="gov"&&!isGov(j))return false;if(F.sector==="private"&&isGov(j))return false;
+  if(F.omani&&!isOmani(j))return false;if(F.hi&&!(j.match&&j.match.score>=70))return false;return true;
+}
+function applyFilters(){
+  const list=$("#jobList");if(!list)return;let shown=0,total=0;
+  list.querySelectorAll("article.card[data-id]").forEach(a=>{const j=(S().jobs||{})[a.dataset.id];if(!j)return;total++;const ok=passes(j);a.hidden=!ok;if(ok)shown++});
+  list.querySelectorAll(".day").forEach(d=>{let n=d.nextElementSibling,vis=false;while(n&&!n.classList.contains("day")){if(n.tagName==="ARTICLE"&&!n.hidden){vis=true;break}n=n.nextElementSibling}d.hidden=!vis});
+  const active=F.loc!=="all"||F.sector!=="all"||F.omani||F.hi;const c=$("#fltCount");if(c)c.textContent=active?"يظهر "+shown+" من "+total:"";
+  let em=$("#fltEmpty");if(active&&total&&!shown){if(!em){em=document.createElement("div");em.id="fltEmpty";em.className="empty";em.textContent="لا توجد وظائف تطابق الفلاتر. خفّف الفلاتر لترى المزيد.";list.prepend(em)}}else if(em)em.remove();
+  list.hidden=F.view==="board";const bd=$("#board");if(bd){bd.hidden=F.view!=="board";if(F.view==="board")renderBoard()}
+}
+function mountFilters(){
+  const sc=$("#statusChips");if(!sc||$("#fltBar"))return;
+  const bar=document.createElement("div");bar.id="fltBar";bar.className="flt-bar";
+  bar.innerHTML='<select id="fltLoc" aria-label="الموقع"><option value="all">كل المواقع</option><option value="muscat">مسقط والسيب</option><option value="batinah">الباطنة وصحار</option><option value="salalah">صلالة وظفار</option><option value="oman">بقية عُمان</option><option value="remote">عن بُعد</option><option value="abroad">خارج عُمان</option></select>'+
+    '<select id="fltSec" aria-label="الجهة"><option value="all">كل الجهات</option><option value="gov">حكومي</option><option value="private">خاص</option></select>'+
+    '<label class="flt-t" for="fltOm"><input type="checkbox" id="fltOm"><span>للعُمانيين</span></label><label class="flt-t" for="fltHi"><input type="checkbox" id="fltHi"><span>تطابق 70٪+</span></label>'+
+    '<div class="flt-view"><button class="chip" data-vw="list" type="button">قائمة</button><button class="chip" data-vw="board" type="button">لوحة</button></div><span class="note" id="fltCount"></span>';
+  sc.after(bar);
+  const sync=()=>{bar.querySelector("#fltLoc").value=F.loc;bar.querySelector("#fltSec").value=F.sector;bar.querySelector("#fltOm").checked=F.omani;bar.querySelector("#fltHi").checked=F.hi;bar.querySelectorAll("[data-vw]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.vw===F.view))};sync();
+  bar.addEventListener("change",()=>{F.loc=bar.querySelector("#fltLoc").value;F.sector=bar.querySelector("#fltSec").value;F.omani=bar.querySelector("#fltOm").checked;F.hi=bar.querySelector("#fltHi").checked;saveF();applyFilters()});
+  bar.addEventListener("click",e=>{const v=e.target.closest("[data-vw]");if(!v)return;F.view=v.dataset.vw;saveF();sync();applyFilters()});
+  const list=$("#jobList");const board=document.createElement("div");board.id="board";board.className="board";board.hidden=true;list.after(board);
+  const mb=document.createElement("button");mb.className="btn";mb.type="button";mb.id="matchAll";mb.textContent="احسب التطابق لوظائف اليوم";
+  mb.addEventListener("click",()=>{const t=today();const l=jobsArr().filter(j=>j.status!=="rejected"&&!j.match&&((j.foundAt||j.addedAt||"").slice(0,10)===t)).concat(jobsArr().filter(j=>j.status==="new"&&!j.match)).filter((j,i,a)=>a.findIndex(x=>x.id===j.id)===i);runMatch(l)});
+  bar.appendChild(mb);
+}
+
+/* =============== 4b. Kanban board =============== */
+function renderBoard(){
+  const bd=$("#board");if(!bd)return;const js=jobsArr().filter(passes);
+  bd.innerHTML=STATUS_ORDER.map(st=>{const col=js.filter(j=>(j.status||"new")===st).sort((a,b)=>(b.statusAt||b.appliedAt||b.addedAt||"").localeCompare(a.statusAt||a.appliedAt||a.addedAt||""));
+    return '<div class="bcol bcol-'+st+'"><div class="bcol-h"><b>'+STATUS_AR[st]+'</b><span>'+col.length+'</span></div>'+
+      col.map(j=>{const i=STATUS_ORDER.indexOf(st);return '<div class="bcard" data-id="'+esc(j.id)+'"><b>'+esc(j.title)+'</b><span class="note">'+esc(j.company||"")+'</span><div class="v34-badges">'+badgesFor(j)+'</div>'+
+        '<div class="bmove">'+(i>0?'<button class="btn ghost" data-mv="-1" type="button" aria-label="المرحلة السابقة">→</button>':'<span></span>')+'<button class="btn ghost" data-v34="more" type="button">المزيد</button>'+(i<STATUS_ORDER.length-1?'<button class="btn ghost" data-mv="1" type="button" aria-label="المرحلة التالية">←</button>':'<span></span>')+'</div></div>'}).join("")+
+      (col.length?'':'<div class="note bempty">لا شيء هنا</div>')+'</div>'}).join("");
+}
+document.addEventListener("click",e=>{const b=e.target.closest("#board [data-mv]");if(!b)return;const id=b.closest("[data-id]").dataset.id,j=(S().jobs||{})[id];if(!j)return;
+  const i=STATUS_ORDER.indexOf(j.status||"new")+(+b.dataset.mv);if(i<0||i>=STATUS_ORDER.length)return;const ns=STATUS_ORDER[i],u={status:ns,statusAt:now()};if(ns==="applied"&&!j.appliedAt)u.appliedAt=now();
+  L.update("jobs",id,u);L.write("activities",L.genId(),{text:"نقلت «"+j.title+"» إلى: "+STATUS_AR[ns],kind:ns==="applied"?"applied":"status",at:now()});});
+
+/* =============== 6. Weekly goal + stats =============== */
+function weekStart(d){const x=new Date(d||Date.now());x.setHours(0,0,0,0);x.setDate(x.getDate()-x.getDay());return x}
+function stats(){
+  const ws=weekStart().getTime(),js=jobsArr();
+  const appliedWeek=js.filter(j=>j.appliedAt&&Date.parse(j.appliedAt)>=ws).length;
+  const respWeek=js.filter(j=>["interview","offer","rejected"].includes(j.status)&&j.statusAt&&Date.parse(j.statusAt)>=ws).length;
+  const byField={};js.filter(j=>j.appliedAt).forEach(j=>{const f=j.field||"other";const o=byField[f]=byField[f]||{a:0,r:0,i:0};o.a++;if(["interview","offer","rejected"].includes(j.status))o.r++;if(["interview","offer"].includes(j.status))o.i++});
+  const goal=+(((S().settings||{}).goals||{}).weekly)||5;
+  return {appliedWeek,respWeek,byField,goal,totalApplied:js.filter(j=>j.appliedAt).length,interviews:js.filter(j=>j.status==="interview").length,offers:js.filter(j=>j.status==="offer").length};
+}
+function ring(p){const r=26,c=2*Math.PI*r,v=Math.min(1,p);return '<svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="'+r+'" class="ring-bg"/><circle cx="32" cy="32" r="'+r+'" class="ring-fg" stroke-dasharray="'+(c*v).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 32 32)"/></svg>'}
+function renderStats(){
+  const host=$("#v34Stats");if(!host)return;const s=stats();
+  const fields=Object.entries(s.byField);
+  host.innerHTML='<div class="card"><div class="goal-row">'+ring(s.appliedWeek/s.goal)+'<div class="t"><b>هدف الأسبوع: '+s.appliedWeek+' من '+s.goal+' طلبات</b><span class="note">'+(s.appliedWeek>=s.goal?"أحسنت، حققت هدفك هذا الأسبوع":"باقي "+(s.goal-s.appliedWeek)+" حتى نهاية السبت")+'</span></div>'+
+    '<label class="goal-set" for="goalN">الهدف<select id="goalN">'+[3,5,7,10,15].map(n=>'<option'+(n===s.goal?" selected":"")+'>'+n+'</option>').join("")+'</select></label></div>'+
+    '<div class="pipe" style="grid-template-columns:repeat(4,1fr)"><div><b>'+s.totalApplied+'</b><small>كل الطلبات</small></div><div><b>'+s.respWeek+'</b><small>ردود هذا الأسبوع</small></div><div><b>'+s.interviews+'</b><small>مقابلات</small></div><div><b>'+s.offers+'</b><small>عروض</small></div></div>'+
+    (fields.length?'<b>أي المجالين يرد أكثر؟</b>'+fields.map(([f,o])=>{const p=o.a?Math.round(o.r/o.a*100):0;return '<div class="axrow"><div class="t"><b>'+esc(FIELD_AR(f))+'</b><span class="note">'+o.a+' طلب · '+o.r+' رد · '+o.i+' مقابلة أو عرض</span><div class="bar"><i class="'+(p>=30?"ok":p>=10?"mid":"low")+'" style="width:'+p+'%"></i></div></div><b>'+p+'٪</b></div>'}).join(""):'<span class="note">سجّل طلباتك بزر «قدّم الآن» أو «تقدّمت» لتظهر هنا نسبة الردود في كل مجال.</span>')+
+    '<div class="row"><button class="btn" id="weekRep" type="button">تقرير الأسبوع</button></div></div>';
+}
+function weeklyReport(){
+  const s=stats(),ws=weekStart(),js=jobsArr();
+  const lines=["تقرير أسبوعي من «مساري» — الأسبوع الذي بدأ "+ws.toLocaleDateString("ar-OM",{day:"numeric",month:"long"}),"الطلبات هذا الأسبوع: "+s.appliedWeek+" من هدف "+s.goal,"الردود هذا الأسبوع: "+s.respWeek+" · مقابلات حالية: "+s.interviews+" · عروض: "+s.offers];
+  Object.entries(s.byField).forEach(([f,o])=>lines.push(FIELD_AR(f)+": "+o.a+" طلب، "+o.r+" رد"));
+  const done=Object.values(S().lessons||{}).filter(l=>l.doneAt&&Date.parse(l.doneAt)>=ws.getTime()).length;lines.push("الدروس المنجزة هذا الأسبوع: "+done);
+  const m=L.modal('<div class="sheet-h"><h2>تقرير الأسبوع</h2><button class="btn ghost" data-x type="button">إغلاق</button></div><div class="ai" dir="rtl">'+esc(lines.join("\n"))+'</div><div class="row"><button class="btn pri" id="repAsk" type="button">حلّله مع المستشار</button></div>');
+  m.el.querySelector("#repAsk").addEventListener("click",async()=>{try{const r=await L.sample("هذا تقريري الأسبوعي في البحث عن عمل:\n"+lines.join("\n")+"\n\nحلّله بصدق: ما الذي نجح، وما الذي يجب أن أغيّره الأسبوع القادم، وأي المجالين أركّز عليه؟ أعطني خطة من 5 خطوات محددة للأسبوع القادم. بالعربية، بدون Markdown.");const o=document.createElement("div");o.className="ai";o.textContent=r.text;m.el.appendChild(o);L.write("advisor",L.genId(),{q:"حلّل تقريري الأسبوعي",a:r.text,at:now()})}catch(e){}});
+}
+document.addEventListener("change",e=>{if(e.target.id==="goalN"){L.write("settings","goals",{weekly:+e.target.value});renderStats();renderV34Hub()}});
+document.addEventListener("click",e=>{if(e.target.closest("#weekRep"))weeklyReport()});
+
+/* =============== Hub card: upcoming, follow-ups, goal =============== */
+function renderV34Hub(){
+  const host=$("#v34Hub");if(!host)return;const t=today(),lim=new Date(Date.now()+14*dayMs).toISOString().slice(0,10);
+  const evs=eventsArr().filter(e=>e.date>=t&&e.date<=lim);
+  const dls=jobsArr().filter(j=>j.deadline&&j.status!=="rejected"&&j.status!=="offer"&&!j.appliedAt).map(j=>Object.assign(j,{dd:daysTo(j.deadline)})).filter(j=>j.dd!=null&&j.dd>=0&&j.dd<=3).sort((a,b)=>a.dd-b.dd);
+  const fus=dueFollowups(),s=stats(),isFri=new Date().getDay()===5;
+  const items=[];
+  evs.slice(0,4).forEach(e=>{const j=(S().jobs||{})[e.jobId];items.push('<button class="up-it up-ev" data-ev="'+esc(e.id)+'" type="button"><span class="up-k">'+esc(EVT[e.type])+'</span><b>'+esc(fmtD(e.date))+(e.time?" · "+esc(e.time):"")+'</b><span>'+esc(j?j.title:(e.notes||""))+'</span></button>')});
+  dls.slice(0,4).forEach(j=>items.push('<button class="up-it up-dl" data-job="'+esc(j.id)+'" type="button"><span class="up-k">آخر موعد</span><b>'+(j.dd===0?"اليوم":j.dd===1?"غدًا":j.dd===2?"بعد يومين":"بعد "+j.dd+" أيام")+'</b><span>'+esc(j.title)+'</span></button>'));
+  fus.slice(0,3).forEach(j=>items.push('<button class="up-it up-fu" data-fu="'+esc(j.id)+'" type="button"><span class="up-k">متابعة مستحقة</span><b>'+Math.floor((Date.now()-Date.parse(j.appliedAt))/dayMs)+' يومًا بلا رد</b><span>'+esc(j.title)+'</span></button>'));
+  host.innerHTML='<div class="card v34hub"><div class="row" style="justify-content:space-between"><b>مواعيدي ومتابعاتي</b><span class="goal-mini">'+ring(s.appliedWeek/s.goal)+'<span>'+s.appliedWeek+'/'+s.goal+' هذا الأسبوع</span></span></div>'+
+    (items.length?'<div class="up-list">'+items.join("")+'</div>':'<span class="note">لا مواعيد أو مواعيد نهائية قريبة. أضف موعد مقابلة من زر «المزيد» في أي وظيفة.</span>')+
+    '<div class="row"><button class="btn" id="evNew" type="button">+ موعد</button><button class="btn" id="cvOpen" type="button">سيرتي الذاتية</button>'+(isFri?'<button class="btn pri" id="weekRep" type="button">تقرير الأسبوع</button>':'')+'</div></div>';
+}
+document.addEventListener("click",e=>{
+  const ev=e.target.closest("[data-ev]");if(ev){const x=eventsArr().find(z=>z.id===ev.dataset.ev);if(x)eventForm(x.jobId,x);return}
+  const dl=e.target.closest("#v34Hub [data-job]");if(dl&&window.MasariApply){window.MasariApply(dl.dataset.job);return}
+  const fu=e.target.closest("[data-fu]");if(fu){followSheet(fu.dataset.fu);return}
+  if(e.target.closest("#evNew")){eventForm(null);return}
+  if(e.target.closest("#cvOpen, #cvCardOpen")){cvSheet(null);return}
+});
+
+/* =============== 5. Government exam prep =============== */
+const GOV_CATS={general:"معلومات عامة عن عُمان",numerical:"القدرات العددية",verbal:"القدرات اللغوية",it:"تقنية المعلومات",sales:"المبيعات والتسويق"};
+const BANK=[
+ ["general","ما عاصمة سلطنة عُمان؟",["صلالة","مسقط","صحار","نزوى"],1,"مسقط هي العاصمة."],
+ ["general","ما اسم الرؤية الوطنية الحالية لسلطنة عُمان؟",["رؤية عُمان 2030","رؤية عُمان 2040","رؤية عُمان 2050","رؤية عُمان 2025"],1,"رؤية عُمان 2040 هي الرؤية الوطنية المعتمدة."],
+ ["general","كم عدد محافظات سلطنة عُمان؟",["9","10","11","12"],2,"تتكون سلطنة عُمان من 11 محافظة."],
+ ["general","ما عملة سلطنة عُمان؟",["الدرهم","الريال العُماني","الدينار","الجنيه"],1,"العملة الرسمية هي الريال العُماني."],
+ ["general","أعلى قمة جبلية في سلطنة عُمان هي:",["جبل شمس","جبل سمحان","الجبل الأخضر","جبل حفيت"],0,"جبل شمس هو الأعلى في السلطنة."],
+ ["general","أي محافظة تطل على مضيق هرمز؟",["ظفار","مسندم","الوسطى","الشرقية"],1,"محافظة مسندم تطل على مضيق هرمز."],
+ ["general","في أي يوم يُحتفل بالعيد الوطني العُماني منذ عام 2020؟",["18 نوفمبر","20 نوفمبر","23 يوليو","11 يناير"],1,"أصبح العيد الوطني يوم 20 نوفمبر منذ 2020."],
+ ["general","تولى جلالة السلطان هيثم بن طارق الحكم في عام:",["2018","2019","2020","2021"],2,"تولى الحكم في يناير 2020."],
+ ["numerical","كم يساوي 15٪ من 240؟",["24","32","36","40"],2,"240 × 0.15 = 36."],
+ ["numerical","ما العدد التالي: 3، 6، 12، 24، ؟",["30","36","48","60"],2,"كل عدد ضعف الذي قبله: 24 × 2 = 48."],
+ ["numerical","سعر منتج 80 ريالًا وعليه خصم 25٪، فكم السعر بعد الخصم؟",["55","60","65","70"],1,"الخصم 20 ريالًا، والسعر 60."],
+ ["numerical","ما العدد التالي: 2، 5، 10، 17، 26، ؟",["35","36","37","38"],2,"الفروق 3، 5، 7، 9، ثم 11، فالعدد 37."],
+ ["numerical","ينجز عامل عملًا في 6 أيام، وآخر في 3 أيام. كم يومًا يحتاجان معًا؟",["2","3","4","4.5"],0,"معدلهما معًا 1/6 + 1/3 = 1/2 من العمل يوميًا، أي يومان."],
+ ["numerical","كم تساوي 7/8 كنسبة مئوية؟",["78٪","85٪","87.5٪","90٪"],2,"7 ÷ 8 = 0.875 = 87.5٪."],
+ ["numerical","سيارة تسير بسرعة 90 كم/س لمدة ساعتين ونصف. كم المسافة؟",["200 كم","215 كم","225 كم","250 كم"],2,"90 × 2.5 = 225 كم."],
+ ["numerical","قُسم 64 بنسبة 3 إلى 5. ما الجزء الأكبر؟",["24","36","40","48"],2,"64 ÷ 8 = 8، والجزء الأكبر 5 × 8 = 40."],
+ ["verbal","مرادف كلمة «يُجيد»:",["يُتقن","يُهمل","يُؤجل","يُكرر"],0,"يُجيد بمعنى يُتقن."],
+ ["verbal","ضد كلمة «الإيجاز»:",["الاختصار","الإطناب","الوضوح","الدقة"],1,"الإطناب هو التطويل، وهو ضد الإيجاز."],
+ ["verbal","Choose the synonym of «accurate»:",["precise","rough","fast","late"],0,"accurate = precise."],
+ ["verbal","Choose the correct sentence:",["She has worked here since 2020.","She works here since 2020.","She is working here since 2020.","She worked here since 2020."],0,"مع since لحالة مستمرة نستخدم present perfect."],
+ ["verbal","The opposite of «expand» is:",["grow","contract","extend","increase"],1,"contract = ينكمش، وهو ضد expand."],
+ ["it","ما المنفذ الافتراضي لبروتوكول HTTPS؟",["21","80","443","3389"],2,"HTTPS يستخدم المنفذ 443."],
+ ["it","في أي طبقة من نموذج OSI يعمل بروتوكول IP؟",["طبقة النقل","طبقة الشبكة","طبقة ربط البيانات","طبقة التطبيقات"],1,"IP يعمل في طبقة الشبكة (الطبقة الثالثة)."],
+ ["it","ما وظيفة خدمة DNS؟",["توزيع عناوين IP تلقائيًا","تحويل أسماء النطاقات إلى عناوين IP","تشفير البيانات","حجب المواقع"],1,"DNS يحوّل اسم النطاق إلى عنوان IP."],
+ ["it","ما وظيفة خدمة DHCP؟",["تحويل الأسماء إلى عناوين","منح عناوين IP للأجهزة تلقائيًا","مراقبة الشبكة","النسخ الاحتياطي"],1,"DHCP يوزّع عناوين IP وإعدادات الشبكة تلقائيًا."],
+ ["it","مستوى RAID الذي يعتمد على النسخ المتطابق (Mirroring) هو:",["RAID 0","RAID 1","RAID 5","RAID 10 فقط"],1,"RAID 1 يكتب البيانات نفسها على قرصين."],
+ ["it","أي نطاق عناوين يُعد خاصًا (Private)؟",["8.8.8.0/24","192.168.0.0/16","172.217.0.0/16","1.1.1.0/24"],1,"192.168.0.0/16 من النطاقات الخاصة وفق RFC 1918."],
+ ["it","قناع الشبكة المقابل لـ /24 هو:",["255.0.0.0","255.255.0.0","255.255.255.0","255.255.255.255"],2,"/24 = 255.255.255.0."],
+ ["it","أي أمر يُستخدم لاختبار الاتصال بجهاز آخر في الشبكة؟",["ping","dir","format","chkdsk"],0,"ping يرسل حزم ICMP لاختبار الوصول."],
+ ["it","التصيّد الاحتيالي (Phishing) هو:",["فيروس يدمر القرص","خداع المستخدم ليكشف بياناته عبر رسائل أو مواقع مزيفة","هجوم على الكهرباء","نسخ احتياطي غير مشفر"],1,"التصيّد يعتمد على الخداع لسرقة البيانات."],
+ ["sales","ماذا يعني مصطلح B2B؟",["بيع الشركات للأفراد","بيع الشركات للشركات","بيع الأفراد للأفراد","البيع الحكومي"],1,"Business-to-Business = من شركة إلى شركة."],
+ ["sales","ماذا يعني CRM؟",["إدارة علاقات العملاء","إدارة الموارد المالية","نظام إدارة المخزون","تحليل المنافسين"],0,"Customer Relationship Management."],
+ ["sales","معدل التحويل (Conversion Rate) في المبيعات هو:",["عدد الموظفين ÷ المبيعات","الصفقات المغلقة ÷ العملاء المحتملين","الأرباح ÷ التكاليف","المبيعات ÷ السنوات"],1,"نسبة من تحوّلوا إلى عملاء فعليين."],
+ ["sales","عرض منتج أعلى قيمة على عميل يشتري بالفعل يُسمى:",["Cross-selling","Upselling","Discounting","Prospecting"],1,"Upselling = الترقية إلى منتج أعلى قيمة."],
+ ["sales","الخطوة الأولى عادة في دورة البيع هي:",["إغلاق الصفقة","البحث عن العملاء المحتملين (Prospecting)","المتابعة بعد البيع","التفاوض"],1,"تبدأ الدورة بالبحث عن العملاء المحتملين وتأهيلهم."]
+].map((q,i)=>({id:"b"+i,cat:q[0],q:q[1],o:q[2],a:q[3],x:q[4]}));
+const bankAll=()=>BANK.concat(Object.entries(S().govBank||{}).map(([id,q])=>Object.assign({id},q)));
+let gx=null,gTimer=null,gRes=false;
+function renderGov(){
+  const host=$("#dev-gov");if(!host||gx||gRes)return;const all=bankAll();const counts={};all.forEach(q=>counts[q.cat]=(counts[q.cat]||0)+1);
+  const hist=Object.values(S().govExams||{}).sort((a,b)=>(b.at||"").localeCompare(a.at||"")).slice(0,6);
+  host.innerHTML='<div class="card"><b>الاستعداد للاختبارات الحكومية</b><span class="note">أسئلة على نمط الاختبارات التحريرية في وزارة العمل والجهات الحكومية: معلومات عامة، وقدرات عددية ولغوية، وأسئلة تخصصية. مجموع الأسئلة '+all.length+'.</span>'+
+    '<div class="grid2"><label for="gCat">نوع الاختبار<select id="gCat"><option value="mix-it">شامل: أخصائي حاسب آلي</option><option value="mix-sales">شامل: مدير مبيعات</option>'+Object.entries(GOV_CATS).map(([k,v])=>'<option value="'+k+'">'+v+' ('+(counts[k]||0)+')</option>').join("")+'</select></label>'+
+    '<label for="gN">عدد الأسئلة<select id="gN"><option>10</option><option selected>20</option><option>30</option></select></label></div>'+
+    '<label class="hub-act" for="gTime"><input type="checkbox" id="gTime" checked><span>بوقت محدد (دقيقة لكل سؤال، مثل الاختبار الحقيقي)</span></label>'+
+    '<div class="row"><button class="btn pri" id="gStart" type="button">ابدأ الاختبار التجريبي</button><button class="btn" id="gMore" type="button">أسئلة جديدة من Claude</button></div></div>'+
+    (hist.length?'<div class="card"><b>نتائجك السابقة</b>'+hist.map(h=>'<div class="axrow"><div class="t"><b>'+esc(h.label)+'</b><span class="note">'+esc(new Date(h.at).toLocaleDateString("ar-OM",{day:"numeric",month:"long"}))+' · '+h.score+' من '+h.total+(h.secs?' · '+Math.round(h.secs/60)+' دقيقة':'')+'</span><div class="bar"><i class="'+(h.pct>=70?"ok":h.pct>=50?"mid":"low")+'" style="width:'+h.pct+'%"></i></div></div><b>'+h.pct+'٪</b></div>').join("")+'</div>':'')+
+    '<div class="note">هذه أسئلة تدريبية للتعود على النمط، وليست أسئلة الاختبار الفعلية. راجع إعلان الجهة لمعرفة محاور اختبارها.</div>';
+}
+function pickQs(cat,n){const all=bankAll();let pool;
+  if(cat==="mix-it")pool=all.filter(q=>["general","numerical","verbal","it"].includes(q.cat));else if(cat==="mix-sales")pool=all.filter(q=>["general","numerical","verbal","sales"].includes(q.cat));else pool=all.filter(q=>q.cat===cat);
+  pool=pool.slice().sort(()=>Math.random()-.5);return pool.slice(0,Math.min(n,pool.length));}
+function gRender(){
+  const host=$("#dev-gov");if(!gx)return;if(gx.i>=gx.qs.length){gFinish();return}
+  const q=gx.qs[gx.i];const left=gx.deadline?Math.max(0,Math.round((gx.deadline-Date.now())/1000)):null;
+  host.innerHTML='<div class="card"><div class="row" style="justify-content:space-between"><span class="note">سؤال '+(gx.i+1)+' من '+gx.qs.length+' · '+esc(GOV_CATS[q.cat]||"")+'</span>'+(left!=null?'<b class="g-timer'+(left<60?" low":"")+'" id="gClock">'+Math.floor(left/60)+':'+String(left%60).padStart(2,"0")+'</b>':'')+'</div><div class="bar"><i style="width:'+Math.round(gx.i/gx.qs.length*100)+'%"></i></div>'+
+    '<div class="qtext" dir="auto">'+esc(q.q)+'</div><div class="stack" style="gap:8px">'+q.o.map((o,k)=>'<button class="opt" data-gk="'+k+'" type="button"><span class="ol">'+"أبجد"[k]+'</span><span class="ot" dir="auto">'+esc(o)+'</span></button>').join("")+'</div>'+
+    '<div class="row"><button class="btn ghost" id="gSkip" type="button">تخطَّ</button><button class="btn ghost danger" id="gEnd" type="button">إنهاء</button></div></div>';
+}
+function gFinish(){
+  clearInterval(gTimer);gTimer=null;const host=$("#dev-gov");const t=gx.qs.length,sc=gx.ans.filter((a,i)=>a===gx.qs[i].a).length,pct=t?Math.round(sc/t*100):0;
+  const per={};gx.qs.forEach((q,i)=>{const p=per[q.cat]=per[q.cat]||[0,0];p[1]++;if(gx.ans[i]===q.a)p[0]++});
+  const secs=Math.round((Date.now()-gx.start)/1000);
+  L.write("govExams",L.genId(),{label:gx.label,score:sc,total:t,pct,per,secs,at:now()});
+  L.write("activities",L.genId(),{text:"اختبار حكومي تجريبي ("+gx.label+"): "+sc+" من "+t,kind:"study",at:now()});
+  const wrong=gx.qs.map((q,i)=>({q,a:gx.ans[i]})).filter(x=>x.a!==x.q.a);
+  host.innerHTML='<div class="card"><div class="score"><b>'+pct+'٪</b><span>'+sc+' من '+t+' · '+Math.floor(secs/60)+' دقيقة</span></div><div class="note">'+(pct>=80?"مستوى ممتاز، حافظ عليه بالتدرب أسبوعيًا.":pct>=60?"جيد. راجع الأسئلة الخاطئة، وركّز على المحور الأضعف.":"تحتاج تدريبًا أكثر. ابدأ بالمحور الأضعف، وأعد الاختبار بعد يومين.")+'</div>'+
+    Object.entries(per).map(([c,v])=>'<div class="row" style="justify-content:space-between"><span>'+esc(GOV_CATS[c]||c)+'</span><span class="note">'+v[0]+' / '+v[1]+'</span></div>').join("")+
+    (wrong.length?'<b>راجع أخطاءك</b>'+wrong.map(w=>'<div class="fix"><div dir="auto">'+esc(w.q.q)+'</div><span class="note">إجابتك: '+esc(w.a==null?"لم تُجب":w.q.o[w.a])+' · الصحيح: <b>'+esc(w.q.o[w.q.a])+'</b>'+(w.q.x?' — '+esc(w.q.x):'')+'</span></div>').join(""):'')+
+    '<div class="row"><button class="btn pri" id="gAgain" type="button">اختبار جديد</button></div></div>';
+  gx=null;gRes=true;
+}
+document.addEventListener("click",async e=>{
+  if(e.target.closest("#gStart")){const cat=$("#gCat").value,n=+$("#gN").value,timed=$("#gTime").checked;const qs=pickQs(cat,n);if(!qs.length){toast("لا توجد أسئلة في هذا النوع بعد. اطلب أسئلة جديدة من Claude.");return}
+    gx={qs,i:0,ans:[],start:Date.now(),deadline:timed?Date.now()+qs.length*60000:null,label:$("#gCat").selectedOptions[0].textContent.replace(/\s*\(\d+\)$/,"")};gRender();
+    if(timed){clearInterval(gTimer);gTimer=setInterval(()=>{if(!gx){clearInterval(gTimer);return}const left=Math.max(0,Math.round((gx.deadline-Date.now())/1000));const c=$("#gClock");if(c){c.textContent=Math.floor(left/60)+":"+String(left%60).padStart(2,"0");c.classList.toggle("low",left<60)}if(!left){toast("انتهى الوقت");gFinish()}},1000)}return}
+  const o=e.target.closest("#dev-gov [data-gk]");if(o&&gx){gx.ans[gx.i]=+o.dataset.gk;const q=gx.qs[gx.i];o.classList.add(+o.dataset.gk===q.a?"ok":"bad");document.querySelectorAll("#dev-gov .opt").forEach(b=>{b.disabled=true;if(+b.dataset.gk===q.a)b.classList.add("ok")});setTimeout(()=>{if(gx){gx.i++;gRender()}},650);return}
+  if(e.target.closest("#gSkip")&&gx){gx.ans[gx.i]=null;gx.i++;gRender();return}
+  if(e.target.closest("#gEnd")&&gx){gx.qs=gx.qs.slice(0,gx.i);gx.ans=gx.ans.slice(0,gx.i);if(gx.qs.length)gFinish();else{gx=null;clearInterval(gTimer);renderGov()}return}
+  if(e.target.closest("#gAgain")){gRes=false;renderGov();return}
+  if(e.target.closest("#gMore")){const cat=$("#gCat").value;const c=cat.startsWith("mix")?(cat==="mix-sales"?"sales":"it"):cat;
+    try{const arr=await L.sample.json("اكتب 10 أسئلة اختيار من متعدد جديدة على نمط الاختبارات التحريرية للتوظيف الحكومي في سلطنة عُمان، في محور: "+GOV_CATS[c]+(c==="it"?" (لوظيفة أخصائي حاسب آلي: شبكات، أنظمة تشغيل، قواعد بيانات، أمن معلومات، Office)":c==="sales"?" (لوظيفة مدير مبيعات)":"")+". 4 خيارات وإجابة صحيحة واحدة، ونوّع موضع الإجابة. لا تضع معلومة غير مؤكدة؛ في المعلومات العامة اكتفِ بالحقائق الثابتة. x = شرح قصير بالعربية.\nأعد JSON فقط: [{\"q\":\"\",\"o\":[\"\",\"\",\"\",\"\"],\"a\":0,\"x\":\"\"}]",{title:"أسئلة اختبارات حكومية"});
+      let n=0;(Array.isArray(arr)?arr:[]).forEach(q=>{if(q&&q.q&&Array.isArray(q.o)&&q.o.length>=2&&+q.a>=0&&+q.a<q.o.length){L.write("govBank",L.genId(),{cat:c,q:String(q.q),o:q.o.map(String),a:+q.a,x:String(q.x||""),at:now()});n++}});toast("أُضيف "+n+" سؤالًا إلى البنك");renderGov()}catch(err){}}
+});
+
+/* =============== Mount =============== */
+function mount(){
+  const hub=$("#todayHub");if(hub&&!$("#v34Hub")){const d=document.createElement("div");d.id="v34Hub";const ig=$("#igBar");(ig||hub).after(d)}
+  mountFilters();
+  const act=$("#tab-act");if(act&&!$("#v34Stats")){const d=document.createElement("div");d.id="v34Stats";const h=act.querySelector(".pipe");(h||act.firstElementChild).before(d)}
+  const docs=$("#tab-docs");if(docs&&!$("#cvCard")){const c=document.createElement("div");c.className="card";c.id="cvCard";
+    c.innerHTML='<div class="row" style="justify-content:space-between"><h2>سيرتي الذاتية</h2></div><span class="note">سيرة احترافية متوافقة مع أنظمة الفرز ATS بالعربية والإنجليزية، ونسخة مخصصة لكل وظيفة من زر «المزيد».</span><div class="row"><button class="btn pri" id="cvCardOpen" type="button">افتح منشئ السيرة</button></div>';
+    const anchor=$("#contactsCard")||(($("#saveProf")||{}).closest?$("#saveProf").closest(".card"):null);anchor?anchor.before(c):docs.appendChild(c)}
+}
+let raf=0;const refresh=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;enhanceCards();renderV34Hub();renderStats();renderGov();if(F.view==="board")renderBoard()})};
+let prevStatus=null;
+document.addEventListener("DOMContentLoaded",()=>{
+  mount();
+  new MutationObserver(()=>{if(!document.querySelector("#jobList article.card:not([data-v34done])"))return;document.querySelectorAll("#jobList article.card").forEach(a=>a.dataset.v34done="1");refresh()}).observe($("#jobList"),{childList:true});
+  window.claude.use("db").then(db=>{if(!db)return;
+    db.collection("jobs").onSnapshot(s=>{const cur={};s.docs.forEach(d=>{cur[d.id]=(d.data()||{}).status});
+      if(prevStatus){for(const id in cur){if(prevStatus[id]&&prevStatus[id]!==cur[id]){const j=(S().jobs||{})[id];if(j&&!j.statusAt||j&&Date.now()-Date.parse(j.statusAt||0)>5000)L.update("jobs",id,{statusAt:now()})}}}
+      prevStatus=cur;refresh()});
+    ["events","govExams","govBank","plan"].forEach(c=>db.collection(c).onSnapshot(refresh));
+    db.doc("settings/goals").onSnapshot(refresh);
+  });
+  setInterval(refresh,60000);
 });
 })();
 
