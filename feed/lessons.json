@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-02T06:00:00Z",
+ "updatedAt": "2026-11-02T21:45:00+04:00",
  "lessons": [
   {
    "id": "it-001",
@@ -20,7 +20,17 @@
       "اختيار برنامج النسخ الاحتياطي"
      ],
      "a": 1,
-     "x": "تحديد شهية المخاطر قرار توجيهي يتخذه المجلس أو الإدارة العليا، أما البقية فأعمال تنفيذية."
+     "x": "تحديد شهية المخاطر قرار توجيهي يتخذه المجلس أو الإدارة العليا، أما البقية فأعمال تنفيذية.",
+     "en": {
+      "q": "Which of the following is governance rather than management?",
+      "o": [
+       "Installing a new firewall",
+       "Approving the organization's acceptable level of risk",
+       "Following up help desk tickets",
+       "Choosing backup software"
+      ],
+      "x": "Setting the risk appetite is a directing decision by the board or senior management; the rest are execution tasks."
+     }
     },
     {
      "q": "ماذا تعني الحروف EDM في نموذج حوكمة التقنية؟",
@@ -31,7 +41,17 @@
       "Estimate, Decide, Measure"
      ],
      "a": 1,
-     "x": "Evaluate, Direct, Monitor هي مهام جهة الحوكمة في ISO/IEC 38500 وفي مجال EDM في COBIT."
+     "x": "Evaluate, Direct, Monitor هي مهام جهة الحوكمة في ISO/IEC 38500 وفي مجال EDM في COBIT.",
+     "en": {
+      "q": "What does EDM stand for in the IT governance model?",
+      "o": [
+       "Execute, Deliver, Maintain",
+       "Evaluate, Direct, Monitor",
+       "Enable, Design, Manage",
+       "Estimate, Decide, Measure"
+      ],
+      "x": "Evaluate, Direct and Monitor are the governing body's tasks in ISO/IEC 38500 and the EDM domain of COBIT."
+     }
     },
     {
      "q": "كم عدد مجالات الإدارة (Management) في COBIT 2019؟",
@@ -42,7 +62,17 @@
       "خمسة"
      ],
      "a": 2,
-     "x": "أربعة: APO وBAI وDSS وMEA، إضافة إلى مجال حوكمة واحد هو EDM."
+     "x": "أربعة: APO وBAI وDSS وMEA، إضافة إلى مجال حوكمة واحد هو EDM.",
+     "en": {
+      "q": "How many management domains are in COBIT 2019?",
+      "o": [
+       "One",
+       "Three",
+       "Four",
+       "Five"
+      ],
+      "x": "Four: APO, BAI, DSS and MEA, plus one governance domain, EDM."
+     }
     }
    ],
    "sources": [
@@ -59,15 +89,27 @@
    "interview": [
     {
      "q": "What is the difference between IT governance and IT management?",
-     "a": "Governance evaluates, directs and monitors — it is the board's responsibility. Management plans, builds, runs and monitors activities in line with that direction."
+     "a": "Governance evaluates, directs and monitors — it is the board's responsibility. Management plans, builds, runs and monitors activities in line with that direction.",
+     "ar": {
+      "q": "ما الفرق بين حوكمة تقنية المعلومات وإدارتها؟",
+      "a": "الحوكمة تقيّم وتوجّه وتراقب، وهي مسؤولية مجلس الإدارة. الإدارة تخطط وتبني وتشغّل وتراقب الأنشطة وفق هذا التوجيه."
+     }
     },
     {
      "q": "ما النموذج الذي يلخّص عمل الحوكمة؟",
-     "a": "نموذج EDM في ISO/IEC 38500: التقييم والتوجيه والمراقبة، وهو نفسه مجال الحوكمة في COBIT 2019."
+     "a": "نموذج EDM في ISO/IEC 38500: التقييم والتوجيه والمراقبة، وهو نفسه مجال الحوكمة في COBIT 2019.",
+     "en": {
+      "q": "Which model summarizes the work of governance?",
+      "a": "The EDM model in ISO/IEC 38500: Evaluate, Direct and Monitor, which is also the governance domain in COBIT 2019."
+     }
     },
     {
      "q": "أعطِ مثالًا على قرار حوكمة.",
-     "a": "اعتماد مستوى المخاطر المقبول، أو أولويات الاستثمار التقني، أو سياسة أمن المعلومات العامة."
+     "a": "اعتماد مستوى المخاطر المقبول، أو أولويات الاستثمار التقني، أو سياسة أمن المعلومات العامة.",
+     "en": {
+      "q": "Give an example of a governance decision.",
+      "a": "Approving the acceptable level of risk, IT investment priorities, or the overall information security policy."
+     }
     }
    ]
   },
@@ -90,7 +132,17 @@
       "MEA"
      ],
      "a": 2,
-     "x": "تشغيل الخدمة ودعمها، ومنه إدارة الحوادث، يقع في DSS (Deliver, Service and Support)."
+     "x": "تشغيل الخدمة ودعمها، ومنه إدارة الحوادث، يقع في DSS (Deliver, Service and Support).",
+     "en": {
+      "q": "Which domain does managing incidents and service requests belong to?",
+      "o": [
+       "APO",
+       "BAI",
+       "DSS",
+       "MEA"
+      ],
+      "x": "Running and supporting services, including incident management, sits in DSS (Deliver, Service and Support)."
+     }
     },
     {
      "q": "كم عدد أهداف مجال APO؟",
@@ -101,7 +153,17 @@
       "6"
      ],
      "a": 2,
-     "x": "APO هو أكبر المجالات، وفيه 14 هدفًا."
+     "x": "APO هو أكبر المجالات، وفيه 14 هدفًا.",
+     "en": {
+      "q": "How many objectives are in the APO domain?",
+      "o": [
+       "5",
+       "11",
+       "14",
+       "6"
+      ],
+      "x": "APO is the largest domain, with 14 objectives."
+     }
     },
     {
      "q": "ما الذي يُستخدم لتكييف نظام الحوكمة حسب ظروف المؤسسة؟",
@@ -112,7 +174,17 @@
       "مصفوفة RACI"
      ],
      "a": 1,
-     "x": "عوامل التصميم تحدد أولويات نظام الحوكمة وطريقة تخصيصه لكل مؤسسة."
+     "x": "عوامل التصميم تحدد أولويات نظام الحوكمة وطريقة تخصيصه لكل مؤسسة.",
+     "en": {
+      "q": "What is used to tailor the governance system to an organization?",
+      "o": [
+       "Capability levels",
+       "Design factors",
+       "The MEA domain",
+       "A RACI matrix"
+      ],
+      "x": "Design factors set the priorities of the governance system and how it is tailored."
+     }
     }
    ],
    "sources": [
@@ -125,15 +197,27 @@
    "interview": [
     {
      "q": "اذكر مجالات COBIT 2019 الخمسة.",
-     "a": "EDM للحوكمة، وAPO وBAI وDSS وMEA للإدارة."
+     "a": "EDM للحوكمة، وAPO وBAI وDSS وMEA للإدارة.",
+     "en": {
+      "q": "Name the five COBIT 2019 domains.",
+      "a": "EDM for governance, and APO, BAI, DSS and MEA for management."
+     }
     },
     {
      "q": "ما عوامل التصميم ولماذا نحتاجها؟",
-     "a": "11 عاملًا مثل الاستراتيجية والمخاطر وحجم المؤسسة، نستخدمها لتفصيل نظام الحوكمة بدل تطبيق الإطار كاملًا بشكل حرفي."
+     "a": "11 عاملًا مثل الاستراتيجية والمخاطر وحجم المؤسسة، نستخدمها لتفصيل نظام الحوكمة بدل تطبيق الإطار كاملًا بشكل حرفي.",
+     "en": {
+      "q": "What are design factors and why do we need them?",
+      "a": "Eleven factors, such as strategy, risk profile and enterprise size, used to tailor the governance system instead of applying the whole framework literally."
+     }
     },
     {
      "q": "إلى أي مجال تنتمي إدارة المخاطر في COBIT؟",
-     "a": "APO12 Managed Risk في مجال الإدارة، ويقابله EDM03 Ensured Risk Optimization في الحوكمة."
+     "a": "APO12 Managed Risk في مجال الإدارة، ويقابله EDM03 Ensured Risk Optimization في الحوكمة.",
+     "en": {
+      "q": "Which domain does risk management belong to in COBIT?",
+      "a": "APO12 Managed Risk in management, with EDM03 Ensured Risk Optimization in governance."
+     }
     }
    ]
   },
@@ -156,7 +240,17 @@
       "Keep it simple and practical"
      ],
      "a": 2,
-     "x": "المبدأ الصحيح هو Optimize and automate، أي التحسين قبل الأتمتة."
+     "x": "المبدأ الصحيح هو Optimize and automate، أي التحسين قبل الأتمتة.",
+     "en": {
+      "q": "Which of these is NOT one of the seven ITIL 4 guiding principles?",
+      "o": [
+       "Focus on value",
+       "Start where you are",
+       "Automate first",
+       "Keep it simple and practical"
+      ],
+      "x": "The correct principle is Optimize and automate: optimize before you automate."
+     }
     },
     {
      "q": "«الشركاء والموردون» هو:",
@@ -167,7 +261,17 @@
       "ممارسة"
      ],
      "a": 1,
-     "x": "Partners and suppliers أحد الأبعاد الأربعة لإدارة الخدمة."
+     "x": "Partners and suppliers أحد الأبعاد الأربعة لإدارة الخدمة.",
+     "en": {
+      "q": "\"Partners and suppliers\" is a:",
+      "o": [
+       "Guiding principle",
+       "One of the four dimensions",
+       "Value chain activity",
+       "Practice"
+      ],
+      "x": "Partners and suppliers is one of the four dimensions of service management."
+     }
     },
     {
      "q": "أي نشاط في سلسلة القيمة يتعامل مع فهم احتياجات أصحاب المصلحة والتواصل معهم؟",
@@ -178,7 +282,17 @@
       "Deliver and support"
      ],
      "a": 0,
-     "x": "Engage مسؤول عن العلاقة والتواصل مع أصحاب المصلحة."
+     "x": "Engage مسؤول عن العلاقة والتواصل مع أصحاب المصلحة.",
+     "en": {
+      "q": "Which value chain activity deals with understanding and communicating with stakeholders?",
+      "o": [
+       "Engage",
+       "Obtain/build",
+       "Plan",
+       "Deliver and support"
+      ],
+      "x": "Engage handles relationships and communication with stakeholders."
+     }
     }
    ],
    "sources": [
@@ -191,15 +305,27 @@
    "interview": [
     {
      "q": "What are the seven ITIL 4 guiding principles?",
-     "a": "Focus on value; start where you are; progress iteratively with feedback; collaborate and promote visibility; think and work holistically; keep it simple and practical; optimize and automate."
+     "a": "Focus on value; start where you are; progress iteratively with feedback; collaborate and promote visibility; think and work holistically; keep it simple and practical; optimize and automate.",
+     "ar": {
+      "q": "ما المبادئ التوجيهية السبعة في ITIL 4؟",
+      "a": "التركيز على القيمة، والبدء من حيث أنت، والتقدم التدريجي مع التغذية الراجعة، والتعاون والشفافية، والتفكير الشمولي، والبساطة والعملية، والتحسين ثم الأتمتة."
+     }
     },
     {
      "q": "ما الفرق بين الحادث والمشكلة؟",
-     "a": "الحادث انقطاع نعيد فيه الخدمة بسرعة، والمشكلة سببه الجذري الذي نحلله لمنع التكرار."
+     "a": "الحادث انقطاع نعيد فيه الخدمة بسرعة، والمشكلة سببه الجذري الذي نحلله لمنع التكرار.",
+     "en": {
+      "q": "What is the difference between an incident and a problem?",
+      "a": "An incident is an interruption where we restore service fast; a problem is its root cause, which we analyze to prevent recurrence."
+     }
     },
     {
      "q": "ما أنشطة سلسلة قيمة الخدمة؟",
-     "a": "التخطيط، والتحسين، والتواصل، والتصميم والانتقال، والحصول أو البناء، والتسليم والدعم."
+     "a": "التخطيط، والتحسين، والتواصل، والتصميم والانتقال، والحصول أو البناء، والتسليم والدعم.",
+     "en": {
+      "q": "What are the service value chain activities?",
+      "a": "Plan, improve, engage, design and transition, obtain/build, and deliver and support."
+     }
     }
    ]
   },
@@ -222,7 +348,17 @@
       "34"
      ],
      "a": 1,
-     "x": "93 ضابطًا. الرقم 114 كان في إصدار 2013."
+     "x": "93 ضابطًا. الرقم 114 كان في إصدار 2013.",
+     "en": {
+      "q": "How many Annex A controls are in ISO/IEC 27001:2022?",
+      "o": [
+       "114",
+       "93",
+       "40",
+       "34"
+      ],
+      "x": "93 controls. 114 was the 2013 edition."
+     }
     },
     {
      "q": "أكبر محور من حيث عدد الضوابط هو:",
@@ -233,7 +369,17 @@
       "الأفراد"
      ],
      "a": 2,
-     "x": "المحور التنظيمي فيه 37 ضابطًا، ثم التقني بـ34 ضابطًا."
+     "x": "المحور التنظيمي فيه 37 ضابطًا، ثم التقني بـ34 ضابطًا.",
+     "en": {
+      "q": "The theme with the most controls is:",
+      "o": [
+       "Technological",
+       "Physical",
+       "Organizational",
+       "People"
+      ],
+      "x": "Organizational has 37 controls, followed by technological with 34."
+     }
     },
     {
      "q": "ما الوثيقة التي تبيّن الضوابط المطبقة والمستبعدة ومبرراتها؟",
@@ -244,7 +390,17 @@
       "SLA"
      ],
      "a": 1,
-     "x": "بيان قابلية التطبيق (SoA) مطلب أساسي في المعيار."
+     "x": "بيان قابلية التطبيق (SoA) مطلب أساسي في المعيار.",
+     "en": {
+      "q": "Which document shows the applied and excluded controls and the reasons?",
+      "o": [
+       "Risk Register",
+       "Statement of Applicability",
+       "Business Impact Analysis",
+       "SLA"
+      ],
+      "x": "The Statement of Applicability (SoA) is a core requirement of the standard."
+     }
     }
    ],
    "sources": [
@@ -257,15 +413,27 @@
    "interview": [
     {
      "q": "How many controls are in ISO/IEC 27001:2022 Annex A?",
-     "a": "93 controls in four themes: organizational (37), people (8), physical (14) and technological (34)."
+     "a": "93 controls in four themes: organizational (37), people (8), physical (14) and technological (34).",
+     "ar": {
+      "q": "كم عدد ضوابط الملحق A في ISO/IEC 27001:2022؟",
+      "a": "93 ضابطًا في أربعة محاور: تنظيمية 37، وأشخاص 8، ومادية 14، وتقنية 34."
+     }
     },
     {
      "q": "ما بيان قابلية التطبيق؟",
-     "a": "وثيقة إلزامية تذكر كل ضابط، وهل طُبّق أم استُبعد ولماذا، بناءً على تقييم المخاطر."
+     "a": "وثيقة إلزامية تذكر كل ضابط، وهل طُبّق أم استُبعد ولماذا، بناءً على تقييم المخاطر.",
+     "en": {
+      "q": "What is the Statement of Applicability?",
+      "a": "A mandatory document listing every control, whether it is implemented or excluded and why, based on the risk assessment."
+     }
     },
     {
      "q": "ما الفرق بين 27001 و27002؟",
-     "a": "27001 هو المعيار الذي تُمنح عليه الشهادة ويحدد المتطلبات، و27002 دليل إرشادي يشرح تطبيق الضوابط."
+     "a": "27001 هو المعيار الذي تُمنح عليه الشهادة ويحدد المتطلبات، و27002 دليل إرشادي يشرح تطبيق الضوابط.",
+     "en": {
+      "q": "What is the difference between 27001 and 27002?",
+      "a": "27001 is the certifiable standard that sets the requirements; 27002 is guidance on implementing the controls."
+     }
     }
    ]
   },
@@ -288,7 +456,17 @@
       "Answer me about the job."
      ],
      "a": 1,
-     "x": "I wanted to follow up… مهذبة ومهنية، والماضي فيها للتلطيف."
+     "x": "I wanted to follow up… مهذبة ومهنية، والماضي فيها للتلطيف.",
+     "ar": {
+      "q": "اختر الافتتاحية الأكثر تهذيبًا:",
+      "x": "I wanted to follow up… مهذبة ومهنية، والماضي فيها للتلطيف.",
+      "o": [
+       "I want to know what happened to my application.",
+       "I wanted to follow up on my application.",
+       "Why didn't you reply to my application?",
+       "Answer me about the job."
+      ]
+     }
     },
     {
      "q": "Complete: I look forward to ___ from you.",
@@ -299,7 +477,17 @@
       "be hearing"
      ],
      "a": 1,
-     "x": "بعد look forward to يأتي الفعل بصيغة -ing لأن to هنا حرف جر."
+     "x": "بعد look forward to يأتي الفعل بصيغة -ing لأن to هنا حرف جر.",
+     "ar": {
+      "q": "أكمل: I look forward to ___ from you.",
+      "x": "بعد look forward to يأتي الفعل بصيغة -ing لأن to هنا حرف جر.",
+      "o": [
+       "hear",
+       "hearing",
+       "heard",
+       "be hearing"
+      ]
+     }
     },
     {
      "q": "The best closing for a formal email is:",
@@ -310,7 +498,17 @@
       "Thanks bro"
      ],
      "a": 1,
-     "x": "Kind regards أو Best regards هي الخاتمة المناسبة للرسائل الرسمية."
+     "x": "Kind regards أو Best regards هي الخاتمة المناسبة للرسائل الرسمية.",
+     "ar": {
+      "q": "أفضل خاتمة لرسالة رسمية:",
+      "x": "Kind regards أو Best regards هي الخاتمة المناسبة للرسائل الرسمية.",
+      "o": [
+       "Bye",
+       "Kind regards,",
+       "See ya",
+       "Thanks bro"
+      ]
+     }
     }
    ],
    "sources": [
@@ -327,15 +525,27 @@
    "interview": [
     {
      "q": "How would you follow up on an application?",
-     "a": "I'd send a short, polite email after about a week, mentioning the position and date I applied, restating my interest, and thanking them for their time."
+     "a": "I'd send a short, polite email after about a week, mentioning the position and date I applied, restating my interest, and thanking them for their time.",
+     "ar": {
+      "q": "كيف تتابع طلب توظيف قدّمته؟",
+      "a": "أرسل بريدًا قصيرًا مهذبًا بعد أسبوع تقريبًا، أذكر فيه الوظيفة وتاريخ التقديم، وأؤكد اهتمامي، وأشكرهم على وقتهم."
+     }
     },
     {
      "q": "ما العبارة المناسبة لبدء رسالة متابعة؟",
-     "a": "I hope you are well. I'm writing to follow up on my application for the ... position."
+     "a": "I hope you are well. I'm writing to follow up on my application for the ... position.",
+     "en": {
+      "q": "What is a good opening line for a follow-up email?",
+      "a": "I hope you are well. I'm writing to follow up on my application for the ... position."
+     }
     },
     {
      "q": "كم مرة أتابع؟",
-     "a": "مرة بعد أسبوع، وأخرى بعد أسبوعين إن لزم، ثم أنتقل لفرص أخرى."
+     "a": "مرة بعد أسبوع، وأخرى بعد أسبوعين إن لزم، ثم أنتقل لفرص أخرى.",
+     "en": {
+      "q": "How many times should I follow up?",
+      "a": "Once after a week, again after two weeks if needed, then move on to other opportunities."
+     }
     }
    ]
   },
@@ -358,7 +568,17 @@
       "I join the company in 2021."
      ],
      "a": 1,
-     "x": "in 2021 وقت محدد في الماضي، لذا نستخدم past simple."
+     "x": "in 2021 وقت محدد في الماضي، لذا نستخدم past simple.",
+     "ar": {
+      "q": "اختر الجملة الصحيحة:",
+      "x": "in 2021 وقت محدد في الماضي، لذا نستخدم past simple.",
+      "o": [
+       "I have joined the company in 2021.",
+       "I joined the company in 2021.",
+       "I am joining the company in 2021 (past).",
+       "I join the company in 2021."
+      ]
+     }
     },
     {
      "q": "I ___ in sales for ten years (and I still work in sales).",
@@ -369,7 +589,17 @@
       "was working"
      ],
      "a": 1,
-     "x": "خبرة مستمرة حتى الآن مع for، لذا present perfect."
+     "x": "خبرة مستمرة حتى الآن مع for، لذا present perfect.",
+     "ar": {
+      "q": "أكمل (وما زلت أعمل في المبيعات): I ___ in sales for ten years.",
+      "x": "خبرة مستمرة حتى الآن مع for، لذا present perfect.",
+      "o": [
+       "worked",
+       "have worked",
+       "work",
+       "was working"
+      ]
+     }
     },
     {
      "q": "Last month I ___ my ITIL 4 Foundation exam.",
@@ -380,7 +610,17 @@
       "have been passing"
      ],
      "a": 1,
-     "x": "last month وقت محدد منتهٍ، لذا past simple."
+     "x": "last month وقت محدد منتهٍ، لذا past simple.",
+     "ar": {
+      "q": "أكمل: Last month I ___ my ITIL 4 Foundation exam.",
+      "x": "last month وقت محدد منتهٍ، لذا past simple.",
+      "o": [
+       "have passed",
+       "passed",
+       "pass",
+       "have been passing"
+      ]
+     }
     }
    ],
    "sources": [
@@ -397,15 +637,27 @@
    "interview": [
     {
      "q": "Tell me about your experience.",
-     "a": "I have worked in IT for several years. In my last role, I managed the network and supported over 200 users."
+     "a": "I have worked in IT for several years. In my last role, I managed the network and supported over 200 users.",
+     "ar": {
+      "q": "حدثني عن خبرتك.",
+      "a": "أعمل في تقنية المعلومات منذ عدة سنوات. وفي وظيفتي الأخيرة أدرت الشبكة ودعمت أكثر من 200 مستخدم."
+     }
     },
     {
      "q": "Have you ever led a project?",
-     "a": "Yes, I have. Last year I led the migration of our email system to Microsoft 365, which we completed on time."
+     "a": "Yes, I have. Last year I led the migration of our email system to Microsoft 365, which we completed on time.",
+     "ar": {
+      "q": "هل سبق أن قدت مشروعًا؟",
+      "a": "نعم. في العام الماضي قدت نقل نظام البريد إلى Microsoft 365، وأنهيناه في الموعد."
+     }
     },
     {
      "q": "ما الخطأ في: I have worked there in 2020؟",
-     "a": "مع تاريخ محدد نستخدم الماضي البسيط: I worked there in 2020."
+     "a": "مع تاريخ محدد نستخدم الماضي البسيط: I worked there in 2020.",
+     "en": {
+      "q": "What is wrong with: I have worked there in 2020?",
+      "a": "With a specific past date we use the past simple: I worked there in 2020."
+     }
     }
    ]
   },
@@ -428,7 +680,17 @@
       "إلغاء المهام المكررة"
      ],
      "a": 1,
-     "x": "فصل المهام ضابط رقابي يمنع أن يتحكم شخص واحد في عملية حساسة من بدايتها لنهايتها."
+     "x": "فصل المهام ضابط رقابي يمنع أن يتحكم شخص واحد في عملية حساسة من بدايتها لنهايتها.",
+     "en": {
+      "q": "\"Segregation of duties\" means:",
+      "o": [
+       "Distributing salaries",
+       "Separating duties to prevent conflicting access",
+       "Dividing the team into departments",
+       "Removing duplicate tasks"
+      ],
+      "x": "Segregation of duties is a control that stops one person controlling a sensitive process end to end."
+     }
     },
     {
      "q": "The maximum acceptable time to restore a system is the:",
@@ -439,7 +701,17 @@
       "SLA"
      ],
      "a": 2,
-     "x": "RTO هو الزمن المستهدف للاستعادة. أما RPO فهو أقصى قدر مقبول من فقدان البيانات."
+     "x": "RTO هو الزمن المستهدف للاستعادة. أما RPO فهو أقصى قدر مقبول من فقدان البيانات.",
+     "ar": {
+      "q": "أقصى زمن مقبول لاستعادة النظام هو:",
+      "x": "RTO هو الزمن المستهدف للاستعادة. أما RPO فهو أقصى قدر مقبول من فقدان البيانات.",
+      "o": [
+       "RPO",
+       "KPI",
+       "RTO",
+       "SLA"
+      ]
+     }
     },
     {
      "q": "Complete: We must ___ the risk by adding a second approval step.",
@@ -450,7 +722,17 @@
       "mediate"
      ],
      "a": 0,
-     "x": "mitigate a risk = تخفيف الخطر."
+     "x": "mitigate a risk = تخفيف الخطر.",
+     "ar": {
+      "q": "أكمل: We must ___ the risk by adding a second approval step.",
+      "x": "mitigate a risk = تخفيف الخطر.",
+      "o": [
+       "mitigate",
+       "migrate",
+       "motivate",
+       "mediate"
+      ]
+     }
     }
    ],
    "sources": [
@@ -467,15 +749,1415 @@
    "interview": [
     {
      "q": "What is risk appetite?",
-     "a": "The amount and type of risk an organization is willing to accept in pursuit of its objectives."
+     "a": "The amount and type of risk an organization is willing to accept in pursuit of its objectives.",
+     "ar": {
+      "q": "ما شهية المخاطر؟",
+      "a": "حجم ونوع المخاطر التي تقبلها المؤسسة في سبيل تحقيق أهدافها."
+     }
     },
     {
      "q": "Explain SLA in one sentence.",
-     "a": "A Service Level Agreement defines the expected service levels, such as availability and resolution times, between a provider and a customer."
+     "a": "A Service Level Agreement defines the expected service levels, such as availability and resolution times, between a provider and a customer.",
+     "ar": {
+      "q": "اشرح SLA في جملة واحدة.",
+      "a": "اتفاقية مستوى الخدمة تحدد المستويات المتوقعة، مثل نسبة التوفر وأوقات الحل، بين مقدم الخدمة والعميل."
+     }
     },
     {
      "q": "What does segregation of duties mean?",
-     "a": "No single person should control all stages of a critical process, to reduce the risk of error or fraud."
+     "a": "No single person should control all stages of a critical process, to reduce the risk of error or fraud.",
+     "ar": {
+      "q": "ماذا يعني فصل المهام؟",
+      "a": "ألا يتحكم شخص واحد في كل مراحل عملية حساسة، لتقليل خطر الخطأ أو الاحتيال."
+     }
+    }
+   ]
+  },
+  {
+   "id": "it-005",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "أساسي",
+   "topic": "Microsoft Excel للعمل",
+   "title": "Excel للعمل: XLOOKUP والجداول المحورية والتنسيق الشرطي",
+   "summary": "أكثر مهارات Excel طلبًا في الوظائف المكتبية والمبيعات والتقارير.",
+   "simple": "Excel مثل آلة حاسبة عملاقة منظمة: XLOOKUP يبحث لك عن معلومة في جدول آخر، والجدول المحوري يلخّص آلاف الصفوف في ثوانٍ، والتنسيق الشرطي يلوّن ما يحتاج انتباهك تلقائيًا.",
+   "body": "١) حوّل البيانات إلى جدول (Ctrl+T): يتوسع تلقائيًا، وتصبح المعادلات أوضح.\n٢) دوال أساسية: SUM وAVERAGE وCOUNTIF وSUMIF وIF.\n• مثال: =SUMIF(B:B,\"مسقط\",C:C) يجمع مبيعات مسقط فقط.\n٣) البحث: XLOOKUP (في Microsoft 365 وExcel 2021 فما بعد) أبسط وأقوى من VLOOKUP.\n• =XLOOKUP(A2,Products[Code],Products[Price],\"غير موجود\")\n• يبحث في أي اتجاه، ويعطي قيمة بديلة عند عدم العثور.\n٤) الجداول المحورية (PivotTable): إدراج ← PivotTable، ثم اسحب الحقول: المندوب إلى الصفوف، والشهر إلى الأعمدة، والمبيعات إلى القيم. تحصل على تقرير جاهز في ثوانٍ.\n٥) التنسيق الشرطي: الصفحة الرئيسية ← تنسيق شرطي، لتلوين القيم الأقل من الهدف بالأحمر مثلًا.\n٦) اختصارات مفيدة: Ctrl+Shift+L للفلترة، وF4 لتثبيت المرجع ($A$1)، وCtrl+Arrow للانتقال إلى نهاية البيانات.\n٧) في المقابلة: قل ما صنعته بها. مثال: «بنيت تقريرًا شهريًا بجدول محوري وفّر 3 ساعات أسبوعيًا».",
+   "quiz": [
+    {
+     "q": "أي دالة تجمع القيم التي تحقق شرطًا واحدًا؟",
+     "o": [
+      "COUNTIF",
+      "SUMIF",
+      "AVERAGE",
+      "IF"
+     ],
+     "a": 1,
+     "x": "SUMIF تجمع القيم التي تطابق شرطًا.",
+     "en": {
+      "q": "Which function adds values that meet one condition?",
+      "o": [
+       "COUNTIF",
+       "SUMIF",
+       "AVERAGE",
+       "IF"
+      ],
+      "x": "SUMIF adds the values that match a condition."
+     }
+    },
+    {
+     "q": "ما الأداة التي تلخّص آلاف الصفوف حسب المندوب والشهر؟",
+     "o": [
+      "التنسيق الشرطي",
+      "الجدول المحوري",
+      "الفلترة",
+      "التحقق من البيانات"
+     ],
+     "a": 1,
+     "x": "PivotTable يلخّص ويجمّع البيانات بسرعة.",
+     "en": {
+      "q": "Which tool summarizes thousands of rows by rep and month?",
+      "o": [
+       "Conditional formatting",
+       "PivotTable",
+       "Filter",
+       "Data validation"
+      ],
+      "x": "A PivotTable summarizes and aggregates data quickly."
+     }
+    },
+    {
+     "q": "ما الذي يفعله F4 أثناء كتابة مرجع خلية؟",
+     "o": [
+      "يحفظ الملف",
+      "يثبّت المرجع ($A$1)",
+      "يحذف الصف",
+      "يفتح الطباعة"
+     ],
+     "a": 1,
+     "x": "F4 يبدّل بين المراجع المطلقة والنسبية.",
+     "en": {
+      "q": "What does F4 do while typing a cell reference?",
+      "o": [
+       "Saves the file",
+       "Locks the reference ($A$1)",
+       "Deletes the row",
+       "Opens print"
+      ],
+      "x": "F4 toggles between absolute and relative references."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "ما مستواك في Excel؟",
+     "a": "متقدم في الاستخدام العملي: أستخدم XLOOKUP وSUMIFS والجداول المحورية والتنسيق الشرطي يوميًا. ومثال ذلك تقرير مبيعات شهري بنيته يتحدث تلقائيًا ووفّر ساعات من العمل اليدوي.",
+     "en": {
+      "q": "What is your Excel level?",
+      "a": "Advanced in practical use: I use XLOOKUP, SUMIFS, PivotTables and conditional formatting daily. For example, I built a monthly sales report that updates automatically and saved hours of manual work."
+     }
+    },
+    {
+     "q": "ما الفرق بين VLOOKUP وXLOOKUP؟",
+     "a": "XLOOKUP يبحث في أي اتجاه، ولا يحتاج رقم العمود، ويعطي قيمة بديلة عند عدم العثور، ويطابق تطابقًا تامًا افتراضيًا. أما VLOOKUP فيبحث يمينًا فقط ويحتاج رقم العمود.",
+     "en": {
+      "q": "What is the difference between VLOOKUP and XLOOKUP?",
+      "a": "XLOOKUP searches in any direction, doesn't need a column number, returns a fallback value when nothing is found and uses exact match by default. VLOOKUP only looks to the right and needs a column index."
+     }
+    },
+    {
+     "q": "كيف تكتشف القيم المكررة في قائمة عملاء؟",
+     "a": "بالتنسيق الشرطي ← تمييز القيم المكررة، أو COUNTIF أكبر من 1، ثم أراجعها قبل الحذف.",
+     "en": {
+      "q": "How do you find duplicates in a client list?",
+      "a": "Conditional formatting, highlight duplicate values, or COUNTIF greater than 1, then review them before deleting."
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "Microsoft Support — XLOOKUP",
+     "url": "https://support.microsoft.com/office/xlookup-function-b7fd680e-6d10-43e6-84f9-88eae8bf5929"
+    }
+   ]
+  },
+  {
+   "id": "it-006",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "أساسي",
+   "topic": "قواعد البيانات",
+   "title": "أساسيات SQL: الاستعلام عن البيانات",
+   "summary": "SELECT وWHERE وJOIN وGROUP BY: ما تحتاجه لقراءة البيانات وكتابة التقارير.",
+   "simple": "قاعدة البيانات مثل مجموعة جداول Excel مرتبطة ببعضها. وSQL هي اللغة التي «تسأل» بها: «أعطني أسماء العملاء في مسقط الذين اشتروا أكثر من 1000 ريال».",
+   "body": "١) الجدول: صفوف (سجلات) وأعمدة (حقول). والمفتاح الأساسي (Primary Key) يميز كل صف، والمفتاح الأجنبي (Foreign Key) يربط جدولًا بآخر.\n٢) الاستعلام الأساسي:\nSELECT name, city FROM Customers WHERE city = 'Muscat' ORDER BY name;\n٣) الربط (JOIN):\nSELECT c.name, o.total FROM Customers c JOIN Orders o ON o.customer_id = c.id;\n• INNER JOIN: الصفوف المتطابقة في الجدولين فقط\n• LEFT JOIN: كل صفوف الجدول الأيسر حتى لو لم يوجد تطابق\n٤) التجميع:\nSELECT city, COUNT(*) AS n, SUM(total) FROM Orders GROUP BY city HAVING SUM(total) > 1000;\n• WHERE تصفّي الصفوف قبل التجميع، وHAVING تصفّي بعده\n٥) أوامر التعديل: INSERT وUPDATE وDELETE. وانتبه: UPDATE أو DELETE بلا WHERE يعدّل الجدول كله.\n٦) أنظمة شائعة: Microsoft SQL Server وOracle وMySQL وPostgreSQL.\n٧) أمنيًا: صلاحيات القراءة فقط لمن يحتاجها، والنسخ الاحتياطي، والحماية من حقن SQL (SQL Injection) باستخدام الاستعلامات المهيأة (Parameterized Queries).",
+   "quiz": [
+    {
+     "q": "ما الفرق بين WHERE وHAVING؟",
+     "o": [
+      "لا فرق",
+      "WHERE قبل التجميع وHAVING بعده",
+      "HAVING للحذف فقط",
+      "WHERE للجداول المرتبطة فقط"
+     ],
+     "a": 1,
+     "x": "WHERE تصفّي الصفوف، وHAVING تصفّي نتائج GROUP BY.",
+     "en": {
+      "q": "What is the difference between WHERE and HAVING?",
+      "o": [
+       "No difference",
+       "WHERE filters before grouping, HAVING after",
+       "HAVING is only for deleting",
+       "WHERE is only for joins"
+      ],
+      "x": "WHERE filters rows; HAVING filters GROUP BY results."
+     }
+    },
+    {
+     "q": "أي ربط يعيد كل صفوف الجدول الأيسر؟",
+     "o": [
+      "INNER JOIN",
+      "LEFT JOIN",
+      "CROSS JOIN",
+      "SELF JOIN"
+     ],
+     "a": 1,
+     "x": "LEFT JOIN يحتفظ بكل صفوف الجدول الأيسر.",
+     "en": {
+      "q": "Which join returns all rows of the left table?",
+      "o": [
+       "INNER JOIN",
+       "LEFT JOIN",
+       "CROSS JOIN",
+       "SELF JOIN"
+      ],
+      "x": "LEFT JOIN keeps every row of the left table."
+     }
+    },
+    {
+     "q": "ماذا يحدث عند تنفيذ DELETE FROM Orders بلا WHERE؟",
+     "o": [
+      "لا شيء",
+      "تُحذف كل صفوف الجدول",
+      "يُحذف الجدول وهيكله",
+      "يظهر خطأ دائمًا"
+     ],
+     "a": 1,
+     "x": "يحذف كل الصفوف، فاحذر دائمًا.",
+     "en": {
+      "q": "What happens when you run DELETE FROM Orders without WHERE?",
+      "o": [
+       "Nothing",
+       "All rows in the table are deleted",
+       "The table structure is dropped",
+       "It always errors"
+      ],
+      "x": "It deletes every row, so always be careful."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "ما المفتاح الأساسي والمفتاح الأجنبي؟",
+     "a": "المفتاح الأساسي يميز كل صف في الجدول ولا يتكرر. والمفتاح الأجنبي عمود يشير إلى المفتاح الأساسي في جدول آخر ليربط بينهما.",
+     "en": {
+      "q": "What are a primary key and a foreign key?",
+      "a": "A primary key uniquely identifies each row and cannot repeat. A foreign key is a column that points to the primary key of another table to link them."
+     }
+    },
+    {
+     "q": "ما حقن SQL وكيف تمنعه؟",
+     "a": "هجوم يُدخل فيه المهاجم أوامر SQL عبر خانات الإدخال. ويُمنع بالاستعلامات المهيأة، والتحقق من المدخلات، وأقل الصلاحيات لحساب قاعدة البيانات.",
+     "en": {
+      "q": "What is SQL injection and how do you prevent it?",
+      "a": "An attack that inserts SQL commands through input fields. It is prevented with parameterized queries, input validation and least-privilege database accounts."
+     }
+    },
+    {
+     "q": "اكتب استعلامًا يعرض عدد الطلبات لكل مدينة.",
+     "a": "SELECT city, COUNT(*) FROM Orders GROUP BY city;",
+     "en": {
+      "q": "Write a query that shows the number of orders per city.",
+      "a": "SELECT city, COUNT(*) FROM Orders GROUP BY city;"
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "Microsoft Learn — Transact-SQL",
+     "url": "https://learn.microsoft.com/sql/t-sql/language-reference"
+    }
+   ]
+  },
+  {
+   "id": "it-007",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "أساسي",
+   "topic": "Linux",
+   "title": "أوامر Linux الأساسية لمهندس الأنظمة",
+   "summary": "التنقل والملفات والصلاحيات والخدمات والسجلات، أكثر ما يُسأل عنه في المقابلات.",
+   "simple": "Linux يدير أغلب خوادم الإنترنت. والطرفية (Terminal) هي «لوحة التحكم» بالأوامر: كل مهمة لها أمر قصير، وعندما تحفظ الأساسيات تستطيع إدارة أي خادم.",
+   "body": "١) التنقل والملفات: pwd (أين أنا)، ls -l (عرض الملفات)، cd (انتقال)، mkdir (مجلد جديد)، cp وmv وrm (نسخ ونقل وحذف)، cat وless (قراءة الملف).\n٢) البحث: grep \"error\" /var/log/syslog للبحث في النص، وfind / -name \"*.conf\" للبحث عن الملفات.\n٣) الصلاحيات: ثلاث فئات (المالك، والمجموعة، والآخرون) وثلاث صلاحيات (قراءة r=4، وكتابة w=2، وتنفيذ x=1).\n• chmod 750 file يعني: المالك rwx، والمجموعة r-x، والآخرون بلا صلاحية\n• chown user:group file لتغيير المالك\n٤) الصلاحيات الإدارية: sudo لتنفيذ أمر بصلاحية المدير.\n٥) الخدمات في توزيعات systemd: systemctl status|start|stop|restart|enable nginx\n٦) السجلات: journalctl -u nginx، والملفات في /var/log.\n٧) الشبكة: ip a لعرض العناوين، وping، وss -tulpn لعرض المنافذ المفتوحة.\n٨) الحزم: apt في Debian وUbuntu، وdnf في Red Hat وRocky.",
+   "quiz": [
+    {
+     "q": "ماذا يعني chmod 750؟",
+     "o": [
+      "الكل يقرأ ويكتب",
+      "المالك rwx والمجموعة r-x والآخرون لا شيء",
+      "المالك قراءة فقط",
+      "حذف الملف"
+     ],
+     "a": 1,
+     "x": "7=rwx و5=r-x و0=لا شيء.",
+     "en": {
+      "q": "What does chmod 750 mean?",
+      "o": [
+       "Everyone can read and write",
+       "Owner rwx, group r-x, others nothing",
+       "Owner read-only",
+       "Delete the file"
+      ],
+      "x": "7=rwx, 5=r-x, 0=none."
+     }
+    },
+    {
+     "q": "أي أمر يعيد تشغيل خدمة في systemd؟",
+     "o": [
+      "service reload all",
+      "systemctl restart <service>",
+      "reboot <service>",
+      "kill -9"
+     ],
+     "a": 1,
+     "x": "systemctl restart يعيد تشغيل الخدمة.",
+     "en": {
+      "q": "Which command restarts a service under systemd?",
+      "o": [
+       "service reload all",
+       "systemctl restart <service>",
+       "reboot <service>",
+       "kill -9"
+      ],
+      "x": "systemctl restart restarts the service."
+     }
+    },
+    {
+     "q": "أي أمر يبحث عن كلمة داخل ملف؟",
+     "o": [
+      "find",
+      "grep",
+      "ls",
+      "pwd"
+     ],
+     "a": 1,
+     "x": "grep يبحث في محتوى النص.",
+     "en": {
+      "q": "Which command searches for a word inside a file?",
+      "o": [
+       "find",
+       "grep",
+       "ls",
+       "pwd"
+      ],
+      "x": "grep searches text content."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "خادم ويب توقف، كيف تشخّص؟",
+     "a": "systemctl status للخدمة، ثم journalctl والسجلات لمعرفة الخطأ، ثم أتحقق من المساحة (df -h) والذاكرة (free -h) والمنفذ (ss -tulpn)، ثم أصلح وأعيد التشغيل وأوثّق.",
+     "en": {
+      "q": "A web server stopped. How do you troubleshoot?",
+      "a": "systemctl status for the service, then journalctl and the logs to find the error, then check disk space (df -h), memory (free -h) and the port (ss -tulpn), then fix, restart and document."
+     }
+    },
+    {
+     "q": "ما الفرق بين find وgrep؟",
+     "a": "find يبحث عن الملفات بالاسم أو الخصائص، وgrep يبحث عن نص داخل الملفات.",
+     "en": {
+      "q": "What is the difference between find and grep?",
+      "a": "find searches for files by name or attributes; grep searches for text inside files."
+     }
+    },
+    {
+     "q": "لماذا نستخدم sudo بدل الدخول كـ root؟",
+     "a": "لتطبيق أقل صلاحية، وتسجيل من نفّذ كل أمر إداري، وتقليل خطر الأخطاء والاختراق.",
+     "en": {
+      "q": "Why use sudo instead of logging in as root?",
+      "a": "To apply least privilege, log who ran each admin command, and reduce the risk of mistakes and compromise."
+     }
+    }
+   ],
+   "sources": []
+  },
+  {
+   "id": "it-008",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "المحاكاة الافتراضية",
+   "title": "المحاكاة الافتراضية: Hyper-V وVMware والحاويات",
+   "summary": "المشغّل الافتراضي، والأجهزة الافتراضية، واللقطات، والفرق بين الآلة الافتراضية والحاوية.",
+   "simple": "المحاكاة الافتراضية تعني تشغيل عدة «حواسيب» وهمية على حاسوب حقيقي واحد. وفّرت على المؤسسات شراء خوادم كثيرة، وسهّلت النسخ والنقل والتعافي.",
+   "body": "١) المشغّل الافتراضي (Hypervisor):\n• النوع 1 (Bare-metal): يعمل مباشرة على العتاد، مثل VMware ESXi وMicrosoft Hyper-V\n• النوع 2 (Hosted): يعمل فوق نظام تشغيل، مثل VirtualBox وVMware Workstation\n٢) الآلة الافتراضية (VM) لها نظام تشغيل كامل، ووحدات معالجة وذاكرة وأقراص افتراضية.\n٣) مزايا: توحيد الخوادم وتقليل التكلفة، وسرعة إنشاء الخوادم، والنقل الحي (vMotion وLive Migration)، والتوافرية العالية (HA)، والتعافي من الكوارث بالنسخ المتماثل.\n٤) اللقطة (Snapshot): حفظ حالة الجهاز قبل تغيير، وليست بديلًا عن النسخ الاحتياطي، ولا تُترك طويلًا لأنها تبطئ الأداء.\n٥) الحاويات (Containers) مثل Docker: تشترك في نواة نظام المضيف، فهي أخف وأسرع من VM. وتنظّمها منصات مثل Kubernetes.\n٦) الإدارة: vCenter لـ VMware، وHyper-V Manager أو SCVMM لـ Microsoft.",
+   "quiz": [
+    {
+     "q": "أي مما يلي مشغّل افتراضي من النوع 1؟",
+     "o": [
+      "VirtualBox",
+      "VMware ESXi",
+      "VMware Workstation",
+      "Docker Desktop"
+     ],
+     "a": 1,
+     "x": "ESXi يعمل مباشرة على العتاد.",
+     "en": {
+      "q": "Which of these is a type 1 hypervisor?",
+      "o": [
+       "VirtualBox",
+       "VMware ESXi",
+       "VMware Workstation",
+       "Docker Desktop"
+      ],
+      "x": "ESXi runs directly on the hardware."
+     }
+    },
+    {
+     "q": "هل اللقطة (Snapshot) بديل عن النسخ الاحتياطي؟",
+     "o": [
+      "نعم دائمًا",
+      "لا",
+      "نعم إذا كانت يومية",
+      "نعم في Hyper-V فقط"
+     ],
+     "a": 1,
+     "x": "اللقطة مرتبطة بأقراص الجهاز نفسه، فليست نسخة احتياطية مستقلة.",
+     "en": {
+      "q": "Is a snapshot a substitute for backup?",
+      "o": [
+       "Yes, always",
+       "No",
+       "Yes, if daily",
+       "Only in Hyper-V"
+      ],
+      "x": "A snapshot depends on the VM's own disks, so it is not an independent backup."
+     }
+    },
+    {
+     "q": "ما الذي يميز الحاوية عن الآلة الافتراضية؟",
+     "o": [
+      "لها نواة مستقلة",
+      "تشترك في نواة نظام المضيف فهي أخف",
+      "أبطأ دائمًا",
+      "تحتاج عتادًا خاصًا"
+     ],
+     "a": 1,
+     "x": "الحاويات تشترك في نواة المضيف.",
+     "en": {
+      "q": "What distinguishes a container from a VM?",
+      "o": [
+       "It has its own kernel",
+       "It shares the host kernel, so it is lighter",
+       "It is always slower",
+       "It needs special hardware"
+      ],
+      "x": "Containers share the host kernel."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "ما الفرق بين VM والحاوية؟",
+     "a": "الآلة الافتراضية فيها نظام تشغيل كامل فوق المشغّل الافتراضي، والحاوية تشترك في نواة المضيف وتحمل التطبيق ومكتباته فقط، فهي أخف وأسرع في التشغيل.",
+     "en": {
+      "q": "What is the difference between a VM and a container?",
+      "a": "A VM runs a full OS on a hypervisor; a container shares the host kernel and packages only the app and its libraries, so it is lighter and starts faster."
+     }
+    },
+    {
+     "q": "متى تستخدم اللقطة؟",
+     "a": "قبل تحديث أو تغيير خطير لأتمكن من الرجوع بسرعة، ثم أحذفها بعد التأكد من نجاح التغيير.",
+     "en": {
+      "q": "When do you use a snapshot?",
+      "a": "Before an update or risky change so I can roll back quickly, then I delete it once the change is confirmed."
+     }
+    },
+    {
+     "q": "ما فائدة النقل الحي؟",
+     "a": "نقل جهاز افتراضي يعمل من خادم لآخر دون توقف، للصيانة أو لموازنة الحمل.",
+     "en": {
+      "q": "What is live migration for?",
+      "a": "Moving a running VM from one host to another without downtime, for maintenance or load balancing."
+     }
+    }
+   ],
+   "sources": []
+  },
+  {
+   "id": "it-009",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "إدارة المشاريع",
+   "title": "إدارة المشاريع: التقليدية وAgile وScrum",
+   "summary": "المراحل والقيود الثلاثة، وأدوار Scrum وأحداثه، ومتى تختار كل أسلوب.",
+   "simple": "المشروع التقليدي يشبه بناء بيت: تخطط كل شيء ثم تبني. وAgile يشبه تطوير تطبيق: تسلّم جزءًا صغيرًا يعمل كل أسبوعين، وتعدّل حسب ملاحظات المستخدم.",
+   "body": "١) القيد الثلاثي: النطاق (Scope) والوقت والتكلفة، والجودة في المنتصف. تغيير أحدها يؤثر في الآخرين.\n٢) الأسلوب التقليدي (Waterfall): بدء، ثم تخطيط، ثم تنفيذ، ثم مراقبة وتحكم، ثم إغلاق. يناسب المشاريع واضحة المتطلبات، مثل تمديد شبكة مبنى.\n٣) Agile: تسليم تدريجي، وتعاون مع العميل، واستجابة للتغيير.\n٤) Scrum، وأدواره الثلاثة:\n• مالك المنتج (Product Owner): يرتّب قائمة المتطلبات (Product Backlog) حسب القيمة\n• Scrum Master: يزيل العوائق ويضمن تطبيق Scrum\n• فريق التطوير (Developers)\n٥) أحداث Scrum: السبرنت (Sprint) لمدة شهر أو أقل، وغالبًا أسبوعان، ثم تخطيط السبرنت، والاجتماع اليومي (15 دقيقة)، ومراجعة السبرنت، والمراجعة الاستعادية (Retrospective).\n٦) أدوات: Jira وAzure DevOps وMicrosoft Project وPlanner.\n٧) شهادات: PMP وCAPM من PMI، وPSM وCSM لـ Scrum.",
+   "quiz": [
+    {
+     "q": "من يرتّب قائمة متطلبات المنتج في Scrum؟",
+     "o": [
+      "Scrum Master",
+      "Product Owner",
+      "مدير القسم",
+      "العميل مباشرة"
+     ],
+     "a": 1,
+     "x": "Product Owner مسؤول عن ترتيب Product Backlog.",
+     "en": {
+      "q": "Who orders the product backlog in Scrum?",
+      "o": [
+       "Scrum Master",
+       "Product Owner",
+       "Department manager",
+       "The client directly"
+      ],
+      "x": "The Product Owner is accountable for ordering the backlog."
+     }
+    },
+    {
+     "q": "مدة الاجتماع اليومي في Scrum:",
+     "o": [
+      "15 دقيقة",
+      "ساعة",
+      "نصف يوم",
+      "حسب الحاجة"
+     ],
+     "a": 0,
+     "x": "Daily Scrum مدته 15 دقيقة.",
+     "en": {
+      "q": "The Daily Scrum lasts:",
+      "o": [
+       "15 minutes",
+       "One hour",
+       "Half a day",
+       "As needed"
+      ],
+      "x": "The Daily Scrum is time-boxed to 15 minutes."
+     }
+    },
+    {
+     "q": "أي أسلوب يناسب مشروعًا متطلباته واضحة وثابتة؟",
+     "o": [
+      "Scrum",
+      "Waterfall",
+      "Kanban فقط",
+      "لا يهم"
+     ],
+     "a": 1,
+     "x": "الأسلوب التقليدي يناسب المتطلبات الثابتة.",
+     "en": {
+      "q": "Which approach suits a project with clear, fixed requirements?",
+      "o": [
+       "Scrum",
+       "Waterfall",
+       "Kanban only",
+       "It doesn't matter"
+      ],
+      "x": "Waterfall suits stable requirements."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "متى تختار Agile بدل الأسلوب التقليدي؟",
+     "a": "عندما تكون المتطلبات غير واضحة أو متغيرة، ويستفيد العميل من تسليمات مبكرة متكررة، كتطوير التطبيقات والأنظمة.",
+     "en": {
+      "q": "When would you choose Agile over waterfall?",
+      "a": "When requirements are unclear or changing and the client benefits from early, frequent deliveries, as in app and system development."
+     }
+    },
+    {
+     "q": "ما دور Scrum Master؟",
+     "a": "يسهّل عمل الفريق ويزيل العوائق، ويحمي الفريق من المقاطعات، ويضمن تطبيق ممارسات Scrum، وليس مديرًا يوزع المهام.",
+     "en": {
+      "q": "What does a Scrum Master do?",
+      "a": "Facilitates the team, removes impediments, protects it from interruptions and ensures Scrum is practised; it is not a manager who assigns tasks."
+     }
+    },
+    {
+     "q": "مشروعك متأخر، ماذا تفعل؟",
+     "a": "أحدد السبب والمسار الحرج، وأعرض على الراعي خيارات: تقليل النطاق، أو إضافة موارد، أو تعديل الموعد، مع أثر كل خيار، ثم أوثّق القرار.",
+     "en": {
+      "q": "Your project is late. What do you do?",
+      "a": "Find the cause and the critical path, give the sponsor options (reduce scope, add resources or move the date) with the impact of each, and document the decision."
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "Scrum Guide",
+     "url": "https://scrumguides.org/"
+    },
+    {
+     "title": "PMI",
+     "url": "https://www.pmi.org/"
+    }
+   ]
+  },
+  {
+   "id": "it-010",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "أمن البريد",
+   "title": "أمن البريد الإلكتروني: SPF وDKIM وDMARC",
+   "summary": "ثلاثة سجلات DNS تمنع انتحال نطاق مؤسستك في رسائل التصيّد.",
+   "simple": "تخيّل أن أي شخص يستطيع كتابة اسم وزارتك على ظرف رسالة. SPF يحدد «من يحق له الإرسال باسمنا»، وDKIM «ختم رسمي» على الرسالة، وDMARC يقول «ماذا تفعل بالرسالة المزيفة».",
+   "body": "١) SPF (Sender Policy Framework): سجل TXT في DNS يذكر الخوادم المسموح لها بالإرسال باسم النطاق.\n• مثال: v=spf1 include:spf.protection.outlook.com -all\n• ‎-all رفض صارم، و‎~all رفض مرن (Softfail)\n٢) DKIM (DomainKeys Identified Mail): توقيع رقمي يضيفه خادم الإرسال، ويتحقق المستقبل منه بالمفتاح العام المنشور في DNS، فيتأكد أن الرسالة لم تُعدَّل.\n٣) DMARC: سجل في ‎_dmarc.example.com يحدد ما يحدث عند فشل التحقق، ويرسل تقارير.\n• p=none للمراقبة فقط، وp=quarantine لنقلها إلى البريد غير المرغوب، وp=reject للرفض\n• مثال: v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com\n٤) خطة التطبيق: ابدأ بـ p=none وراقب التقارير، وصحّح كل مصادر الإرسال الشرعية (أنظمة الرواتب والتسويق)، ثم انتقل تدريجيًا إلى quarantine ثم reject.\n٥) هذه الضوابط تحمي نطاقك من الانتحال، لكنها لا تغني عن توعية الموظفين ضد التصيّد.",
+   "quiz": [
+    {
+     "q": "أي سجل يذكر الخوادم المسموح لها بالإرسال باسم النطاق؟",
+     "o": [
+      "DKIM",
+      "SPF",
+      "MX",
+      "CNAME"
+     ],
+     "a": 1,
+     "x": "SPF يحدد المرسلين المصرح لهم.",
+     "en": {
+      "q": "Which record lists the servers allowed to send for a domain?",
+      "o": [
+       "DKIM",
+       "SPF",
+       "MX",
+       "CNAME"
+      ],
+      "x": "SPF defines authorized senders."
+     }
+    },
+    {
+     "q": "سياسة DMARC التي ترفض الرسائل المزيفة:",
+     "o": [
+      "p=none",
+      "p=quarantine",
+      "p=reject",
+      "p=allow"
+     ],
+     "a": 2,
+     "x": "p=reject يرفض الرسائل التي تفشل في التحقق.",
+     "en": {
+      "q": "The DMARC policy that rejects spoofed mail:",
+      "o": [
+       "p=none",
+       "p=quarantine",
+       "p=reject",
+       "p=allow"
+      ],
+      "x": "p=reject rejects messages that fail authentication."
+     }
+    },
+    {
+     "q": "ما الذي يثبته DKIM؟",
+     "o": [
+      "سرعة الإرسال",
+      "أن الرسالة موقعة من النطاق ولم تُعدَّل",
+      "عنوان IP للمستقبل",
+      "حجم المرفقات"
+     ],
+     "a": 1,
+     "x": "DKIM توقيع رقمي للسلامة والمصدر.",
+     "en": {
+      "q": "What does DKIM prove?",
+      "o": [
+       "Sending speed",
+       "That the message was signed by the domain and not altered",
+       "The recipient's IP",
+       "Attachment size"
+      ],
+      "x": "DKIM is a digital signature for integrity and origin."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "كيف تحمي نطاق مؤسستك من الانتحال في البريد؟",
+     "a": "أطبّق SPF وDKIM، ثم DMARC بدءًا من المراقبة وصولًا إلى الرفض، وأراقب التقارير، مع توعية الموظفين وتصفية البريد.",
+     "en": {
+      "q": "How do you protect your organization's domain from email spoofing?",
+      "a": "Implement SPF and DKIM, then DMARC from monitoring up to reject, review the reports, and add staff awareness and mail filtering."
+     }
+    },
+    {
+     "q": "لماذا نبدأ DMARC بـ p=none؟",
+     "a": "لنرى في التقارير كل مصادر الإرسال الشرعية ونصحح إعداداتها قبل الرفض، حتى لا نحجب رسائل حقيقية.",
+     "en": {
+      "q": "Why start DMARC at p=none?",
+      "a": "To see every legitimate sending source in the reports and fix them before enforcing, so real mail isn't blocked."
+     }
+    },
+    {
+     "q": "ما الفرق بين ‎-all و‎~all في SPF؟",
+     "a": "‎-all يطلب رفض الرسائل من خوادم غير مذكورة، و‎~all يعلّمها مشبوهة دون رفض صارم.",
+     "en": {
+      "q": "What is the difference between -all and ~all in SPF?",
+      "a": "-all asks receivers to reject mail from unlisted servers; ~all marks it as suspicious without a hard fail."
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "Microsoft Learn — Email authentication",
+     "url": "https://learn.microsoft.com/defender-office-365/email-authentication-about"
+    }
+   ]
+  },
+  {
+   "id": "it-011",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "إدارة الأصول",
+   "title": "إدارة أصول تقنية المعلومات وقاعدة CMDB",
+   "summary": "جرد الأجهزة والبرامج والتراخيص، ودورة حياة الأصل، وقاعدة بيانات الإعدادات CMDB.",
+   "simple": "لا تستطيع حماية أو إدارة ما لا تعرف أنه موجود. إدارة الأصول هي «سجل الممتلكات» للتقنية: كل جهاز وبرنامج وترخيص، ومن يستخدمه، ومتى ينتهي.",
+   "body": "١) إدارة الأصول (IT Asset Management): تتبع الأصل ماليًا وتعاقديًا طوال حياته: الطلب، ثم الشراء، ثم الاستلام والتسجيل، ثم التشغيل، ثم الصيانة، ثم الإخراج من الخدمة والإتلاف الآمن.\n٢) أصول البرمجيات: التراخيص وعددها وتاريخ تجديدها، ومطابقة المثبت مع المرخّص لتجنب مخالفات التدقيق من الموردين.\n٣) CMDB (قاعدة بيانات إدارة الإعدادات): تسجل عناصر الإعداد (Configuration Items) والعلاقات بينها. مثال: تطبيق الرواتب يعمل على خادمين ويعتمد على قاعدة بيانات.\n• تفيد في تحليل أثر التغيير، وتسريع حل الحوادث\n٤) الفرق: إدارة الأصول تركز على القيمة والتكلفة والعقود، والـ CMDB تركز على العلاقات التشغيلية.\n٥) أدوات: الاكتشاف التلقائي في الشبكة، وMicrosoft Intune، وServiceNow، وLansweeper، وGLPI.\n٦) الأمن: الجرد هو أول ضابط في أطر كثيرة، فالجهاز غير المعروف لا يُحدَّث ولا يُراقَب.\n٧) الإتلاف الآمن: محو الأقراص أو إتلافها مع شهادة إتلاف، خاصة للأجهزة التي تحمل بيانات حساسة.",
+   "quiz": [
+    {
+     "q": "ما الذي تسجله CMDB بالإضافة إلى العناصر؟",
+     "o": [
+      "الرواتب",
+      "العلاقات والاعتماديات بين عناصر الإعداد",
+      "كلمات المرور",
+      "سجل الحضور"
+     ],
+     "a": 1,
+     "x": "قيمة CMDB في العلاقات بين العناصر.",
+     "en": {
+      "q": "Besides the items, what does a CMDB record?",
+      "o": [
+       "Salaries",
+       "Relationships and dependencies between configuration items",
+       "Passwords",
+       "Attendance"
+      ],
+      "x": "The value of a CMDB is in the relationships between items."
+     }
+    },
+    {
+     "q": "لماذا يُعد الجرد ضابطًا أمنيًا مهمًا؟",
+     "o": [
+      "لأنه يقلل الكهرباء",
+      "لأن الجهاز غير المعروف لا يُحدَّث ولا يُراقَب",
+      "لأنه يسرّع الإنترنت",
+      "ليس مهمًا"
+     ],
+     "a": 1,
+     "x": "لا يمكن حماية أصل غير معروف.",
+     "en": {
+      "q": "Why is inventory an important security control?",
+      "o": [
+       "It saves electricity",
+       "An unknown device is not patched or monitored",
+       "It speeds up the internet",
+       "It isn't important"
+      ],
+      "x": "You can't protect an asset you don't know about."
+     }
+    },
+    {
+     "q": "آخر مرحلة في دورة حياة الأصل:",
+     "o": [
+      "الشراء",
+      "التشغيل",
+      "الإخراج من الخدمة والإتلاف الآمن",
+      "الصيانة"
+     ],
+     "a": 2,
+     "x": "تنتهي الدورة بالإتلاف الآمن الموثق.",
+     "en": {
+      "q": "The last stage of the asset lifecycle:",
+      "o": [
+       "Purchase",
+       "Operation",
+       "Retirement and secure disposal",
+       "Maintenance"
+      ],
+      "x": "The lifecycle ends with documented secure disposal."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "ما الفرق بين إدارة الأصول وCMDB؟",
+     "a": "إدارة الأصول تتابع القيمة المالية والعقود والتراخيص طوال حياة الأصل. والـ CMDB تتابع عناصر الإعداد وعلاقاتها التشغيلية لدعم التغيير والحوادث.",
+     "en": {
+      "q": "What is the difference between IT asset management and a CMDB?",
+      "a": "Asset management tracks financial value, contracts and licences over the asset's life; a CMDB tracks configuration items and their operational relationships to support change and incident management."
+     }
+    },
+    {
+     "q": "كيف تتجنب مخالفات تراخيص البرامج؟",
+     "a": "بجرد دوري للبرامج المثبتة، ومطابقته مع التراخيص المشتراة، وسياسة تمنع التثبيت دون موافقة، ومتابعة تواريخ التجديد.",
+     "en": {
+      "q": "How do you avoid software licence violations?",
+      "a": "Regular inventory of installed software, reconciling it with purchased licences, a policy that blocks unapproved installs, and tracking renewal dates."
+     }
+    },
+    {
+     "q": "ماذا تفعل بجهاز قديم يحمل بيانات حساسة؟",
+     "a": "أخرجه من الخدمة في السجل، وأمحو القرص محوًا آمنًا أو أتلفه، وأحصل على شهادة إتلاف، وأحدّث الجرد.",
+     "en": {
+      "q": "What do you do with an old device holding sensitive data?",
+      "a": "Retire it in the register, securely wipe or destroy the disk, get a destruction certificate and update the inventory."
+     }
+    }
+   ],
+   "sources": []
+  },
+  {
+   "id": "en-004",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1-B2",
+   "topic": "Interview English",
+   "title": "عبارات إنجليزية قوية للمقابلة الشخصية",
+   "summary": "عبارات جاهزة لتقديم نفسك ووصف إنجازاتك والإجابة بثقة، مع الأخطاء الشائعة.",
+   "simple": "في المقابلة لا تحتاج إنجليزية معقدة، بل جمل واضحة صحيحة وجاهزة. احفظ عشر عبارات قوية، وتدرّب عليها بصوت مرتفع، وستشعر بفرق كبير في ثقتك.",
+   "body": "١) تقديم نفسك:\n• I'm an IT engineer with experience in systems support and IT governance.\n• I specialize in… / My background is in…\n٢) وصف الإنجاز (فعل قوي + رقم):\n• I reduced response time by 30%.\n• I led the migration of 200 users to Microsoft 365.\n• I was responsible for… (أضعف من I led / I managed)\n٣) عندما تحتاج وقتًا للتفكير:\n• That's a good question. Let me think for a moment.\n٤) عندما لا تفهم السؤال:\n• Could you rephrase the question, please?\n• Do you mean…?\n٥) نقاط الضعف بإيجابية:\n• I used to…, so I started… and now I…\n٦) نهاية المقابلة:\n• What does success look like in this role in the first six months?\n• Thank you for your time. I look forward to hearing from you.\n٧) أخطاء شائعة:\n• ✗ I have 5 years experience ← ✓ I have 5 years of experience\n• ✗ I am working here since 2020 ← ✓ I have been working here since 2020\n• ✗ Discuss about ← ✓ Discuss (بلا about)",
+   "quiz": [
+    {
+     "q": "Choose the correct sentence:",
+     "o": [
+      "I have 5 years experience.",
+      "I have 5 years of experience.",
+      "I have experience 5 years.",
+      "I am 5 years experience."
+     ],
+     "a": 1,
+     "x": "نقول years of experience.",
+     "ar": {
+      "q": "اختر الجملة الصحيحة:",
+      "o": [
+       "I have 5 years experience.",
+       "I have 5 years of experience.",
+       "I have experience 5 years.",
+       "I am 5 years experience."
+      ],
+      "x": "الصيغة الصحيحة: years of experience."
+     }
+    },
+    {
+     "q": "The strongest way to describe an achievement:",
+     "o": [
+      "I was responsible for the network.",
+      "I led a network upgrade that cut outages by 40%.",
+      "I did network things.",
+      "I know networks."
+     ],
+     "a": 1,
+     "x": "فعل قوي ونتيجة رقمية.",
+     "ar": {
+      "q": "أقوى طريقة لوصف إنجاز:",
+      "o": [
+       "I was responsible for the network.",
+       "I led a network upgrade that cut outages by 40%.",
+       "I did network things.",
+       "I know networks."
+      ],
+      "x": "فعل قوي مع نتيجة بالأرقام."
+     }
+    },
+    {
+     "q": "Which is correct?",
+     "o": [
+      "We discussed about the plan.",
+      "We discussed the plan.",
+      "We discussed on the plan.",
+      "We discussion the plan."
+     ],
+     "a": 1,
+     "x": "discuss لا يأخذ about.",
+     "ar": {
+      "q": "أي جملة صحيحة؟",
+      "o": [
+       "We discussed about the plan.",
+       "We discussed the plan.",
+       "We discussed on the plan.",
+       "We discussion the plan."
+      ],
+      "x": "الفعل discuss لا يأتي بعده about."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "Tell me about yourself.",
+     "a": "I'm an IT engineer based in Muscat, focused on IT governance and infrastructure. I've supported systems and networks and built applications, and I'm now deepening my knowledge of COBIT and ISO 27001. I'm excited about this role because it combines both.",
+     "ar": {
+      "q": "حدثني عن نفسك.",
+      "a": "مهندس تقنية معلومات في مسقط، أركّز على حوكمة التقنية والبنية التحتية. دعمت الأنظمة والشبكات وطوّرت تطبيقات، وأعمّق الآن معرفتي بـ COBIT وISO 27001. وتحمسني هذه الوظيفة لأنها تجمع الجانبين."
+     }
+    },
+    {
+     "q": "What is your biggest weakness?",
+     "a": "I used to find it hard to delegate, so I started using a task board and weekly check-ins. Now I delegate more and the team delivers faster.",
+     "ar": {
+      "q": "ما أكبر نقاط ضعفك؟",
+      "a": "كنت أجد صعوبة في تفويض المهام، فبدأت أستخدم لوحة مهام ومتابعة أسبوعية، والآن أفوّض أكثر ويسلّم الفريق أسرع."
+     }
+    },
+    {
+     "q": "Do you have any questions for us?",
+     "a": "Yes. What would success look like in this role in the first six months, and what are the team's main priorities this year?",
+     "ar": {
+      "q": "هل لديك أسئلة لنا؟",
+      "a": "نعم. كيف يبدو النجاح في هذه الوظيفة خلال الأشهر الستة الأولى؟ وما أولويات الفريق الرئيسية هذا العام؟"
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "British Council — LearnEnglish: Business",
+     "url": "https://learnenglish.britishcouncil.org/business-english"
+    }
+   ]
+  },
+  {
+   "id": "en-005",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1-B2",
+   "topic": "Formal emails",
+   "title": "الرسائل الرسمية بالإنجليزية: البداية والطلب والختام",
+   "summary": "هيكل البريد الرسمي، وعبارات الطلب المهذب والإرفاق والاعتذار، مع أخطاء شائعة.",
+   "simple": "البريد الرسمي له قالب ثابت: تحية، ثم سبب الرسالة في سطر، ثم التفاصيل، ثم طلب واضح، ثم ختام. إذا حفظت القالب تكتب أي رسالة بثقة.",
+   "body": "١) التحية: Dear Mr. Al Balushi, / Dear Ms. Sara, / Dear Hiring Team, (إذا لم تعرف الاسم).\n٢) سبب الرسالة: I am writing to apply for… / I am writing regarding…\n٣) الإرفاق: Please find attached my CV. / I have attached…\n• ✗ Please find attached herewith my CV (أسلوب قديم مكرر)\n٤) الطلب المهذب: Could you please…? / I would appreciate it if you could…\n٥) المتابعة: I am following up on my email of 3 November.\n٦) الاعتذار: I apologize for the delay in replying.\n٧) الختام: I look forward to hearing from you. ثم Kind regards, / Best regards, ثم الاسم والهاتف.\n٨) أخطاء شائعة:\n• ✗ Kindly do the needful ← ✓ Could you please…\n• ✗ I am waiting your reply ← ✓ I look forward to your reply\n• ✗ Dear Sir/Madam بالإيميل مع معرفة الاسم ← استخدم الاسم",
+   "quiz": [
+    {
+     "q": "The best way to start a job application email:",
+     "o": [
+      "Hi bro,",
+      "I am writing to apply for the IT Specialist position.",
+      "Give me the job.",
+      "Hello, what's up?"
+     ],
+     "a": 1,
+     "x": "يذكر سبب الرسالة بوضوح ورسمية.",
+     "ar": {
+      "q": "أفضل بداية لرسالة تقديم على وظيفة:",
+      "o": [
+       "Hi bro,",
+       "I am writing to apply for the IT Specialist position.",
+       "Give me the job.",
+       "Hello, what's up?"
+      ],
+      "x": "تذكر سبب الرسالة بوضوح ورسمية."
+     }
+    },
+    {
+     "q": "Choose the correct phrase:",
+     "o": [
+      "I am waiting your reply.",
+      "I look forward to hearing from you.",
+      "I wait you.",
+      "Reply me fast."
+     ],
+     "a": 1,
+     "x": "العبارة الرسمية الصحيحة.",
+     "ar": {
+      "q": "اختر العبارة الصحيحة:",
+      "o": [
+       "I am waiting your reply.",
+       "I look forward to hearing from you.",
+       "I wait you.",
+       "Reply me fast."
+      ],
+      "x": "هذه العبارة الرسمية الصحيحة."
+     }
+    },
+    {
+     "q": "A polite request is:",
+     "o": [
+      "Send me the file.",
+      "Could you please send me the file?",
+      "File now.",
+      "You must send the file."
+     ],
+     "a": 1,
+     "x": "Could you please… طلب مهذب.",
+     "ar": {
+      "q": "الطلب المهذب هو:",
+      "o": [
+       "Send me the file.",
+       "Could you please send me the file?",
+       "File now.",
+       "You must send the file."
+      ],
+      "x": "صيغة Could you please… طلب مهذب."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "How would you email a recruiter you don't know?",
+     "a": "Dear Hiring Team, I am writing to apply for the IT Specialist position advertised on your website. Please find attached my CV. I look forward to hearing from you. Kind regards, Majid",
+     "ar": {
+      "q": "كيف تراسل موظف توظيف لا تعرفه؟",
+      "a": "أبدأ بـ Dear Hiring Team، ثم أذكر الوظيفة ومكان الإعلان، وأشير إلى السيرة المرفقة، وأختم بـ I look forward to hearing from you و Kind regards."
+     }
+    },
+    {
+     "q": "How do you apologize for a late reply?",
+     "a": "I apologize for the delay in replying. Please find the requested documents attached.",
+     "ar": {
+      "q": "كيف تعتذر عن تأخر الرد؟",
+      "a": "بعبارة I apologize for the delay in replying، ثم أقدّم المطلوب مباشرة."
+     }
+    },
+    {
+     "q": "What is wrong with \"Kindly do the needful\"?",
+     "a": "It is vague and outdated. It is clearer to say exactly what you need: Could you please confirm the interview time?",
+     "ar": {
+      "q": "ما المشكلة في عبارة Kindly do the needful؟",
+      "a": "غامضة وقديمة. الأوضح أن تطلب الشيء المحدد: Could you please confirm the interview time?"
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "Cambridge English — Writing emails",
+     "url": "https://www.cambridgeenglish.org/learning-english/"
+    }
+   ]
+  },
+  {
+   "id": "en-006",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1-B2",
+   "topic": "Numbers and results",
+   "title": "التحدث عن الأرقام والنتائج بالإنجليزية",
+   "summary": "increase وdecrease والنسب والمقارنات، لتصف إنجازاتك وتقاريرك بدقة.",
+   "simple": "المقيّمون يحبون الأرقام. وبدل «حسّنت المبيعات» قل «Sales increased by 20%». هذا الدرس يعطيك الأفعال والحروف الصحيحة لوصف أي رقم.",
+   "body": "١) أفعال الزيادة: increase, rise, grow, double (تضاعف).\nأفعال النقص: decrease, fall, drop, reduce, cut.\n٢) الفرق بين by وto:\n• Sales increased by 20%. (مقدار التغير)\n• Sales increased to 50,000 rials. (القيمة النهائية)\n٣) الأسماء: an increase of 20% in sales / a 15% reduction in costs.\n٤) الصفات والظروف: a sharp increase (حاد) / increased sharply، وa slight drop / dropped slightly، وsteady growth / grew steadily.\n٥) المقارنة: higher than / twice as many as / the highest in the region.\n٦) نطق الأرقام: 1.5 = one point five، و15% = fifteen percent، و2025 = twenty twenty-five، و30,000 = thirty thousand (بلا s).\n٧) أخطاء شائعة:\n• ✗ increased with 20% ← ✓ increased by 20%\n• ✗ thirty thousands ← ✓ thirty thousand\n• ✗ the sales was ← ✓ sales were",
+   "quiz": [
+    {
+     "q": "Sales went from 40,000 to 50,000. Sales increased ___ 25%.",
+     "o": [
+      "to",
+      "by",
+      "with",
+      "of"
+     ],
+     "a": 1,
+     "x": "by لمقدار التغير.",
+     "ar": {
+      "q": "ارتفعت المبيعات من 40,000 إلى 50,000. Sales increased ___ 25%.",
+      "o": [
+       "to",
+       "by",
+       "with",
+       "of"
+      ],
+      "x": "نستخدم by لمقدار التغير."
+     }
+    },
+    {
+     "q": "Choose the correct one:",
+     "o": [
+      "thirty thousands rials",
+      "thirty thousand rials",
+      "thirty thousand of rials",
+      "thirties thousand rials"
+     ],
+     "a": 1,
+     "x": "thousand لا تُجمع بعد رقم.",
+     "ar": {
+      "q": "اختر الصحيح:",
+      "o": [
+       "thirty thousands rials",
+       "thirty thousand rials",
+       "thirty thousand of rials",
+       "thirties thousand rials"
+      ],
+      "x": "كلمة thousand لا تُجمع بعد الرقم."
+     }
+    },
+    {
+     "q": "Costs went ___ 8,000 rials (the final value).",
+     "o": [
+      "by",
+      "to",
+      "at",
+      "on"
+     ],
+     "a": 1,
+     "x": "to للقيمة النهائية.",
+     "ar": {
+      "q": "وصلت التكاليف ___ 8,000 ريال (القيمة النهائية).",
+      "o": [
+       "by",
+       "to",
+       "at",
+       "on"
+      ],
+      "x": "نستخدم to للقيمة النهائية."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "What was your biggest achievement last year?",
+     "a": "I increased our B2B sales by 22%, from 180,000 to 220,000 rials, by opening fifteen new corporate accounts.",
+     "ar": {
+      "q": "ما أكبر إنجاز لك العام الماضي؟",
+      "a": "رفعت مبيعات الشركات بنسبة 22٪، من 180 ألفًا إلى 220 ألف ريال، بفتح خمسة عشر حسابًا جديدًا."
+     }
+    },
+    {
+     "q": "How did you improve the help desk?",
+     "a": "We cut the average resolution time by 35%, from four hours to about two and a half, by introducing a knowledge base.",
+     "ar": {
+      "q": "كيف حسّنت مكتب الدعم؟",
+      "a": "خفضنا متوسط وقت الحل بنسبة 35٪، من أربع ساعات إلى ساعتين ونصف تقريبًا، بإنشاء قاعدة معرفة."
+     }
+    },
+    {
+     "q": "Describe a trend in a chart.",
+     "a": "Revenue rose steadily in the first quarter, dropped slightly in April, and then increased sharply to reach its highest level in June.",
+     "ar": {
+      "q": "صف اتجاهًا في رسم بياني.",
+      "a": "ارتفعت الإيرادات بثبات في الربع الأول، وانخفضت قليلًا في أبريل، ثم ارتفعت بحدة لتبلغ أعلى مستوى في يونيو."
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "BBC Learning English",
+     "url": "https://www.bbc.co.uk/learningenglish"
+    }
+   ]
+  },
+  {
+   "id": "en-007",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1-B2",
+   "topic": "Meetings and calls",
+   "title": "إنجليزية الاجتماعات والمكالمات",
+   "summary": "عبارات الافتتاح، وطلب التوضيح، والاعتراض بلطف، والتلخيص، والمكالمات الهاتفية.",
+   "simple": "في الاجتماع تحتاج عبارات «إدارة الحديث» أكثر من المفردات الصعبة: كيف تطلب التكرار، وكيف تعترض بأدب، وكيف تلخّص. هذه العبارات تجعلك تبدو محترفًا فورًا.",
+   "body": "١) البدء: Shall we get started? / The purpose of today's meeting is to…\n٢) إبداء الرأي: In my view… / I think we should… / From a technical point of view…\n٣) الموافقة والاعتراض بلطف:\n• I agree with you on that.\n• I see your point, but… / I'm not sure that's the best option, because…\n٤) طلب التوضيح:\n• Sorry, could you repeat that, please?\n• Could you clarify what you mean by…?\n• So, if I understand correctly, you mean…?\n٥) المقاطعة بأدب: Sorry to interrupt, but…\n٦) التلخيص والمهام: To sum up, we agreed to… / Majid will send the report by Thursday.\n٧) المكالمات:\n• This is Majid from… / I'm calling about…\n• Could you hold on a moment, please?\n• The line is breaking up. Could you speak up?\n• I'll send you an email to confirm.\n٨) خطأ شائع: ✗ I didn't understand you, repeat ← ✓ Sorry, could you repeat that, please?",
+   "quiz": [
+    {
+     "q": "A polite way to disagree:",
+     "o": [
+      "You are wrong.",
+      "I see your point, but I think…",
+      "No way.",
+      "That's stupid."
+     ],
+     "a": 1,
+     "x": "اعتراض مهذب يبدأ بتقدير الرأي.",
+     "ar": {
+      "q": "طريقة مهذبة للاعتراض:",
+      "o": [
+       "You are wrong.",
+       "I see your point, but I think…",
+       "No way.",
+       "That's stupid."
+      ],
+      "x": "اعتراض مهذب يبدأ بتقدير رأي الآخر."
+     }
+    },
+    {
+     "q": "When you don't hear clearly on a call:",
+     "o": [
+      "What?",
+      "Sorry, could you repeat that, please?",
+      "Speak!",
+      "Again again."
+     ],
+     "a": 1,
+     "x": "طلب التكرار بأدب.",
+     "ar": {
+      "q": "عندما لا تسمع جيدًا في مكالمة:",
+      "o": [
+       "What?",
+       "Sorry, could you repeat that, please?",
+       "Speak!",
+       "Again again."
+      ],
+      "x": "اطلب التكرار بأدب."
+     }
+    },
+    {
+     "q": "To summarize at the end of a meeting:",
+     "o": [
+      "To sum up, we agreed to…",
+      "Finish.",
+      "Bye everyone.",
+      "No more."
+     ],
+     "a": 0,
+     "x": "To sum up للتلخيص.",
+     "ar": {
+      "q": "للتلخيص في نهاية الاجتماع:",
+      "o": [
+       "To sum up, we agreed to…",
+       "Finish.",
+       "Bye everyone.",
+       "No more."
+      ],
+      "x": "عبارة To sum up للتلخيص."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "How do you handle a disagreement in a meeting?",
+     "a": "I listen first, acknowledge the other view, then explain mine with facts: \"I see your point, but the data shows…\" If needed, I suggest we review it offline.",
+     "ar": {
+      "q": "كيف تتعامل مع خلاف في اجتماع؟",
+      "a": "أستمع أولًا وأقدّر الرأي الآخر، ثم أشرح رأيي بالحقائق، وأقترح مناقشته لاحقًا عند الحاجة."
+     }
+    },
+    {
+     "q": "How do you open a call with a new client?",
+     "a": "Good morning, this is Majid from [Company]. I'm calling about your request for a network upgrade. Is now a good time to talk?",
+     "ar": {
+      "q": "كيف تبدأ مكالمة مع عميل جديد؟",
+      "a": "أعرّف بنفسي وشركتي، وأذكر سبب الاتصال، وأسأل هل الوقت مناسب للحديث."
+     }
+    },
+    {
+     "q": "How do you confirm action points?",
+     "a": "To sum up, I'll send the proposal by Thursday and you'll confirm the budget next week. I'll email a summary today.",
+     "ar": {
+      "q": "كيف تؤكد المهام المتفق عليها؟",
+      "a": "ألخّص من سيفعل ماذا ومتى، وأعد بإرسال ملخص بالبريد اليوم."
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "British Council — LearnEnglish: Business",
+     "url": "https://learnenglish.britishcouncil.org/business-english"
+    }
+   ]
+  },
+  {
+   "id": "en-008",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1-B2",
+   "topic": "Sales English",
+   "title": "إنجليزية المبيعات: عرض المنتج والتعامل مع الاعتراضات",
+   "summary": "عبارات عرض القيمة، وأسئلة الاكتشاف، والرد على اعتراض السعر، وطلب القرار.",
+   "simple": "العميل لا يشتري «مواصفات»، بل يشتري حلًّا لمشكلته. وهذه العبارات تساعدك أن تتحدث عن الفائدة لا عن المنتج فقط.",
+   "body": "١) أسئلة الاكتشاف:\n• What challenges are you facing with your current system?\n• What would an ideal solution look like for you?\n• Who else is involved in the decision?\n٢) من الخاصية إلى الفائدة: This feature… which means you can… / This will help you reduce…\n٣) الاعتراض على السعر:\n• I understand. Compared to what?\n• If we look at the total cost over three years…\n• What if we spread the payments over…?\n٤) «سأفكر في الأمر»: Of course. What would you like to think over? Is it the price or the timing?\n٥) طلب القرار: Shall we go ahead with the order? / When would you like to start?\n٦) المتابعة: As promised, I'm sending the proposal we discussed.\n٧) أخطاء شائعة:\n• ✗ Our product is very cheap ← ✓ Our solution is cost-effective\n• ✗ You must buy now ← ✓ This offer is valid until the end of the month",
+   "quiz": [
+    {
+     "q": "A good discovery question:",
+     "o": [
+      "Do you want to buy?",
+      "What challenges are you facing with your current system?",
+      "Our product is the best.",
+      "Sign here."
+     ],
+     "a": 1,
+     "x": "سؤال مفتوح يكشف الحاجة.",
+     "ar": {
+      "q": "سؤال اكتشاف جيد:",
+      "o": [
+       "Do you want to buy?",
+       "What challenges are you facing with your current system?",
+       "Our product is the best.",
+       "Sign here."
+      ],
+      "x": "سؤال مفتوح يكشف حاجة العميل."
+     }
+    },
+    {
+     "q": "The more professional wording:",
+     "o": [
+      "Our product is very cheap.",
+      "Our solution is cost-effective.",
+      "Cheap cheap.",
+      "Low quality price."
+     ],
+     "a": 1,
+     "x": "cost-effective أفضل من cheap.",
+     "ar": {
+      "q": "الصياغة الأكثر احترافية:",
+      "o": [
+       "Our product is very cheap.",
+       "Our solution is cost-effective.",
+       "Cheap cheap.",
+       "Low quality price."
+      ],
+      "x": "كلمة cost-effective أفضل من cheap."
+     }
+    },
+    {
+     "q": "Asking for the decision:",
+     "o": [
+      "Shall we go ahead with the order?",
+      "Maybe later.",
+      "Think about it.",
+      "Bye."
+     ],
+     "a": 0,
+     "x": "طلب قرار واضح ومهذب.",
+     "ar": {
+      "q": "طلب القرار:",
+      "o": [
+       "Shall we go ahead with the order?",
+       "Maybe later.",
+       "Think about it.",
+       "Bye."
+      ],
+      "x": "طلب قرار واضح ومهذب."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "Sell me this product.",
+     "a": "Before I do, may I ask a few questions? What do you use it for, and what problems do you have with your current one? … Based on that, this will save you time because…",
+     "ar": {
+      "q": "بِعني هذا المنتج.",
+      "a": "أبدأ بأسئلة عن حاجة العميل ومشكلته الحالية، ثم أعرض المنتج كحل لهذه المشكلة بالتحديد، وأطلب القرار."
+     }
+    },
+    {
+     "q": "The client says: \"It's too expensive.\"",
+     "a": "I understand. Compared to what? If we look at the total cost over three years, including support and downtime, our solution actually costs less.",
+     "ar": {
+      "q": "العميل يقول: «السعر مرتفع».",
+      "a": "أقدّر ملاحظته، وأسأل: مقارنة بماذا؟ ثم أوضح التكلفة الإجمالية على ثلاث سنوات مع الدعم وتقليل التوقف."
+     }
+    },
+    {
+     "q": "The client says: \"I'll think about it.\"",
+     "a": "Of course. To help you decide, what is it you'd like to think over: the price, the timing, or something else?",
+     "ar": {
+      "q": "العميل يقول: «سأفكر في الأمر».",
+      "a": "أحترم ذلك، وأسأل بلطف عن السبب: السعر أم التوقيت أم شيء آخر، لأعالجه."
+     }
+    }
+   ],
+   "sources": []
+  },
+  {
+   "id": "it-012",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "Microsoft 365",
+   "title": "إدارة Microsoft 365 الأساسية",
+   "summary": "المستخدمون والتراخيص، وExchange Online، وTeams وSharePoint، والأمن بـ MFA والوصول المشروط.",
+   "simple": "Microsoft 365 هو «المكتب الرقمي» لمعظم الشركات: البريد والملفات والاجتماعات. ومسؤول النظام يضيف الموظفين، ويمنحهم التراخيص، ويحمي حساباتهم.",
+   "body": "١) مركز الإدارة (Microsoft 365 admin center): إضافة المستخدمين، وتعيين التراخيص، وإعادة تعيين كلمات المرور، والمجموعات.\n٢) الهوية: Microsoft Entra ID. ومع Active Directory المحلي تُزامن الحسابات بأداة Microsoft Entra Connect (هوية هجينة).\n٣) Exchange Online: صناديق البريد، والصناديق المشتركة (Shared Mailbox)، وقواعد التدفق، وحماية البريد بـ Defender for Office 365.\n٤) SharePoint وOneDrive وTeams:\n• OneDrive للملفات الشخصية\n• SharePoint لمواقع الأقسام وملفاتها\n• كل فريق في Teams مرتبط بمجموعة Microsoft 365 وموقع SharePoint\n٥) الأمن:\n• MFA لكل المستخدمين\n• الوصول المشروط (Conditional Access): السماح بالدخول حسب الجهاز والموقع والخطر\n• أدوار إدارية بأقل صلاحية، مثل User Administrator بدل Global Administrator\n٦) الامتثال: Microsoft Purview لتصنيف البيانات ومنع تسربها (DLP) وسياسات الاحتفاظ.\n٧) مغادرة موظف: احجب الدخول، وحوّل البريد أو صندوقه إلى صندوق مشترك، وانقل ملفات OneDrive، ثم حرّر الترخيص.",
+   "quiz": [
+    {
+     "q": "أداة مزامنة حسابات AD المحلي مع السحابة:",
+     "o": [
+      "Intune",
+      "Microsoft Entra Connect",
+      "Teams",
+      "Purview"
+     ],
+     "a": 1,
+     "x": "Entra Connect يزامن الهوية الهجينة.",
+     "en": {
+      "q": "The tool that syncs on-premises AD accounts to the cloud:",
+      "o": [
+       "Intune",
+       "Microsoft Entra Connect",
+       "Teams",
+       "Purview"
+      ],
+      "x": "Entra Connect syncs hybrid identity."
+     }
+    },
+    {
+     "q": "ميزة تسمح بالدخول حسب الجهاز والموقع والخطر:",
+     "o": [
+      "Shared Mailbox",
+      "Conditional Access",
+      "OneDrive",
+      "Flow rules"
+     ],
+     "a": 1,
+     "x": "Conditional Access.",
+     "en": {
+      "q": "The feature that allows sign-in based on device, location and risk:",
+      "o": [
+       "Shared Mailbox",
+       "Conditional Access",
+       "OneDrive",
+       "Flow rules"
+      ],
+      "x": "Conditional Access."
+     }
+    },
+    {
+     "q": "أفضل ممارسة لأدوار المدراء:",
+     "o": [
+      "الكل Global Administrator",
+      "أقل صلاحية لازمة لكل دور",
+      "حساب مدير مشترك",
+      "بلا MFA للمدراء"
+     ],
+     "a": 1,
+     "x": "Least privilege.",
+     "en": {
+      "q": "Best practice for admin roles:",
+      "o": [
+       "Everyone is Global Administrator",
+       "Least privilege for each role",
+       "A shared admin account",
+       "No MFA for admins"
+      ],
+      "x": "Least privilege."
+     }
+    }
+   ],
+   "interview": [
+    {
+     "q": "ما خطواتك عند مغادرة موظف؟",
+     "a": "أحجب الدخول وأُلغي الجلسات، وأحوّل صندوق بريده إلى صندوق مشترك أو أعيد توجيهه لمديره، وأنقل ملفات OneDrive، وأزيل الأجهزة، ثم أحرّر الترخيص وأوثّق.",
+     "en": {
+      "q": "What do you do when an employee leaves?",
+      "a": "Block sign-in and revoke sessions, convert the mailbox to shared or forward it to the manager, transfer OneDrive files, remove devices, then free the licence and document it."
+     }
+    },
+    {
+     "q": "كيف تحمي حسابات Microsoft 365؟",
+     "a": "MFA للجميع، والوصول المشروط، وحجب المصادقة القديمة، وأدوار بأقل صلاحية، ومراقبة تسجيلات الدخول الخطرة، وتوعية المستخدمين.",
+     "en": {
+      "q": "How do you secure Microsoft 365 accounts?",
+      "a": "MFA for everyone, conditional access, blocking legacy authentication, least-privilege admin roles, monitoring risky sign-ins, and user awareness."
+     }
+    },
+    {
+     "q": "ما الفرق بين OneDrive وSharePoint؟",
+     "a": "OneDrive لملفات الموظف الشخصية، وSharePoint لملفات الأقسام والمشاريع المشتركة، وهو ما تستخدمه Teams خلف الكواليس.",
+     "en": {
+      "q": "What is the difference between OneDrive and SharePoint?",
+      "a": "OneDrive is for an employee's own files; SharePoint is for shared department and project files, and it is what Teams uses behind the scenes."
+     }
+    }
+   ],
+   "sources": [
+    {
+     "title": "Microsoft Learn — Microsoft 365 admin",
+     "url": "https://learn.microsoft.com/microsoft-365/admin/"
     }
    ]
   }
