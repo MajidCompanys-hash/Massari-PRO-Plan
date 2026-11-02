@@ -46,8 +46,8 @@ let saveTimer=null;
 function persist(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{kvPut(STORE_KV,"data",S).catch(()=>toast("تعذّر الحفظ في ذاكرة الجهاز"))},150)}
 const saveMeta=()=>kvPut(STORE_KV,"meta",meta).catch(()=>{});
 const loaded=(async()=>{
-  try{S=(await kvGet(STORE_KV,"data"))||{};meta=(await kvGet(STORE_KV,"meta"))||{}}
-  catch(e){S={};meta={};console.warn(e)}
+  try{S=(await kvGet(STORE_KV,"data"))||{};Object.assign(meta,(await kvGet(STORE_KV,"meta"))||{})}
+  catch(e){S={};console.warn(e)}
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 })();
 const snapDoc=(c,id)=>{const v=S[c]&&S[c][id];return {id,exists:!!v,data:()=>v?clone(v):undefined,metadata:{fromCache:false,hasPendingWrites:false}}};
@@ -175,19 +175,28 @@ async function restore(obj){
   emitAll();
 }
 const FIELD_KEYS=()=>["it","sales"].concat(((S.settings&&S.settings.fields&&S.settings.fields.list)||[]).map(f=>f.key));
-function importJobs(arr){
+function importJobs(arr,opt){opt=opt||{};
   const list=Array.isArray(arr)?arr:Array.isArray(arr&&arr.jobs)?arr.jobs:[];
   const ex=Object.entries(S.jobs||{}),urls=new Set(ex.map(([,j])=>(j.url||"").trim()).filter(Boolean)),keys=new Set(ex.map(([,j])=>((j.title||"")+"|"+(j.company||"")).toLowerCase()));
-  let n=0;const fk=FIELD_KEYS();
+  let n=0;const fk=FIELD_KEYS(),seen=new Set(meta.seen||[]);
   for(const x of list){if(!x||!x.title)continue;const url=String(x.url||"").trim(),key=(String(x.title)+"|"+String(x.company||"")).toLowerCase();
-    if((url&&urls.has(url))||keys.has(key))continue;
-    const id=String(x.id||"").replace(/[^\w.-]/g,"").slice(0,60)||genId();if(S.jobs&&S.jobs[id])continue;
-    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),notes:"",status:"new",addedAt:new Date().toISOString()});
+    const id=String(x.id||"").replace(/[^\w.-]/g,"").slice(0,60)||genId();
+    if((url&&(urls.has(url)||seen.has(url)))||keys.has(key)||seen.has(id))continue;
+    if(S.jobs&&S.jobs[id])continue;
+    seen.add(id);if(url)seen.add(url);
+    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),notes:"",status:"new",foundAt:String(x.foundAt||"").slice(0,10)||todayISO(),addedAt:new Date().toISOString()});
     urls.add(url);keys.add(key);n++}
-  if(n)write("activities",genId(),{text:"استوردت "+n+" وظيفة جديدة من Claude",kind:"search",at:new Date().toISOString()});
-  meta.lastJobsImport=new Date().toISOString();saveMeta();
+  if(n)write("activities",genId(),{text:(opt.feed?"وصلت "+n+" وظيفة جديدة من البحث اليومي":"استوردت "+n+" وظيفة جديدة من Claude"),kind:"search",at:new Date().toISOString()});
+  meta.seen=[...seen].slice(-3000);meta.lastJobsImport=new Date().toISOString();saveMeta();
   return n;
 }
+function importLessons(list){let n=0;const seenL=new Set(meta.seenLessons||[]);
+  for(const x of (Array.isArray(list)?list:[])){if(!x||!x.id||!x.title||!x.body)continue;const id=String(x.id).replace(/[^\w.-]/g,"").slice(0,60);
+    if((S.lessons&&S.lessons[id])||seenL.has(id))continue;seenL.add(id);
+    write("lessons",id,Object.assign({},clone(x),{id,done:false,receivedAt:new Date().toISOString()}));n++}
+  meta.seenLessons=[...seenL].slice(-3000);saveMeta();return n}
+function setResources(list){const cur=S.settings&&S.settings.resources;if(cur&&JSON.stringify(cur.list)===JSON.stringify(list))return;write("settings","resources",{list:clone(list)})}
+function setTips(list){if(!Array.isArray(list)||!list.length)return;const cur=S.settings&&S.settings.tips;if(cur&&JSON.stringify(cur.list)===JSON.stringify(list))return;write("settings","tips",{list:clone(list)})}
 function fieldsText(){const extra=((S.settings&&S.settings.fields&&S.settings.fields.list)||[]).map(f=>'"'+f.key+'" = '+f.name).join("، ");
   return '"it" = أخصائي حاسب آلي، مهندس تقنية معلومات، حوكمة تقنية المعلومات، شبكات، أنظمة، دعم فني، أمن سيبراني؛ "sales" = مدير مبيعات، رئيس مبيعات، مساعد مدير مبيعات، مبيعات الشركات B2B'+(extra?"؛ "+extra:"")}
 function searchPrompt(){
@@ -241,6 +250,9 @@ function dataMenu(){
     box.querySelector("#lxYes").addEventListener("click",async()=>{try{await restore(obj);m.close();toast("تمت استعادة بياناتك")}catch(err){msg("تعذّر الاستعادة.")}});
   });
 }
+window.MasariLocal={S:()=>S,meta,saveMeta:()=>{saveMeta()},write,remove,
+  update:(c,id,d)=>{const cur=S[c]&&S[c][id];if(cur)write(c,id,Object.assign(clone(cur),clone(d)))},
+  getAsset:id=>kvGet(STORE_AS,id),importJobs,importLessons,setResources,setTips,sample,modal,toast,genId,todayISO,loaded};
 document.addEventListener("DOMContentLoaded",()=>{
   const b=document.getElementById("dataBtn");if(b)b.addEventListener("click",dataMenu);
   loaded.then(()=>{const lb=meta.lastBackup?Date.parse(meta.lastBackup):0,has=Object.keys(S).length;
@@ -410,6 +422,38 @@ details summary{cursor:pointer}
 #dataBtn{position:relative}
 #dataBtn.dot::after{content:"";position:absolute;top:3px;inset-inline-end:3px;width:9px;height:9px;border-radius:50%;background:var(--bad)}
 @media (max-width:380px){#dataBtn{padding-inline:8px}}
+.hub{gap:10px}
+.hub-t{font-family:var(--display);font-size:18px}
+.hub-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.hub-cell{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 8px;display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:start;cursor:pointer;color:var(--ink);min-width:0;font:inherit}
+.hub-cell b{font-family:var(--display);font-size:24px;color:var(--accent);font-variant-numeric:tabular-nums}
+.hub-cell span{font-size:12px;color:var(--muted)}
+.hub-cell .hub-l{color:var(--ink);font-size:13px;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hub-cell.muted{cursor:default}
+.hub-k{font-size:12px;color:var(--gold);font-weight:600}
+.hub-tip{display:flex;flex-direction:column;gap:6px;background:var(--gold-soft);border-radius:10px;padding:12px;font-size:14px}
+.hub-act{flex-direction:row!important;align-items:flex-start;gap:8px;color:var(--ink)!important;font-size:14px!important}
+.hub-act input{width:20px;height:20px;flex:none;margin-top:2px;accent-color:var(--accent)}
+.hub-streak{font-size:12px;color:var(--muted);font-weight:600}
+.hub-streak.hot{color:var(--ok)}
+@media (max-width:420px){.hub-grid{grid-template-columns:1fr 1fr}.hub-grid .hub-cell:first-child{grid-column:1/-1;flex-direction:row;align-items:baseline;gap:8px}}
+.lesson-today{border-color:var(--accent)}
+.lrow{display:flex;gap:10px;align-items:center;width:100%;text-align:start;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 0;cursor:pointer;color:var(--ink);text-decoration:none;font:inherit}
+.lrow:last-child{border-bottom:0}
+.lrow .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.lchk{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-size:13px;color:var(--surface)}
+.lchk.on{background:var(--ok);border-color:var(--ok)}
+.lesson-body{white-space:pre-wrap;display:flex;flex-direction:column;font-size:15px;line-height:1.8;background:var(--bg);border-radius:10px;padding:12px}
+.card.doc{flex-direction:row;flex-wrap:wrap;align-items:center}
+.doc-acts{width:100%;justify-content:flex-end}
+.doc-acts input{width:20px;height:20px;margin-inline-end:auto;accent-color:var(--accent)}
+#printArea{display:none}
+@media print{body.printing>*:not(#printArea){display:none!important}body.printing #printArea{display:block!important}body.printing{background:#fff!important;color:#000!important}:root{padding:0!important}}
+.pr-doc{font-family:var(--body);color:#000;padding:8mm 4mm;font-size:12pt;line-height:1.7}
+.pr-head{display:flex;justify-content:space-between;border-bottom:2px solid #0f6b63;padding-bottom:6pt;margin-bottom:14pt}
+.pr-doc h1{font-size:15pt;margin:0 0 10pt}
+.pr-body{white-space:pre-wrap}
+.pr-img img{max-width:100%;max-height:260mm;display:block;margin:0 auto}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -427,6 +471,7 @@ details summary{cursor:pointer}
 
   <!-- JOBS -->
   <section id="tab-jobs" class="stack">
+    <div id="todayHub"></div>
     <div class="pipe" aria-label="ملخص الطلبات">
       <div><b id="cNew">0</b><small>جديدة</small></div>
       <div><b id="cApplied">0</b><small>تقدّمت</small></div>
@@ -436,6 +481,7 @@ details summary{cursor:pointer}
     <div class="chips" id="fieldChips"></div>
     <div class="chips" id="statusChips">
       <button class="chip" data-s="active" aria-pressed="true">النشطة</button>
+      <button class="chip" data-s="today" aria-pressed="false">وصلت اليوم</button>
       <button class="chip" data-s="new" aria-pressed="false">جديدة</button>
       <button class="chip" data-s="applied" aria-pressed="false">تقدّمت</button>
       <button class="chip" data-s="interview" aria-pressed="false">مقابلة / اختبار</button>
@@ -448,7 +494,7 @@ details summary{cursor:pointer}
 
   <!-- DOCS -->
   <section id="tab-docs" class="stack" hidden>
-    <div><h2>مستنداتي</h2><div class="note">السيرة الذاتية، الشهادات، خطابات التقديم. محفوظة في حسابك.</div></div>
+    <div><h2>مستنداتي</h2><div class="note">السيرة الذاتية، الشهادات، الهوية، خطابات التقديم. محفوظة على جهازك، تطبعها أو ترسلها إلى الواتساب والبريد بضغطة.</div></div>
     <div class="card">
       <div class="grid2">
         <label for="docKind">نوع المستند<select id="docKind"><option>سيرة ذاتية</option><option>شهادة</option><option>خطاب تقديم</option><option>بطاقة / هوية</option><option>خبرة / توصية</option><option>أخرى</option></select></label>
@@ -456,6 +502,7 @@ details summary{cursor:pointer}
       </div>
       <div class="row"><button class="btn pri" id="uploadBtn" type="button">رفع المستند</button><span id="upMsg" class="note"></span></div>
     </div>
+    <div class="row"><button class="btn pri" id="docSendSel" type="button" disabled>حدد مستندات لإرسالها معًا</button><span class="note">«إرسال» يفتح قائمة المشاركة: واتساب، البريد، الطباعة، وغيرها.</span></div>
     <div id="docList" class="stack"></div>
     <div class="card">
       <h2>نبذتي المهنية</h2>
@@ -496,6 +543,7 @@ details summary{cursor:pointer}
     </div>
     <div class="chips" id="devSub">
       <button class="chip" data-v="skills" aria-pressed="true">المحاور والمهارات</button>
+      <button class="chip" data-v="lessons" aria-pressed="false">الدروس</button>
       <button class="chip" data-v="quiz" aria-pressed="false">الاختبارات</button>
       <button class="chip" data-v="plan" aria-pressed="false">خطة المراجعة</button>
       <button class="chip" data-v="files" aria-pressed="false">ملفات المراجعة</button>
@@ -505,6 +553,7 @@ details summary{cursor:pointer}
       <div id="skillGroups" class="stack"></div>
       <div class="card"><label for="newSkill">أضف مهارة لهذا المجال<input id="newSkill" placeholder="مثال: Python، Power BI، إدارة الوقت"></label><div class="row"><button class="btn" id="newSkillAdd" type="button">إضافة المهارة</button></div></div>
     </div>
+    <div id="dev-lessons" class="stack" hidden></div>
     <div id="dev-quiz" class="stack" hidden>
       <div class="card" id="qzSetup">
         <b>اختبار اختيار من متعدد</b>
@@ -559,12 +608,14 @@ details summary{cursor:pointer}
     </div>
     <div class="card" id="enRun" hidden></div>
     <div class="chips" id="enSub">
-      <button class="chip" data-v="practice" aria-pressed="true">تمارين</button>
+      <button class="chip" data-v="lessons" aria-pressed="true">الدروس</button>
+      <button class="chip" data-v="practice" aria-pressed="false">تمارين</button>
       <button class="chip" data-v="words" aria-pressed="false">بنك الكلمات</button>
       <button class="chip" data-v="writing" aria-pressed="false">الكتابة</button>
       <button class="chip" data-v="chat" aria-pressed="false">المحادثة</button>
     </div>
-    <div id="en-practice" class="stack">
+    <div id="en-lessons" class="stack"></div>
+    <div id="en-practice" class="stack" hidden>
       <div class="card">
         <b>تمرين اختيار من متعدد</b>
         <div class="grid2">
@@ -686,7 +737,7 @@ chipGroup("#statusChips","s",v=>fStatus=v);
 function renderJobs(){
   const c={new:0,applied:0,interview:0,offer:0};jobs.forEach(j=>{if(c[j.status]!=null)c[j.status]++});
   $("#cNew").textContent=c.new;$("#cApplied").textContent=c.applied;$("#cInterview").textContent=c.interview;$("#cOffer").textContent=c.offer;
-  let list=jobs.filter(j=>(fField==="all"||j.field===fField)&&(fStatus==="all"||(fStatus==="active"?j.status!=="rejected":j.status===fStatus)));
+  let list=jobs.filter(j=>(fField==="all"||j.field===fField)&&(fStatus==="all"||(fStatus==="today"?(j.foundAt||j.addedAt||"").slice(0,10)===todayISO():fStatus==="active"?j.status!=="rejected":j.status===fStatus)));
   list.sort((a,b)=>(b.postedAt||b.addedAt||"").localeCompare(a.postedAt||a.addedAt||""));
   const host=$("#jobList");
   if(!list.length){host.innerHTML='<div class="empty">لا توجد وظائف هنا بعد. اضغط «+ وظيفة» لإضافة إعلان، أو اضغط «بياناتي» لتطلب من Claude البحث عن وظائف جديدة.</div>';fillIvJobs();return}
@@ -788,6 +839,7 @@ function prepSheet(j){
     catch(e){if(e&&e.code==="aborted")return;out.textContent=e&&e.code==="not_granted"?"لم يُسمح للمساعد بالعمل. فعّله من إعدادات الصفحة.":e&&e.code==="rate_limited"?"المساعد مشغول الآن، حاول بعد دقيقة.":"تعذّر توليد النص. حاول مرة أخرى."}
   }));
   cp.addEventListener("click",()=>copy(out.textContent,cp));
+  if(window.MasariShare){const sr=MasariShare.textSendRow(()=>cp.disabled?"":out.textContent,"طلب وظيفة: "+j.title);out.after(sr)}
   s.querySelector("#markApplied").addEventListener("click",async()=>{
     try{await db.collection("jobs").doc(j.id).update({status:"applied",appliedAt:new Date().toISOString()});logAct("تقدّمت إلى «"+j.title+"» — "+(j.company||""),"applied");closeSheet();toast("سُجّل التقديم")}catch(e){toast("تعذّر الحفظ")}
   });
@@ -801,7 +853,7 @@ function renderDocs(){
   const sorted=[...mine].sort((a,b)=>(b.addedAt||"").localeCompare(a.addedAt||""));
   host.innerHTML=sorted.map(d=>{const ext=(d.name||"").split(".").pop().slice(0,4).toUpperCase();
     return '<div class="card doc" data-id="'+esc(d.id)+'"><div class="ic">'+esc(ext||"ملف")+'</div><div class="t"><b>'+esc(d.name)+'</b><span class="note">'+esc(d.kind||"")+' · '+esc(fmtDate((d.addedAt||"").slice(0,10)))+'</span></div>'+
-    (d.url?'<a class="btn" href="'+esc(d.url)+'" target="_blank" rel="noopener">فتح</a>':'')+'<button class="btn ghost danger" data-del type="button">حذف</button></div>'}).join("");
+    '<div class="row doc-acts"><input type="checkbox" data-sel aria-label="تحديد للإرسال">'+(d.url?'<a class="btn" href="'+esc(d.url)+'" target="_blank" rel="noopener">فتح</a>':'')+'<button class="btn" data-dprint type="button">طباعة</button><button class="btn" data-dshare type="button">إرسال</button><button class="btn ghost danger" data-del type="button">حذف</button></div></div>'}).join("");
 }
 $("#docList").addEventListener("click",async e=>{
   const b=e.target.closest("[data-del]");if(!b)return;
@@ -910,7 +962,7 @@ function renderDev(){
   if(!FIELD[devField]||devField==="other")devField="it";
   $("#devChips").innerHTML=devFields().map(([k,n])=>'<button class="chip" data-d="'+esc(k)+'" aria-pressed="'+(devField===k)+'">'+esc(n)+'</button>').join("")+'<button class="chip" data-d="+" aria-pressed="false">+ مجال جديد</button>';
   document.querySelectorAll("#devSub .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.v===devView));
-  ["skills","quiz","plan","files"].forEach(v=>$("#dev-"+v).hidden=v!==devView);
+  ["skills","lessons","quiz","plan","files"].forEach(v=>$("#dev-"+v).hidden=v!==devView);
   // today across all fields
   const tdy=todayISO(),due=plan.filter(x=>!x.done&&x.date&&x.date<=tdy).sort((a,b)=>a.date.localeCompare(b.date));
   $("#todayCount").textContent=due.length?due.length+" جلسة":"";
@@ -1130,7 +1182,7 @@ const CEFR=["A1","A2","B1","B2","C1","C2"],CEFR_AR={A1:"مبتدئ",A2:"أساس
 const CEFR_DESC={A1:"تفهم وتستخدم عبارات يومية بسيطة جدًا.",A2:"تتواصل في مواقف روتينية بجمل بسيطة.",B1:"تتعامل مع أغلب مواقف العمل المألوفة وتكتب نصًا مترابطًا بسيطًا.",B2:"تتحدث بطلاقة مقبولة مع الناطقين بها وتكتب نصوصًا واضحة ومفصلة.",C1:"تستخدم اللغة بمرونة وفاعلية في العمل والمواقف المهنية المعقدة.",C2:"تفهم كل ما تسمعه أو تقرؤه تقريبًا وتعبّر بدقة عالية."};
 const EN_SKILL={grammar:"القواعد · Grammar",vocab:"المفردات · Vocabulary",reading:"الفهم والقراءة · Reading",business:"إنجليزية الأعمال · Business",it:"إنجليزية التقنية والحوكمة · IT",sales:"إنجليزية المبيعات · Sales",interview:"إنجليزية المقابلات · Interviews"};
 const EN_FOCUS={grammar:"English grammar (tenses, conditionals, passive, articles, prepositions, relative clauses) in workplace sentences",vocab:"general and professional vocabulary, collocations and phrasal verbs",reading:"short reading comprehension: each question has a 2-4 sentence workplace passage in p",business:"business English: emails, meetings, reports, formal register",it:"IT English and IT governance terms (COBIT, ITIL, ISO 27001, risk, audit, incidents, SLAs)",sales:"sales English: prospecting, pitching, negotiation, objection handling, client emails",interview:"job interview English: common questions, strong answer phrases, polite expressions"};
-let enTests=[],enPractice=[],words=[],enWriting=[],enQ=null,enView="practice",enMsgs=[];
+let enTests=[],enPractice=[],words=[],enWriting=[],enQ=null,enView="lessons",enMsgs=[];
 $("#enSkill").innerHTML=Object.entries(EN_SKILL).map(([k,n])=>'<option value="'+k+'">'+n+'</option>').join("");
 const byAtDesc=(a,b)=>(b.at||b.addedAt||"").localeCompare(a.at||a.addedAt||"");
 const curLevel=()=>{const t=[...enTests].sort(byAtDesc)[0];return t&&CEFR.includes(t.level)?t:null};
@@ -1151,7 +1203,7 @@ function renderEn(){
   $("#enHist").textContent=hist.length>1?"تطوّر مستواك: "+hist.map(h=>h.level).join(" ← "):"";
   const pl=$("#enLevel");if(!pl.dataset.touched&&lv)pl.value=lv;
   document.querySelectorAll("#enSub .chip").forEach(c=>c.setAttribute("aria-pressed",c.dataset.v===enView));
-  ["practice","words","writing","chat"].forEach(v=>$("#en-"+v).hidden=v!==enView);
+  ["lessons","practice","words","writing","chat"].forEach(v=>$("#en-"+v).hidden=v!==enView);
   const st={};Object.keys(EN_SKILL).forEach(k=>st[k]={c:0,t:0,n:0});
   enPractice.forEach(p=>{if(st[p.skill]){st[p.skill].c+=+p.score||0;st[p.skill].t+=+p.total||0;st[p.skill].n++}});
   $("#enSkills").innerHTML=Object.entries(st).sort((x,y)=>(x[1].t?x[1].c/x[1].t:-1)-(y[1].t?y[1].c/y[1].t:-1)).map(([k,v])=>{const p=v.t?Math.round(v.c/v.t*100):null,cls=p==null?"":p>=80?"ok":p>=60?"mid":"low";
@@ -1356,6 +1408,229 @@ const snapDocs=snap=>snap.docs.map(d=>({id:d.id,...d.data()}));
     if(document.activeElement!==$("#profText"))$("#profText").value=profile.text||"";},onErr);
 })();
 })();
+</script>
+<script>
+/* مساري — الإصدار 2: لوحة اليوم، المزامنة التلقائية للوظائف والدروس، الطباعة والمشاركة، مكتبة الدروس */
+(function(){
+"use strict";
+const L=window.MasariLocal;if(!L)return;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const todayISO=L.todayISO;
+const fmtD=iso=>{try{return new Date(String(iso).slice(0,10)+"T12:00:00").toLocaleDateString("ar-OM",{day:"numeric",month:"long"})}catch(e){return iso}};
+const fmtT=iso=>{try{return new Date(iso).toLocaleString("ar-OM",{weekday:"long",hour:"numeric",minute:"2-digit"})}catch(e){return ""}};
+const toast=L.toast;
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const TRACK={en:"الإنجليزية",it:"الحاسب الآلي والحوكمة"};
+
+const TIPS=[
+ {t:"لا تنتظر الحماس حتى تبدأ. ابدأ بخطوة صغيرة جدًا، والحماس يأتي أثناء العمل.",a:"افتح قائمة وظائف اليوم واقرأ إعلانًا واحدًا كاملًا"},
+ {t:"قاعدة الدقيقتين: أي مهمة تأخذ أقل من دقيقتين نفّذها الآن ولا تؤجلها.",a:"حدّث رقم هاتفك وبريدك في سيرتك الذاتية إن لم تكن محدثة"},
+ {t:"البحث عن عمل وظيفة بحد ذاته. حدد له وقتًا ثابتًا كل يوم كأنه دوام.",a:"خصص ساعة ثابتة غدًا للبحث، واكتبها في تقويمك"},
+ {t:"التقديم الموجّه أفضل من التقديم العشوائي. طلبان مخصصان أقوى من عشرة طلبات عامة.",a:"جهّز خطاب تقديم مخصصًا لوظيفة واحدة من القائمة"},
+ {t:"أغلب الوظائف تأتي عن طريق المعارف. شبكة علاقاتك أداة بحث مهمة.",a:"راسل شخصًا واحدًا تعرفه يعمل في مجالك واسأله عن الفرص عندهم"},
+ {t:"الرفض جزء طبيعي من الطريق، وليس حكمًا على قيمتك. كل «لا» تقرّبك من «نعم».",a:"اكتب درسًا واحدًا تعلمته من آخر طلب لم ينجح"},
+ {t:"قسّم الهدف الكبير. «أجد وظيفة» هدف ثقيل، و«أقدّم على وظيفتين اليوم» هدف تنجزه.",a:"قدّم على وظيفتين اليوم"},
+ {t:"سيرتك الذاتية تُقرأ في ثوانٍ. اجعل أهم إنجازاتك بالأرقام في أعلاها.",a:"أضف إنجازًا واحدًا بالأرقام إلى سيرتك الذاتية"},
+ {t:"ملف LinkedIn المكتمل يجعل مسؤولي التوظيف يجدونك بدل أن تبحث أنت عنهم.",a:"حدّث العنوان المهني (Headline) في LinkedIn ليذكر مجاليك"},
+ {t:"المتابعة بعد التقديم تميّزك. قليل من المتقدمين يفعلونها.",a:"أرسل رسالة متابعة لطلب قدّمته قبل أكثر من أسبوع"},
+ {t:"الكسل غالبًا خوف متنكر من الفشل. ابدأ بالمهمة الأصعب أولًا وهي قليلة.",a:"أنجز المهمة التي تؤجلها منذ أيام قبل أي شيء آخر"},
+ {t:"تعلّم شيئًا جديدًا كل يوم ولو 15 دقيقة. بعد شهر ستكون شخصًا مختلفًا في المقابلة.",a:"أنهِ درس اليوم في التطبيق"},
+ {t:"جهّز قصصك قبل المقابلة. ثلاث قصص بأسلوب STAR تغطي أغلب الأسئلة السلوكية.",a:"اكتب قصة واحدة بأسلوب STAR عن مشكلة حللتها"},
+ {t:"ابعد الهاتف أثناء وقت البحث. التنقل بين التطبيقات يضيع التركيز.",a:"اعمل 25 دقيقة متواصلة على البحث والهاتف بعيد عنك"},
+ {t:"احتفل بالخطوات الصغيرة. التقدم المرئي يدفعك للاستمرار.",a:"راجع سجل أنشطتك في التطبيق ولاحظ ما أنجزته هذا الأسبوع"},
+ {t:"لا تكتفِ بالإعلانات. تواصل مع الشركات التي تحب العمل فيها مباشرة.",a:"اختر شركة واحدة تتمنى العمل فيها وابحث عن صفحة التوظيف لديها"},
+ {t:"الإنجليزية الجيدة ترفع فرصتك في أغلب وظائف تقنية المعلومات والمبيعات في الخليج.",a:"تعلّم 5 كلمات جديدة من بنك الكلمات"},
+ {t:"الشهادة المهنية رسالة قوية لصاحب العمل بأنك جاد في تطوير نفسك.",a:"حدد شهادة واحدة تستهدفها (مثل ITIL 4 أو COBIT) واقرأ متطلباتها"},
+ {t:"حافظ على روتين يومي: نوم واستيقاظ في وقت ثابت. الطاقة الجيدة تبدأ من النوم.",a:"حدد وقت استيقاظ ثابتًا لهذا الأسبوع والتزم به غدًا"},
+ {t:"اسأل نفسك كل مساء: ما الخطوة الواحدة التي قربتني اليوم من هدفي؟",a:"سجّل في الأنشطة خطوة واحدة أنجزتها اليوم"},
+ {t:"التدريب على المقابلة بصوت مسموع يختلف كثيرًا عن التفكير فيها بصمت.",a:"تدرّب على سؤال مقابلة واحد في التطبيق وأجب بصوت مسموع"},
+ {t:"قارن نفسك بنفسك أمس، لا بالآخرين. لكل شخص طريقه وتوقيته.",a:"اكتب شيئًا واحدًا تحسن فيه هذا الشهر"},
+ {t:"المبادرة تعني أن تصنع الفرصة: تطوع، أو مشروع صغير، أو شهادة. كلها تملأ الفراغ في سيرتك.",a:"فكر في مشروع صغير أو عمل تطوعي يضيف خبرة لسيرتك"},
+ {t:"اقرأ متطلبات الإعلان واستخدم كلماته نفسها في سيرتك، فأنظمة الفرز تبحث عنها.",a:"عدّل سيرتك لتشمل 3 كلمات مفتاحية من إعلان يهمك"},
+ {t:"لا تنتظر أن تكون جاهزًا 100٪. إذا كنت تطابق 70٪ من المتطلبات فقدّم.",a:"قدّم على وظيفة كنت تتردد فيها"},
+ {t:"نظّم مستنداتك مرة واحدة لتوفر الوقت كل مرة: السيرة والشهادات والهوية في مكان واحد.",a:"ارفع أي مستند ناقص إلى «مستنداتي»"},
+ {t:"التمرين الرياضي الخفيف يرفع التركيز والمزاج ويقلل التسويف.",a:"امشِ 20 دقيقة اليوم قبل جلسة البحث"},
+ {t:"اطلب رأيًا صادقًا في سيرتك من شخص يعمل في التوظيف أو في مجالك.",a:"أرسل سيرتك لشخص تثق به واطلب منه ملاحظتين"},
+ {t:"راجع أهدافك أسبوعيًا: ماذا نجح؟ ماذا لم ينجح؟ ماذا ستغير؟",a:"خصص 10 دقائق لمراجعة طلبات هذا الأسبوع ونتائجها"},
+ {t:"الاستمرار يغلب الموهبة. خطوة صغيرة كل يوم أقوى من جهد كبير مرة في الشهر.",a:"حافظ على سلسلتك: نفّذ خطوة واحدة على الأقل اليوم"}];
+/* ---------- Print ---------- */
+function printArea(){let a=$("#printArea");if(!a){a=document.createElement("div");a.id="printArea";document.body.appendChild(a)}return a}
+function cleanupPrint(){document.body.classList.remove("printing");const a=$("#printArea");if(a)a.innerHTML=""}
+async function printHTML(html){
+  const a=printArea();a.innerHTML=html;document.body.classList.add("printing");
+  await Promise.all([...a.querySelectorAll("img")].map(i=>i.decode?i.decode().catch(()=>{}):0));
+  window.addEventListener("afterprint",cleanupPrint,{once:true});
+  try{window.print()}catch(e){cleanupPrint();toast("الطباعة غير متاحة هنا. استخدم «إرسال» ثم «طباعة».")}
+}
+function letterHTML(title,text,dir){
+  const p=(L.S().settings||{}).profile||{};
+  return '<div class="pr-doc" dir="'+(dir||"auto")+'"><div class="pr-head"><b>'+esc(p.name||"")+'</b><span>'+esc(new Date().toLocaleDateString(dir==="ltr"?"en-GB":"ar-OM",{day:"numeric",month:"long",year:"numeric"}))+'</span></div>'+(title?'<h1>'+esc(title)+'</h1>':'')+'<div class="pr-body">'+esc(text)+'</div></div>';
+}
+async function printAsset(d){
+  const rec=await L.getAsset(d.assetId);if(!rec){toast("الملف غير موجود على هذا الجهاز.");return}
+  const type=rec.type||"";
+  if(type.startsWith("image/")){const u=URL.createObjectURL(rec.blob);await printHTML('<div class="pr-img"><img src="'+u+'" alt=""></div>');setTimeout(()=>URL.revokeObjectURL(u),60000);return}
+  if(type==="application/pdf"&&!isIOS){
+    const u=URL.createObjectURL(rec.blob),f=document.createElement("iframe");f.style.cssText="position:fixed;width:0;height:0;border:0;right:0;bottom:0";f.src=u;
+    f.onload=()=>{try{f.contentWindow.focus();f.contentWindow.print()}catch(e){window.open(u,"_blank")}setTimeout(()=>{f.remove();URL.revokeObjectURL(u)},120000)};document.body.appendChild(f);return}
+  toast("من القائمة التي تظهر اختر «طباعة»");
+  await shareFiles([new File([rec.blob],rec.name||d.name||"document",{type})],d.name);
+}
+
+/* ---------- Share ---------- */
+async function shareFiles(files,title){
+  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,title:title||""});return true}}
+  catch(e){if(e&&e.name==="AbortError")return false}
+  for(const f of files){const u=URL.createObjectURL(f),a=document.createElement("a");a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)}
+  toast("نُزّلت الملفات. أرفقها من تطبيق الواتساب أو البريد.");return true;
+}
+async function filesFor(docs){const out=[];for(const d of docs){const r=d.assetId&&await L.getAsset(d.assetId);if(r)out.push(new File([r.blob],r.name||d.name||"document",{type:r.type||"application/octet-stream"}))}return out}
+function textSendRow(getText,subject){
+  const row=document.createElement("div");row.className="row";
+  row.innerHTML='<button class="btn" data-t="wa" type="button">واتساب</button><button class="btn" data-t="mail" type="button">إيميل</button><button class="btn" data-t="share" type="button">مشاركة</button><button class="btn" data-t="print" type="button">طباعة</button>';
+  row.addEventListener("click",async e=>{const b=e.target.closest("[data-t]");if(!b)return;const t=getText();if(!t){toast("لا يوجد نص بعد.");return}
+    if(b.dataset.t==="wa")window.open("https://wa.me/?text="+encodeURIComponent(t),"_blank");
+    if(b.dataset.t==="mail")location.href="mailto:?subject="+encodeURIComponent(subject||"")+"&body="+encodeURIComponent(t);
+    if(b.dataset.t==="share"){try{await navigator.share({title:subject||"",text:t})}catch(err){if(!err||err.name!=="AbortError"){try{await navigator.clipboard.writeText(t);toast("نُسخ النص")}catch(e2){}}}}
+    if(b.dataset.t==="print")printHTML(letterHTML(subject,t,/^[\s\W]*[A-Za-z]/.test(t)?"ltr":"rtl"));
+  });
+  return row;
+}
+window.MasariShare={printHTML,letterHTML,textSendRow,shareFiles};
+
+/* ---------- Documents: print / send / multi-select ---------- */
+const selected=new Set();
+function updateSelBar(){const b=$("#docSendSel");if(b){b.disabled=!selected.size;b.textContent=selected.size?"إرسال المحدد ("+selected.size+")":"حدد مستندات لإرسالها معًا"}}
+document.addEventListener("change",e=>{const c=e.target.closest("#docList [data-sel]");if(!c)return;const id=c.closest("[data-id]").dataset.id;c.checked?selected.add(id):selected.delete(id);updateSelBar()});
+document.addEventListener("click",async e=>{
+  const pb=e.target.closest("#docList [data-dprint]"),sb=e.target.closest("#docList [data-dshare]");
+  if(pb||sb){const d=((L.S().docs)||{})[(pb||sb).closest("[data-id]").dataset.id];if(!d)return;
+    if(pb)printAsset(d);else{const f=await filesFor([d]);if(f.length)shareFiles(f,d.name);else toast("الملف غير موجود على هذا الجهاز.")}return}
+  if(e.target.closest("#docSendSel")){const all=(L.S().docs)||{},list=[...selected].map(id=>Object.assign({id},all[id])).filter(d=>d.assetId);
+    const f=await filesFor(list);if(!f.length){toast("لا توجد ملفات محددة.");return}if(await shareFiles(f,"مستنداتي")){selected.clear();document.querySelectorAll("#docList [data-sel]").forEach(c=>c.checked=false);updateSelBar()}return}
+});
+document.addEventListener("DOMContentLoaded",()=>{
+  const prof=$("#saveProf");
+  if(prof){const host=prof.closest(".card");const r=textSendRow(()=>{const p=(L.S().settings||{}).profile||{};return ((p.name?p.name+"\n\n":"")+(p.text||"")).trim()},"نبذتي المهنية");host.appendChild(r)}
+  updateSelBar();
+});
+
+/* ---------- Feed sync (jobs + lessons from the daily Claude task) ---------- */
+let syncing=false;
+async function syncFeed(manual){
+  if(syncing||location.protocol==="file:")return;syncing=true;let nj=0,nl=0,ok=false;
+  try{const r=await fetch("feed/jobs.json",{cache:"no-store"});if(r.ok){const j=await r.json();nj=L.importJobs(j.jobs||[],{feed:true});L.meta.feedJobsAt=j.updatedAt||"";ok=true}}catch(e){}
+  try{const r=await fetch("feed/lessons.json",{cache:"no-store"});if(r.ok){const j=await r.json();nl=L.importLessons(j.lessons||[]);L.setResources(j.resources||[]);L.setTips(j.tips||[]);L.meta.feedLessonsAt=j.updatedAt||"";ok=true}}catch(e){}
+  L.meta.lastSync=new Date().toISOString();L.saveMeta();syncing=false;renderHub();
+  if(manual)toast(!ok?"تعذّر الاتصال. تحقق من الإنترنت.":(nj||nl)?"وصل: "+nj+" وظيفة و"+nl+" درس":"لا جديد الآن. البحث التلقائي يعمل كل صباح.");
+  else if(nj)toast("وصلت "+nj+" وظيفة جديدة اليوم");
+}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){const l=Date.parse(L.meta.lastSync||0);if(Date.now()-l>30*60e3)syncFeed(false)}});
+
+/* ---------- Today hub ---------- */
+let jobsCache=[],lessonsCache=[],actsCache=[];
+const localDay=iso=>{const d=new Date(iso);if(isNaN(d))return "";return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function pickTip(){const t=todayISO(),feed=(((L.S().settings||{}).tips||{}).list||[]).find(x=>x&&x.date===t&&x.text);
+  if(feed)return {t:String(feed.text),a:String(feed.action||"")};const n=Math.floor(Date.parse(t+"T12:00:00")/864e5);return TIPS[n%TIPS.length]}
+function streak(){const days=new Set(actsCache.map(a=>localDay(a.at)));const d=new Date(todayISO()+"T12:00:00");if(!days.has(todayISO()))d.setDate(d.getDate()-1);
+  let n=0;while(days.has(localDay(d.toISOString()))){n++;d.setDate(d.getDate()-1)}return {n,today:days.has(todayISO())}}
+function todaysJobs(){const t=todayISO();return jobsCache.filter(j=>(j.foundAt||j.addedAt||"").slice(0,10)===t)}
+function pickLesson(track){const t=todayISO(),ls=lessonsCache.filter(l=>l.track===track);
+  return ls.find(l=>l.date===t&&!l.done)||ls.filter(l=>!l.done).sort((a,b)=>(a.date||"").localeCompare(b.date||""))[0]||null}
+function renderHub(){
+  const h=$("#todayHub");if(!h)return;
+  const tj=todaysJobs(),en=pickLesson("en"),it=pickLesson("it");
+  const last=L.meta.feedJobsAt?"آخر بحث تلقائي: "+fmtT(L.meta.feedJobsAt):"البحث التلقائي يبدأ صباح الغد";
+  h.innerHTML='<div class="card hub"><div class="row" style="justify-content:space-between;align-items:baseline"><b class="hub-t">اليوم</b><span class="note">'+esc(last)+'</span></div>'+
+    '<div class="hub-grid"><button class="hub-cell" id="hubJobs" type="button"><b>'+tj.length+'</b><span>وظيفة جديدة اليوم</span></button>'+
+    lessonCell(en,"en")+lessonCell(it,"it")+'</div>'+tipHTML()+
+    '<div class="row"><button class="btn" id="hubSync" type="button">تحديث الآن</button><span class="note">'+(location.protocol==="file:"?"افتح التطبيق من رابطه على الإنترنت ليصلك الجديد تلقائيًا.":"")+'</span></div></div>';
+}
+function tipHTML(){const tip=pickTip(),done=!!(((L.S().daily)||{})[todayISO()]||{}).done,st=streak();
+  const stTxt=st.n?(st.n===1?"سلسلتك: يوم واحد من العمل على مسارك":st.n===2?"سلسلتك: يومان متتاليان من العمل على مسارك":"سلسلتك: "+st.n+" "+(st.n<=10?"أيام متتالية":"يومًا متتاليًا")+" من العمل على مسارك")+(st.today?"":". نفّذ خطوة اليوم لتحافظ عليها"):"ابدأ سلسلتك اليوم بخطوة واحدة";
+  return '<div class="hub-tip"><span class="hub-k">نصيحة اليوم</span><div>'+esc(tip.t)+'</div>'+(tip.a?'<label class="hub-act" for="tipDone"><input type="checkbox" id="tipDone"'+(done?" checked":"")+'><span><b>مهمة اليوم:</b> '+esc(tip.a)+'</span></label>':'')+'<span class="hub-streak'+(st.n>=3?" hot":"")+'">'+esc(stTxt)+'</span></div>'}
+document.addEventListener("change",e=>{if(e.target.id!=="tipDone")return;const t=todayISO(),tip=pickTip();
+  if(e.target.checked){L.write("daily",t,{done:true,action:tip.a,at:new Date().toISOString()});L.write("activities",L.genId(),{text:"أنجزت مهمة اليوم: "+tip.a,kind:"daily",at:new Date().toISOString()});toast("أحسنت! خطوة اليوم تمت")}
+  else L.write("daily",t,{done:false,action:tip.a,at:new Date().toISOString()});renderHub()});
+function lessonCell(l,track){
+  if(!l)return '<div class="hub-cell muted"><b>✓</b><span>أنهيت دروس '+TRACK[track]+'</span></div>';
+  return '<button class="hub-cell" data-open-lesson="'+esc(l.id)+'" type="button"><span class="hub-k">درس '+(track==="en"?"الإنجليزية":"الحاسب")+'</span><span class="hub-l">'+esc(l.title)+'</span></button>';
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest("#hubSync")){syncFeed(true);return}
+  if(e.target.closest("#hubJobs")){const c=document.querySelector('#statusChips .chip[data-s="today"]');c&&c.click();document.getElementById("jobList").scrollIntoView({behavior:"smooth",block:"start"});return}
+  const o=e.target.closest("[data-open-lesson]");if(o){openLesson(o.dataset.openLesson);return}
+  const rq=e.target.closest("[data-req-lesson]");if(rq){requestLesson(rq.dataset.reqLesson);return}
+});
+
+/* ---------- Lessons library ---------- */
+function renderLessons(track){
+  const el=$(track==="en"?"#en-lessons":"#dev-lessons");if(!el)return;
+  const ls=lessonsCache.filter(l=>l.track===track).sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(a.id<b.id?1:-1));
+  const done=ls.filter(l=>l.done).length,p=ls.length?Math.round(done/ls.length*100):0,next=pickLesson(track);
+  const res=(((L.S().settings||{}).resources||{}).list||[]).filter(r=>r.track===track);
+  el.innerHTML=
+    (next?'<div class="card lesson-today"><span class="note">درسك التالي</span><b style="font-size:17px">'+esc(next.title)+'</b><span class="note">'+esc(next.summary||"")+'</span><div class="row"><button class="btn pri" data-open-lesson="'+esc(next.id)+'" type="button">ابدأ الدرس</button><span class="lv lv-learning">'+esc(next.level||"")+'</span></div></div>':'<div class="card"><b>أنهيت كل الدروس المتاحة.</b><span class="note">يصلك درس جديد كل صباح، أو اطلب درسًا الآن.</span></div>')+
+    '<div class="card"><div class="row" style="justify-content:space-between"><b>تقدّمك في '+TRACK[track]+'</b><span class="note">'+done+' من '+ls.length+' درس</span></div><div class="bar"><i style="width:'+p+'%"></i></div>'+
+    '<div class="grid2"><label for="rq-'+track+'">اطلب درسًا في موضوع<input id="rq-'+track+'" placeholder="'+(track==="en"?"مثال: كتابة تقرير، نطق الأرقام، Phrasal verbs":"مثال: إدارة المخاطر، Excel، تقسيم الشبكات")+'"></label><div style="display:flex;align-items:flex-end"><button class="btn" data-req-lesson="'+track+'" type="button">اطلب من Claude</button></div></div></div>'+
+    (ls.length?'<div class="card">'+ls.map(l=>'<button class="lrow" data-open-lesson="'+esc(l.id)+'" type="button"><span class="lchk'+(l.done?" on":"")+'">'+(l.done?"✓":"")+'</span><span class="t"><b>'+esc(l.title)+'</b><span class="note">'+esc([l.topic,l.level,fmtD(l.date)].filter(Boolean).join(" · "))+(l.done&&l.score!=null?" · نتيجتك "+esc(l.score):"")+'</span></span></button>').join("")+'</div>':'')+
+    (res.length?'<div class="card"><b>مصادر رسمية موثوقة</b><div class="note">جهات رسمية ومنصات تعليمية معروفة، تكمل بها ما تتعلمه هنا.</div>'+res.map(r=>'<a class="lrow" href="'+esc(r.url)+'" target="_blank" rel="noopener"><span class="t"><b>'+esc(r.title)+'</b><span class="note">'+esc(r.desc||"")+'</span></span><span class="note">↗</span></a>').join("")+'</div>':'');
+}
+function openLesson(id){
+  const l=lessonsCache.find(x=>x.id===id);if(!l)return;
+  const quiz=Array.isArray(l.quiz)?l.quiz:[];const ans={};
+  const m=L.modal('<div class="sheet-h"><h2>'+esc(l.title)+'</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="row"><span class="tag f-other">'+esc(TRACK[l.track]||"")+'</span>'+(l.level?'<span class="lv lv-learning">'+esc(l.level)+'</span>':'')+(l.topic?'<span class="note">'+esc(l.topic)+'</span>':'')+'</div>'+
+    (l.summary?'<div class="note">'+esc(l.summary)+'</div>':'')+
+    '<div class="lesson-body">'+String(l.body||"").split("\n").map(x=>'<div dir="auto">'+(esc(x)||"&nbsp;")+'</div>').join("")+'</div>'+
+    (quiz.length?'<b>اختبر فهمك</b><div id="lq" class="stack" style="gap:14px">'+quiz.map((q,i)=>'<div class="stack" style="gap:6px" data-qi="'+i+'"><div class="qtext" dir="auto" style="font-size:15px">'+(i+1)+'. '+esc(q.q)+'</div>'+(q.o||[]).map((o,k)=>'<button class="opt" data-k="'+k+'" type="button" dir="auto"><span class="ol">'+"أبجد"[k]+'</span><span class="ot" dir="auto">'+esc(o)+'</span></button>').join("")+'<div class="qexp" hidden></div></div>').join("")+'</div>':'')+
+    (Array.isArray(l.sources)&&l.sources.length?'<b>المصادر</b><div class="stack" style="gap:4px">'+l.sources.map(s=>'<a href="'+esc(s.url)+'" target="_blank" rel="noopener" dir="auto">'+esc(s.title||s.url)+'</a>').join("")+'</div>':'')+
+    '<div class="row"><button class="btn pri" id="lDone" type="button">'+(l.done?"أنهيته ✓":"أنهيت الدرس")+'</button><button class="btn" id="lAsk" type="button">اسأل Claude عن الدرس</button></div><div id="lAskOut"></div><div id="lSend"></div>');
+  const el=m.el;
+  el.querySelector("#lSend").appendChild(textSendRow(()=>l.title+"\n\n"+(l.body||""),l.title));
+  const lq=el.querySelector("#lq");
+  if(lq)lq.addEventListener("click",e=>{const b=e.target.closest(".opt");if(!b)return;const box=b.closest("[data-qi]"),i=+box.dataset.qi;if(i in ans)return;
+    const q=quiz[i],k=+b.dataset.k,ok=k===+q.a;ans[i]=ok;
+    box.querySelectorAll(".opt").forEach(x=>{x.disabled=true;const kk=+x.dataset.k;if(kk===+q.a)x.classList.add("ok");else if(kk===k)x.classList.add("bad")});
+    const ex=box.querySelector(".qexp");ex.hidden=false;ex.className="qexp "+(ok?"good":"wrong");ex.innerHTML='<b>'+(ok?"صحيح":"غير صحيح")+'</b>'+(q.x?'<div dir="auto">'+esc(q.x)+'</div>':'')});
+  el.querySelector("#lDone").addEventListener("click",()=>{
+    const n=Object.keys(ans).length,c=Object.values(ans).filter(Boolean).length;
+    L.update("lessons",l.id,{done:true,doneAt:new Date().toISOString(),score:quiz.length&&n?c+"/"+quiz.length:null});
+    if(!l.done)L.write("activities",L.genId(),{text:"أنهيت درس "+(l.track==="en"?"الإنجليزية":"الحاسب")+": "+l.title+(n?" ("+c+"/"+quiz.length+")":""),kind:"study",at:new Date().toISOString()});
+    m.close();toast("أحسنت، سُجّل الدرس");
+  });
+  el.querySelector("#lAsk").addEventListener("click",async()=>{
+    try{const r=await L.sample("أنا أتعلم من هذا الدرس:\n«"+l.title+"»\n"+(l.body||"")+"\n\nاشرح لي الفكرة الأهم فيه بأسلوب أبسط مع مثالين عمليين من بيئة العمل في عُمان، ثم أعطني 3 أسئلة مقابلة عنه مع إجابات نموذجية مختصرة. اكتب بالعربية مع المصطلحات الإنجليزية بين قوسين. بدون Markdown.");
+      const o=el.querySelector("#lAskOut");o.className="ai";o.setAttribute("dir","auto");o.textContent=r.text}catch(e){}
+  });
+}
+async function requestLesson(track){
+  const inp=$("#rq-"+track),topic=(inp&&inp.value.trim())||"";
+  const p=track==="en"
+    ?"اكتب درس لغة إنجليزية قصيرًا لمتعلم عربي في عُمان يعمل في تقنية المعلومات والمبيعات، بمستوى B1-B2"+(topic?"، في موضوع: "+topic:"، في موضوع مفيد لبيئة العمل")+". الشرح بالعربية والأمثلة بالإنجليزية، مع أخطاء شائعة وتصحيحها."
+    :"اكتب درسًا قصيرًا دقيقًا في الحاسب الآلي وحوكمة تقنية المعلومات لباحث عن عمل في عُمان"+(topic?"، في موضوع: "+topic:"، في موضوع من COBIT أو ITIL أو ISO 27001 أو المخاطر أو التدقيق")+". التزم بالإصدارات الرسمية الحالية للأطر، ولا تذكر أرقامًا أو بنودًا غير مؤكدة، واكتب المصطلحات بالإنجليزية بين قوسين.";
+  try{
+    const r=await L.sample.json(p+'\nأعد JSON فقط بالشكل: {"title":"","level":"","topic":"","summary":"سطر واحد","body":"نص الدرس 250-400 كلمة بفقرات ونقاط","quiz":[{"q":"","o":["","","",""],"a":0,"x":"شرح الإجابة"}],"sources":[{"title":"","url":"رابط رسمي حقيقي فقط"}]} مع 3 أسئلة.');
+    if(!r||!r.title||!r.body){toast("الرد غير مكتمل، حاول مرة أخرى.");return}
+    const id="req-"+L.genId();
+    L.write("lessons",id,{id,track,date:todayISO(),title:String(r.title),level:String(r.level||""),topic:String(r.topic||topic),summary:String(r.summary||""),body:String(r.body),quiz:Array.isArray(r.quiz)?r.quiz.slice(0,5):[],sources:Array.isArray(r.sources)?r.sources.slice(0,4):[],done:false,requested:true,receivedAt:new Date().toISOString()});
+    if(inp)inp.value="";openLesson(id);
+  }catch(e){}
+}
+
+/* ---------- Wire up ---------- */
+(async()=>{
+  const db=await window.claude.use("db");if(!db)return;
+  db.collection("jobs").onSnapshot(s=>{jobsCache=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderHub()});
+  db.collection("lessons").onSnapshot(s=>{lessonsCache=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderHub();renderLessons("en");renderLessons("it")});
+  db.doc("settings/resources").onSnapshot(()=>{renderLessons("en");renderLessons("it")});
+  db.collection("activities").onSnapshot(s=>{actsCache=s.docs.map(d=>d.data());renderHub()});
+  db.doc("settings/tips").onSnapshot(()=>renderHub());
+  syncFeed(false);
+})();
+})();
+
 </script>
 </body>
 </html>
