@@ -184,7 +184,7 @@ function importJobs(arr,opt){opt=opt||{};
     if((url&&(urls.has(url)||seen.has(url)))||keys.has(key)||seen.has(id))continue;
     if(S.jobs&&S.jobs[id])continue;
     seen.add(id);if(url)seen.add(url);
-    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),notes:"",status:"new",foundAt:String(x.foundAt||"").slice(0,10)||todayISO(),addedAt:new Date().toISOString()});
+    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),applyEmail:String(x.applyEmail||""),howToApply:String(x.howToApply||""),notes:"",status:"new",foundAt:String(x.foundAt||"").slice(0,10)||todayISO(),addedAt:new Date().toISOString()});
     urls.add(url);keys.add(key);n++}
   if(n)write("activities",genId(),{text:(opt.feed?"وصلت "+n+" وظيفة جديدة من البحث اليومي":"استوردت "+n+" وظيفة جديدة من Claude"),kind:"search",at:new Date().toISOString()});
   meta.seen=[...seen].slice(-3000);meta.lastJobsImport=new Date().toISOString();saveMeta();
@@ -454,6 +454,123 @@ details summary{cursor:pointer}
 .pr-doc h1{font-size:15pt;margin:0 0 10pt}
 .pr-body{white-space:pre-wrap}
 .pr-img img{max-width:100%;max-height:260mm;display:block;margin:0 auto}
+.ap-how{background:var(--info-soft);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:14px}
+.ct{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;padding-block:10px;border-bottom:1px solid var(--line)}
+.ct:last-child{border-bottom:0}
+.ct .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.ct-av{width:40px;height:40px;border-radius:12px;background:linear-gradient(150deg,var(--accent),var(--hub2,#073f3a));color:#fff;display:grid;place-items:center;font-weight:700;flex:none;box-shadow:0 6px 12px -6px rgba(15,107,99,.7)}
+.ct-acts{display:flex;gap:6px;flex-wrap:wrap;width:100%;justify-content:flex-end}
+#advisorFab{position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:7;border:0;border-radius:999px;padding:10px 14px 10px 16px;display:flex;align-items:center;gap:6px;font:inherit;font-weight:600;font-size:14px;color:#fff;cursor:pointer;
+  background:radial-gradient(120% 120% at 30% 20%,#2fa596,#0f6b63 55%,#073f3a);box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 -3px 0 rgba(0,0,0,.25) inset,0 12px 22px -8px rgba(7,63,58,.75);transition:transform .15s ease}
+#advisorFab svg{width:22px;height:22px}
+#advisorFab:active{transform:translateY(2px) scale(.97)}
+@media (prefers-reduced-motion:no-preference){#advisorFab{animation:fabIn .6s cubic-bezier(.34,1.56,.64,1)}}
+@keyframes fabIn{from{transform:translateY(30px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.adv-thread{max-height:46vh;overflow:auto;padding:4px}
+.adv-a{max-width:100%;line-height:1.75}
+main{padding-block-end:150px!important}
+/* ---------- Masari UX: depth, gestures, marquee ---------- */
+:root{
+  --hub1:#0f6b63; --hub2:#073f3a; --hub-ink:#ffffff; --hub-soft:rgba(255,255,255,.14); --hub-gold:#f6d39a;
+  --pri-edge:#0a4a44; --glass:rgba(255,255,255,.82);
+  --sh1:0 1px 0 rgba(255,255,255,.7) inset,0 1px 2px rgba(16,56,52,.08),0 8px 20px -10px rgba(16,56,52,.22);
+  --sh2:0 2px 4px rgba(16,56,52,.10),0 18px 36px -14px rgba(16,56,52,.38);
+  --glow:radial-gradient(900px 480px at 100% -8%,var(--accent-soft),transparent 62%);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --pri-edge:#2a8f83; --glass:rgba(23,36,34,.82);
+  --sh1:0 1px 0 rgba(255,255,255,.05) inset,0 1px 2px rgba(0,0,0,.35),0 10px 22px -10px rgba(0,0,0,.6);
+  --sh2:0 2px 6px rgba(0,0,0,.4),0 20px 40px -14px rgba(0,0,0,.75)}}
+:root[data-theme="dark"]{
+  --pri-edge:#2a8f83; --glass:rgba(23,36,34,.82);
+  --sh1:0 1px 0 rgba(255,255,255,.05) inset,0 1px 2px rgba(0,0,0,.35),0 10px 22px -10px rgba(0,0,0,.6);
+  --sh2:0 2px 6px rgba(0,0,0,.4),0 20px 40px -14px rgba(0,0,0,.75)}
+
+body{background-image:var(--glow);background-attachment:fixed}
+header.top{background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px)}
+body::before{background:var(--glass)}
+
+/* depth */
+.card{box-shadow:var(--sh1);border-color:transparent;transition:transform .25s ease,box-shadow .25s ease}
+#jobList article.card{transform-style:preserve-3d;will-change:transform}
+#jobList article.card:active{transform:scale(.985);box-shadow:var(--sh2)}
+@media (hover:hover){#jobList article.card:hover{box-shadow:var(--sh2)}}
+.pipe div{box-shadow:var(--sh1);border-color:transparent}
+
+/* 3D buttons */
+.btn{transition:transform .12s ease,box-shadow .12s ease,background .2s}
+.btn.pri{box-shadow:0 3px 0 var(--pri-edge),0 8px 14px -6px rgba(15,107,99,.55)}
+.btn.pri:active:not(:disabled){transform:translateY(3px);box-shadow:0 0 0 var(--pri-edge),0 3px 8px -4px rgba(15,107,99,.5)}
+.btn:not(.pri):not(.ghost){box-shadow:0 2px 0 var(--line)}
+.btn:not(.pri):not(.ghost):active{transform:translateY(2px);box-shadow:none}
+.chip{transition:transform .15s ease,box-shadow .2s}
+.chip[aria-pressed="true"]{box-shadow:0 6px 12px -6px rgba(15,107,99,.7)}
+.chip:active{transform:scale(.95)}
+.opt{transition:transform .12s ease,box-shadow .2s}
+.opt:active:not(:disabled){transform:scale(.98)}
+.opt.ok{animation:pop .35s ease}
+.opt.bad{animation:shake .35s ease}
+
+/* Today hub — the one bold 3D moment */
+.card.hub{background:linear-gradient(150deg,var(--hub1),var(--hub2));color:var(--hub-ink);box-shadow:var(--sh2);position:relative;overflow:hidden}
+.card.hub::after{content:"";position:absolute;inset:-40% -20% auto auto;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 65%);pointer-events:none}
+.card.hub .note,.card.hub .hub-t{color:var(--hub-ink)}
+.card.hub .note{opacity:.8}
+.card.hub .hub-cell{background:var(--hub-soft);border:1px solid rgba(255,255,255,.18);color:var(--hub-ink);box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 10px 18px -10px rgba(0,0,0,.55);transition:transform .2s ease}
+.card.hub .hub-cell:active{transform:translateY(2px) scale(.98)}
+.card.hub .hub-cell b{color:var(--hub-ink);font-size:28px;text-shadow:0 2px 0 rgba(0,0,0,.18)}
+.card.hub .hub-cell span{color:rgba(255,255,255,.82)}
+.card.hub .hub-cell .hub-k{color:var(--hub-gold)}
+.card.hub .hub-cell .hub-l{color:var(--hub-ink)}
+.card.hub .hub-tip{box-shadow:0 10px 20px -12px rgba(0,0,0,.6);color:var(--ink)}
+.card.hub .hub-tip .hub-act{color:var(--ink)!important}
+.card.hub .btn:not(.pri){background:rgba(255,255,255,.14);color:var(--hub-ink);border-color:rgba(255,255,255,.25);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.card.hub .hub-cell:first-child b{animation:pop .5s ease}
+
+/* raised active tab */
+nav.tabs{background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);box-shadow:0 -8px 24px -16px rgba(16,56,52,.4)}
+nav.tabs button{position:relative;isolation:isolate}
+nav.tabs button svg{transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+nav.tabs button::before{content:"";position:absolute;top:5px;left:50%;width:44px;height:30px;margin-left:-22px;border-radius:12px;background:var(--accent-soft);z-index:-1;transform:scale(.4);opacity:0;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .2s}
+nav.tabs button[aria-selected="true"]::before{transform:translateY(-2px) scale(1);opacity:1;box-shadow:0 6px 12px -6px rgba(15,107,99,.6)}
+nav.tabs button[aria-selected="true"] svg{transform:translateY(-3px) scale(1.12)}
+
+/* page transitions (swipe / tab) */
+main section.slide-n{animation:slideN .32s cubic-bezier(.2,.8,.2,1)}
+main section.slide-p{animation:slideP .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideN{from{opacity:.2;transform:perspective(900px) translateX(-36px) rotateY(-7deg)}to{opacity:1;transform:none}}
+@keyframes slideP{from{opacity:.2;transform:perspective(900px) translateX(36px) rotateY(7deg)}to{opacity:1;transform:none}}
+.sheet{animation:sheetUp .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.toast{animation:toastIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes toastIn{from{transform:translate(-50%,16px) scale(.9);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* marquee for long titles */
+.mq{display:block;white-space:nowrap;overflow:hidden;min-width:0}
+.mq>.mq-in{display:inline-block;white-space:nowrap}
+.mq:not(.run){text-overflow:ellipsis}
+.mq.run>.mq-in{animation:mq var(--mqd,8s) ease-in-out infinite alternate}
+.mq.run{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}
+@keyframes mq{0%,18%{transform:translateX(0)}82%,100%{transform:translateX(var(--mq,0px))}}
+.card h3.mq{flex:1}
+.hub-cell .hub-l.mq{display:block;-webkit-line-clamp:unset;width:100%}
+.hub-cell{width:100%}
+
+/* pull to refresh */
+#ptr{position:fixed;top:calc(env(safe-area-inset-top,0px) + 62px);left:50%;z-index:6;width:40px;height:40px;margin-left:-20px;border-radius:50%;background:var(--surface);box-shadow:var(--sh2);display:grid;place-items:center;transform:translateY(-70px);opacity:0;pointer-events:none}
+#ptr svg{width:22px;height:22px;color:var(--accent);transition:transform .2s}
+#ptr.ready svg{transform:rotate(180deg)}
+#ptr.spin svg{animation:spin .8s linear infinite}
+#ptr.back{transition:transform .3s ease,opacity .3s ease}
+@keyframes spin{to{transform:rotate(360deg)}}
+.swipe-hint{position:fixed;bottom:calc(132px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--bg);font-size:13px;padding:8px 14px;border-radius:999px;box-shadow:var(--sh2);white-space:nowrap}
+
+@media (prefers-reduced-motion:reduce){
+  .mq.run>.mq-in,main section.slide-n,main section.slide-p,.sheet,.toast,.opt.ok,.opt.bad,.card.hub .hub-cell:first-child b{animation:none!important}
+  .mq.run{-webkit-mask-image:none;mask-image:none;text-overflow:ellipsis}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -749,9 +866,9 @@ function renderJobs(){
       '<div class="row" style="justify-content:space-between;align-items:flex-start"><h3>'+esc(j.title)+'</h3><button class="st s-'+esc(j.status)+'" data-act="status" type="button" aria-label="تغيير الحالة">'+esc(STATUS[j.status]||j.status)+'</button></div>'+
       '<div class="meta"><span>'+esc(j.company||"")+'</span>'+(j.location?'<span>'+esc(j.location)+'</span>':'')+'<span class="tag f-'+(j.field==="it"||j.field==="sales"?j.field:"other")+'">'+esc(FIELD[j.field]||"أخرى")+'</span>'+(j.source?'<span>المصدر: '+esc(j.source)+'</span>':'')+'</div>'+
       (j.deadline?'<div class="meta"><span style="color:var(--warn)">آخر موعد: '+esc(fmtDate(j.deadline))+'</span></div>':'')+
-      (j.notes?'<div class="note">'+esc(j.notes)+'</div>':'')+
+      (j.notes?'<div class="note">'+esc(j.notes)+'</div>':'')+(j.description?'<div class="note">'+esc(j.description)+'</div>':'')+(j.applyEmail?'<div class="note">التقديم بالبريد: <span dir="ltr">'+esc(j.applyEmail)+'</span></div>':'')+(j.status==="applied"&&j.appliedAt?'<div class="note" style="color:var(--info)">تقدّمت في '+esc(fmtDate(j.appliedAt.slice(0,10)))+'</div>':'')+
       '<div class="row">'+(j.url?'<a class="btn" href="'+esc(j.url)+'" target="_blank" rel="noopener">فتح الإعلان</a>':'')+
-      '<button class="btn pri" data-act="prep" type="button">جهّز طلب التقديم</button>'+
+      '<button class="btn pri" data-apply type="button">قدّم الآن</button><button class="btn" data-act="prep" type="button">أدوات التقديم</button>'+
       '<button class="btn ghost" data-act="edit" type="button">تعديل</button></div>'+
     '</article>';
   });
@@ -797,13 +914,14 @@ function jobForm(j){
   '<div class="grid2"><label for="jfField">المجال<select id="jfField">'+Object.keys(FIELD).map(k=>'<option value="'+k+'"'+(j.field===k?" selected":"")+'>'+FIELD[k]+'</option>').join("")+'</select></label>'+
   '<label for="jfSrc">المصدر<input id="jfSrc" value="'+esc(j.source)+'" placeholder="LinkedIn، Bayt، وزارة العمل…"></label></div>'+
   '<div class="grid2"><label for="jfPosted">تاريخ النشر<input type="date" id="jfPosted" value="'+esc((j.postedAt||"").slice(0,10))+'"></label><label for="jfDead">آخر موعد للتقديم<input type="date" id="jfDead" value="'+esc(j.deadline||"")+'"></label></div>'+
-  '<label for="jfUrl">رابط الإعلان<input id="jfUrl" type="url" dir="ltr" value="'+esc(j.url)+'" placeholder="https://"></label>'+
+  '<div class="grid2"><label for="jfUrl">رابط الإعلان<input id="jfUrl" type="url" dir="ltr" value="'+esc(j.url)+'" placeholder="https://"></label><label for="jfMail">بريد التقديم (إن وُجد)<input id="jfMail" type="email" dir="ltr" value="'+esc(j.applyEmail)+'" placeholder="hr@company.com"></label></div>'+
   '<label for="jfDesc">وصف الوظيفة أو المتطلبات (اختياري، يحسّن خطاب التقديم)<textarea id="jfDesc" rows="3">'+esc(j.description)+'</textarea></label>'+
+  '<div class="grid2"><label for="jfCName">مسؤول التوظيف<input id="jfCName" value="'+esc(j.contactName)+'" placeholder="الاسم (اختياري)"></label><label for="jfCPhone">هاتفه / واتساب<input id="jfCPhone" type="tel" dir="ltr" value="'+esc(j.contactPhone)+'" placeholder="+968"></label></div>'+
   '<label for="jfNotes">ملاحظاتي<input id="jfNotes" value="'+esc(j.notes)+'"></label>'+
   '<div class="row" style="justify-content:space-between"><button class="btn pri" id="jfSave" type="button">حفظ</button>'+(isNew?'':'<button class="btn danger" id="jfDel" type="button">حذف الوظيفة</button>')+'</div><div id="jfErr" class="err"></div>');
   s.querySelector("#jfSave").addEventListener("click",async()=>{
     const v=id=>s.querySelector(id).value.trim();
-    const data={title:v("#jfTitle"),company:v("#jfCo"),location:v("#jfLoc"),field:v("#jfField"),source:v("#jfSrc"),postedAt:v("#jfPosted"),deadline:v("#jfDead"),url:v("#jfUrl"),description:v("#jfDesc"),notes:v("#jfNotes")};
+    const data={title:v("#jfTitle"),company:v("#jfCo"),location:v("#jfLoc"),field:v("#jfField"),source:v("#jfSrc"),postedAt:v("#jfPosted"),deadline:v("#jfDead"),url:v("#jfUrl"),applyEmail:v("#jfMail"),contactName:v("#jfCName"),contactPhone:v("#jfCPhone"),description:v("#jfDesc"),notes:v("#jfNotes")};
     if(!data.title){s.querySelector("#jfErr").textContent="اكتب المسمى الوظيفي أولًا.";return}
     try{
       if(isNew){data.status="new";data.addedAt=new Date().toISOString();await db.collection("jobs").add(data);logAct("أضفت وظيفة «"+data.title+"»","added")}
@@ -876,7 +994,7 @@ $("#uploadBtn").addEventListener("click",async()=>{
 });
 $("#saveProf").addEventListener("click",async()=>{
   if(!db)return;const p={name:$("#profName").value.trim(),text:$("#profText").value.trim(),updatedAt:new Date().toISOString()};
-  try{await db.doc("settings/profile").set(p);$("#profMsg").textContent="تم الحفظ."}catch(e){$("#profMsg").textContent="تعذّر الحفظ."}
+  try{await db.doc("settings/profile").set(Object.assign({},profile,p));$("#profMsg").textContent="تم الحفظ."}catch(e){$("#profMsg").textContent="تعذّر الحفظ."}
 });
 
 /* ---------- Interview ---------- */
@@ -1497,7 +1615,7 @@ function textSendRow(getText,subject){
   });
   return row;
 }
-window.MasariShare={printHTML,letterHTML,textSendRow,shareFiles};
+window.MasariShare={printHTML,letterHTML,textSendRow,shareFiles,filesFor};
 
 /* ---------- Documents: print / send / multi-select ---------- */
 const selected=new Set();
@@ -1526,6 +1644,7 @@ async function syncFeed(manual){
   if(manual)toast(!ok?"تعذّر الاتصال. تحقق من الإنترنت.":(nj||nl)?"وصل: "+nj+" وظيفة و"+nl+" درس":"لا جديد الآن. البحث التلقائي يعمل كل صباح.");
   else if(nj)toast("وصلت "+nj+" وظيفة جديدة اليوم");
 }
+window.MasariSync=syncFeed;
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){const l=Date.parse(L.meta.lastSync||0);if(Date.now()-l>30*60e3)syncFeed(false)}});
 
 /* ---------- Today hub ---------- */
@@ -1619,6 +1738,61 @@ async function requestLesson(track){
   }catch(e){}
 }
 
+/* ---------- Easy apply (قدّم الآن) ---------- */
+function openApply(id){
+  const S=L.S(),j=(S.jobs||{})[id];if(!j)return;
+  const prof=(S.settings||{}).profile||{};
+  const docs=Object.entries(S.docs||{}).map(([k,v])=>Object.assign({id:k},v)).filter(d=>d.kind!=="ملف مراجعة"&&d.assetId);
+  const email=String(j.applyEmail||"").trim(),how=String(j.howToApply||"").trim();
+  const subject="Application for "+j.title+(prof.name?" – "+prof.name:"");
+  const m=L.modal('<div class="sheet-h"><h2>قدّم الآن</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div><b>'+esc(j.title)+'</b><div class="note">'+esc([j.company,j.location].filter(Boolean).join(" · "))+'</div></div>'+
+    '<div class="ap-how">'+(email?'طريقة التقديم: بالبريد الإلكتروني إلى <b dir="ltr">'+esc(email)+'</b>':j.url?'طريقة التقديم: من صفحة الإعلان':'لم تُذكر طريقة التقديم، راجع الإعلان')+(how?'<div class="note">'+esc(how)+'</div>':'')+'</div>'+
+    '<ol class="lx-steps">'+
+    '<li><b>خطاب التقديم</b><textarea id="apLetter" rows="8" dir="auto" placeholder="اكتب الخطاب أو اطلبه من Claude">'+esc(j.letter||"")+'</textarea>'+
+      '<div class="row"><button class="btn" id="apGen" type="button">اكتبه مع Claude</button><label class="hub-act" for="apEn" style="align-items:center"><input type="checkbox" id="apEn" checked><span>بالإنجليزية</span></label></div>'+(prof.text?'':'<span class="note">أضف «نبذتي المهنية» في مستنداتي ليكون الخطاب عن خبرتك أنت.</span>')+'</li>'+
+    '<li><b>المرفقات</b>'+(docs.length?'<div class="stack" style="gap:4px">'+docs.map(d=>'<label class="hub-act" for="ap-'+esc(d.id)+'"><input type="checkbox" id="ap-'+esc(d.id)+'" data-apdoc="'+esc(d.id)+'"'+(d.kind==="سيرة ذاتية"?" checked":"")+'><span>'+esc(d.name)+' <span class="note">('+esc(d.kind||"")+')</span></span></label>').join("")+'</div>':'<span class="note">لا توجد مستندات. ارفع سيرتك الذاتية من «مستنداتي» أولًا.</span>')+'</li>'+
+    '<li><b>أرسل الطلب</b><div class="row">'+
+      (email?'<button class="btn pri" id="apMail" type="button">أرسل بالبريد مع المرفقات</button><a class="btn" id="apMailto" href="#">بريد بدون مرفقات</a>':'')+
+      (j.url?'<a class="btn'+(email?'':' pri')+'" id="apSite" href="'+esc(j.url)+'" target="_blank" rel="noopener">افتح صفحة التقديم</a>':'')+
+      '<button class="btn" id="apShare" type="button">مشاركة (واتساب وغيره)</button><button class="btn" id="apSave" type="button">حفظ المرفقات في الملفات</button></div>'+
+      '<span class="note">'+(email?'عند الإرسال بالبريد يُنسخ العنوان تلقائيًا، اختر تطبيق البريد والصق العنوان في خانة «إلى».':'عند فتح صفحة التقديم يُنسخ الخطاب تلقائيًا لتلصقه في النموذج. ولرفع سيرتك في الموقع، احفظ المرفقات في «الملفات» أولًا.')+'</span></li>'+
+    '<li><b>بعد الإرسال</b><div class="row"><button class="btn pri" id="apDone" type="button">'+(j.status==="applied"?"مُسجّل أنك تقدّمت ✓":"تم التقديم ✓")+'</button></div><span class="note">يُسجَّل الطلب في متابعتك مع الخطاب والمرفقات التي أرسلتها.</span></li></ol>');
+  const el=m.el,ta=el.querySelector("#apLetter");
+  const saveLetter=()=>{const t=ta.value.trim();if(t!==(j.letter||""))L.update("jobs",id,{letter:t})};
+  ta.addEventListener("change",saveLetter);
+  const chosen=()=>[...el.querySelectorAll("[data-apdoc]:checked")].map(c=>docs.find(d=>d.id===c.dataset.apdoc)).filter(Boolean);
+  const copyQuiet=async t=>{try{await navigator.clipboard.writeText(t);return true}catch(e){return false}};
+  el.querySelector("#apGen").addEventListener("click",async()=>{
+    const en=el.querySelector("#apEn").checked;
+    try{const r=await L.sample("اكتب خطاب تقديم (cover letter) احترافيًا ومختصرًا (180-250 كلمة) "+(en?"باللغة الإنجليزية":"بالعربية الفصحى")+" لهذه الوظيفة، يربط خبرات المتقدم بمتطلباتها، ويصلح للإرسال في نص البريد الإلكتروني مباشرة، مع تحية وخاتمة واسم المتقدم.\nالوظيفة: "+j.title+"\nالجهة: "+(j.company||"")+"\nالموقع: "+(j.location||"")+"\nالمتطلبات: "+(j.description||"غير متوفرة")+"\n\nبيانات المتقدم:\n"+(prof.name?"الاسم: "+prof.name+"\n":"")+(prof.text||"لم يكتب نبذة؛ اترك أقواسًا [ ] لما يجب أن يملأه.")+"\n\nاكتب نص الخطاب فقط بدون أي تعليق، وبدون Markdown.");
+      ta.value=r.text.trim();saveLetter()}catch(e){}
+  });
+  const mailBtn=el.querySelector("#apMail");
+  if(mailBtn)mailBtn.addEventListener("click",async()=>{
+    saveLetter();await copyQuiet(email);toast("نُسخ عنوان البريد: "+email);
+    const files=await filesFor(chosen());
+    if(files.length&&navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files,title:subject,text:ta.value})}catch(e){}}
+    else location.href="mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(ta.value);
+  });
+  const mt=el.querySelector("#apMailto");
+  if(mt)mt.addEventListener("click",e=>{e.preventDefault();saveLetter();location.href="mailto:"+encodeURIComponent(email)+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(ta.value)});
+  const site=el.querySelector("#apSite");
+  if(site)site.addEventListener("click",()=>{saveLetter();if(ta.value.trim()){copyQuiet(ta.value);toast("نُسخ الخطاب، الصقه في نموذج التقديم")}});
+  el.querySelector("#apShare").addEventListener("click",async()=>{saveLetter();const files=await filesFor(chosen());
+    try{if(files.length&&navigator.canShare&&navigator.canShare({files}))await navigator.share({files,title:subject,text:ta.value});else await navigator.share({title:subject,text:ta.value})}
+    catch(e){if(!e||e.name!=="AbortError")window.open("https://wa.me/?text="+encodeURIComponent(ta.value),"_blank")}});
+  el.querySelector("#apSave").addEventListener("click",async()=>{const files=await filesFor(chosen());if(!files.length){toast("حدد مرفقًا واحدًا على الأقل");return}toast("اختر «حفظ في الملفات»");shareFiles(files,j.title)});
+  el.querySelector("#apDone").addEventListener("click",()=>{
+    saveLetter();const sent=chosen().map(d=>d.name);
+    L.update("jobs",id,{status:"applied",appliedAt:new Date().toISOString(),appliedWith:{docs:sent,method:email?"email":j.url?"website":"other"}});
+    if(j.status!=="applied")L.write("activities",L.genId(),{text:"تقدّمت إلى «"+j.title+"» — "+(j.company||"")+(sent.length?" (المرفقات: "+sent.join("، ")+")":""),kind:"applied",at:new Date().toISOString()});
+    m.close();toast("سُجّل التقديم. بالتوفيق!");
+  });
+}
+window.MasariApply=openApply;
+document.addEventListener("click",e=>{const b=e.target.closest("#jobList [data-apply]");if(b)openApply(b.closest("[data-id]").dataset.id)});
+
 /* ---------- Wire up ---------- */
 (async()=>{
   const db=await window.claude.use("db");if(!db)return;
@@ -1629,6 +1803,250 @@ async function requestLesson(track){
   db.doc("settings/tips").onSnapshot(()=>renderHub());
   syncFeed(false);
 })();
+})();
+
+/* Masari: my details, employer contacts, smart career advisor */
+(function(){
+"use strict";
+const L=window.MasariLocal,SH=window.MasariShare;if(!L||!SH)return;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const toast=L.toast,S=()=>L.S(),now=()=>new Date().toISOString();
+const prof=()=>((S().settings||{}).profile)||{};
+const fmtD=iso=>{try{return new Date(String(iso).slice(0,10)+"T12:00:00").toLocaleDateString("ar-OM",{day:"numeric",month:"long"})}catch(e){return ""}};
+const telOf=p=>String(p||"").replace(/[^\d+]/g,"");
+const waOf=p=>{let d=String(p||"").replace(/\D/g,"");if(d.length===8)d="968"+d;return d};
+
+/* ---------- My details (added to «نبذتي المهنية») ---------- */
+function mountMyDetails(){
+  const btn=$("#saveProf");if(!btn||$("#myDetails"))return;
+  const box=document.createElement("div");box.id="myDetails";box.className="grid2";
+  box.innerHTML='<label for="pfEmail">بريدي الإلكتروني<input id="pfEmail" type="email" dir="ltr" placeholder="name@gmail.com"></label>'+
+    '<label for="pfPhone">رقم هاتفي<input id="pfPhone" type="tel" dir="ltr" placeholder="+968 9XXX XXXX"></label>'+
+    '<label for="pfLinked">رابط LinkedIn<input id="pfLinked" type="url" dir="ltr" placeholder="https://linkedin.com/in/…"></label>'+
+    '<label for="pfCity">مدينة الإقامة<input id="pfCity" placeholder="مسقط"></label>';
+  btn.closest(".row").before(box);
+  const fill=()=>{const p=prof();[["pfEmail","email"],["pfPhone","phone"],["pfLinked","linkedin"],["pfCity","city"]].forEach(([id,k])=>{const el=document.getElementById(id);if(el&&document.activeElement!==el)el.value=p[k]||""})};
+  fill();window.claude.use("db").then(db=>db&&db.doc("settings/profile").onSnapshot(fill));
+  btn.addEventListener("click",()=>{const d={email:$("#pfEmail").value.trim(),phone:$("#pfPhone").value.trim(),linkedin:$("#pfLinked").value.trim(),city:$("#pfCity").value.trim()};
+    setTimeout(()=>{const cur=prof();L.write("settings","profile",Object.assign({},cur,d))},60)},true);
+}
+window.MasariSignature=()=>{const p=prof();return [p.name,p.phone,p.email,p.linkedin].filter(Boolean).join("\n")};
+
+/* ---------- Employer contacts ---------- */
+function allContacts(){
+  const s=S(),list=Object.entries(s.contacts||{}).map(([id,c])=>Object.assign({id,manual:true},c));
+  const seen=new Set(list.map(c=>(c.email||"").toLowerCase()).filter(Boolean));
+  Object.entries(s.jobs||{}).forEach(([jid,j])=>{const em=String(j.applyEmail||"").trim();if(!em&&!j.contactPhone&&!j.contactName)return;
+    if(em&&seen.has(em.toLowerCase()))return;if(em)seen.add(em.toLowerCase());
+    list.push({id:"job-"+jid,jobId:jid,name:j.contactName||"",company:j.company||"",role:"",email:em,phone:j.contactPhone||"",note:j.title,fromJob:true,at:j.addedAt})});
+  return list.sort((a,b)=>(b.at||"").localeCompare(a.at||""));
+}
+function renderContacts(){
+  const host=$("#contactsList");if(!host)return;const cs=allContacts();
+  host.innerHTML=cs.length?cs.map(c=>'<div class="ct" data-cid="'+esc(c.id)+'"><div class="ct-av">'+esc((c.name||c.company||"؟").trim().charAt(0))+'</div><div class="t"><b>'+esc(c.name||c.company||"جهة توظيف")+'</b><span class="note">'+esc([c.name?c.company:"",c.role,c.note].filter(Boolean).join(" · "))+'</span>'+(c.email?'<span class="note" dir="ltr">'+esc(c.email)+'</span>':'')+'</div>'+
+    '<div class="ct-acts">'+(c.email?'<button class="btn pri" data-cmail type="button">إيميل + سيرتي</button>':'')+(c.phone?'<a class="btn" href="https://wa.me/'+esc(waOf(c.phone))+'" target="_blank" rel="noopener">واتساب</a><a class="btn" href="tel:'+esc(telOf(c.phone))+'">اتصال</a>':'')+(c.manual?'<button class="btn ghost" data-cedit type="button">تعديل</button>':'')+'</div></div>').join(""):
+    '<div class="note">لا توجد جهات بعد. أضف مسؤول التوظيف أو قسم الموارد البشرية لأي جهة تقدّمت إليها، أو أضف بريد التقديم في بيانات الوظيفة.</div>';
+}
+function mountContacts(){
+  const docs=$("#tab-docs");if(!docs||$("#contactsCard"))return;
+  const card=document.createElement("div");card.className="card";card.id="contactsCard";
+  card.innerHTML='<div class="row" style="justify-content:space-between"><h2>جهات التوظيف</h2><button class="btn" id="ctAdd" type="button">+ جهة</button></div><div class="note">إيميلات وأرقام مسؤولي التوظيف. اضغط «إيميل + سيرتي» لإرسال سيرتك وملفاتك مباشرة.</div><div id="contactsList"></div>';
+  const prof=$("#saveProf");const anchor=prof?prof.closest(".card"):null;
+  if(anchor)anchor.before(card);else docs.appendChild(card);
+  renderContacts();
+}
+function contactForm(c){
+  c=c||{};const isNew=!c.id;
+  const m=L.modal('<div class="sheet-h"><h2>'+(isNew?"إضافة جهة توظيف":"تعديل الجهة")+'</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="grid2"><label for="cfName">اسم المسؤول<input id="cfName" value="'+esc(c.name)+'"></label><label for="cfCo">الجهة / الشركة<input id="cfCo" value="'+esc(c.company)+'"></label></div>'+
+    '<div class="grid2"><label for="cfMail">البريد الإلكتروني<input id="cfMail" type="email" dir="ltr" value="'+esc(c.email)+'"></label><label for="cfPhone">الهاتف / واتساب<input id="cfPhone" type="tel" dir="ltr" value="'+esc(c.phone)+'" placeholder="+968"></label></div>'+
+    '<div class="grid2"><label for="cfRole">المنصب<input id="cfRole" value="'+esc(c.role)+'" placeholder="مسؤول التوظيف"></label><label for="cfNote">ملاحظة<input id="cfNote" value="'+esc(c.note)+'" placeholder="تعرفت عليه في معرض التوظيف"></label></div>'+
+    '<div class="row" style="justify-content:space-between"><button class="btn pri" id="cfSave" type="button">حفظ</button>'+(isNew?'':'<button class="btn danger" id="cfDel" type="button">حذف</button>')+'</div>');
+  const el=m.el,v=id=>el.querySelector(id).value.trim();
+  el.querySelector("#cfSave").addEventListener("click",()=>{const d={name:v("#cfName"),company:v("#cfCo"),email:v("#cfMail"),phone:v("#cfPhone"),role:v("#cfRole"),note:v("#cfNote"),at:c.at||now()};
+    if(!d.name&&!d.company){toast("اكتب الاسم أو الجهة");return}L.write("contacts",isNew?L.genId():c.id,d);m.close();toast("حُفظت الجهة")});
+  const del=el.querySelector("#cfDel");if(del)del.addEventListener("click",()=>{if(del.dataset.c!=="1"){del.dataset.c="1";del.textContent="اضغط للتأكيد";return}L.remove("contacts",c.id);m.close()});
+}
+function mailSheet(c){
+  const p=prof(),docs=Object.entries(S().docs||{}).map(([k,v])=>Object.assign({id:k},v)).filter(d=>d.kind!=="ملف مراجعة"&&d.assetId);
+  const greet=c.name?"Dear "+c.name+",":"Dear Hiring Team,";
+  const body=greet+"\n\nI hope this message finds you well. Please find attached my CV and supporting documents for your consideration for suitable opportunities in "+(c.company||"your organization")+".\n\nI would welcome the opportunity to discuss how my experience can contribute to your team.\n\nKind regards,\n"+window.MasariSignature();
+  const m=L.modal('<div class="sheet-h"><h2>إرسال إلى '+esc(c.name||c.company||"")+'</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="ap-how">إلى: <b dir="ltr">'+esc(c.email)+'</b></div>'+
+    '<label for="msSub">العنوان<input id="msSub" dir="auto" value="'+esc("Job application – "+(p.name||""))+'"></label>'+
+    '<label for="msBody">الرسالة<textarea id="msBody" rows="9" dir="auto">'+esc(body)+'</textarea></label>'+
+    '<div class="row"><button class="btn" id="msAI" type="button">حسّنها مع Claude</button></div>'+
+    '<b>المرفقات</b>'+(docs.length?'<div class="stack" style="gap:4px">'+docs.map(d=>'<label class="hub-act" for="ms-'+esc(d.id)+'"><input type="checkbox" id="ms-'+esc(d.id)+'" data-msdoc="'+esc(d.id)+'"'+(d.kind==="سيرة ذاتية"||d.kind==="شهادة"?" checked":"")+'><span>'+esc(d.name)+' <span class="note">('+esc(d.kind||"")+')</span></span></label>').join("")+'</div>':'<span class="note">ارفع سيرتك الذاتية في «مستنداتي» أولًا.</span>')+
+    '<div class="row"><button class="btn pri" id="msSend" type="button">أرسل مع المرفقات</button><button class="btn" id="msPlain" type="button">بريد بدون مرفقات</button></div>'+
+    '<span class="note">يُنسخ عنوان البريد تلقائيًا. في قائمة المشاركة اختر Mail أو Gmail والصق العنوان في خانة «إلى».</span>');
+  const el=m.el,chosen=()=>[...el.querySelectorAll("[data-msdoc]:checked")].map(x=>docs.find(d=>d.id===x.dataset.msdoc)).filter(Boolean);
+  el.querySelector("#msAI").addEventListener("click",async()=>{try{const r=await L.sample("حسّن هذه الرسالة الإلكترونية الموجهة إلى مسؤول توظيف"+(c.company?" في "+c.company:"")+"، واجعلها مهنية ومختصرة (120-180 كلمة) بنفس لغتها، مع ذكر نقاط قوة المتقدم من نبذته:\n"+(p.text||"")+"\n\nالرسالة:\n"+el.querySelector("#msBody").value+"\n\nاكتب نص الرسالة فقط بدون Markdown.");el.querySelector("#msBody").value=r.text.trim()}catch(e){}});
+  const logSent=n=>{L.write("activities",L.genId(),{text:"أرسلت إيميلًا إلى "+(c.name||c.company||c.email)+(n?" مع "+n+" مرفق":""),kind:"contact",at:now()});if(c.manual)L.update("contacts",c.id,{lastContact:now()})};
+  el.querySelector("#msSend").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(c.email);toast("نُسخ العنوان: "+c.email)}catch(e){}
+    const files=await SH.filesFor(chosen()),sub=el.querySelector("#msSub").value,txt=el.querySelector("#msBody").value;
+    if(files.length&&navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files,title:sub,text:txt});logSent(files.length)}catch(e){}}
+    else{location.href="mailto:"+encodeURIComponent(c.email)+"?subject="+encodeURIComponent(sub)+"&body="+encodeURIComponent(txt);logSent(0)}});
+  el.querySelector("#msPlain").addEventListener("click",()=>{location.href="mailto:"+encodeURIComponent(c.email)+"?subject="+encodeURIComponent(el.querySelector("#msSub").value)+"&body="+encodeURIComponent(el.querySelector("#msBody").value);logSent(0)});
+}
+document.addEventListener("click",e=>{
+  if(e.target.closest("#ctAdd")){contactForm(null);return}
+  const row=e.target.closest("[data-cid]");if(!row)return;const c=allContacts().find(x=>x.id===row.dataset.cid);if(!c)return;
+  if(e.target.closest("[data-cmail]")){if(c.jobId&&window.MasariApply)window.MasariApply(c.jobId);else mailSheet(c)}
+  if(e.target.closest("[data-cedit]"))contactForm(c);
+});
+
+/* ---------- Smart career advisor ---------- */
+function snapshot(){
+  const s=S(),p=prof(),jobs=Object.values(s.jobs||{}),by={};jobs.forEach(j=>by[j.status||"new"]=(by[j.status||"new"]||0)+1);
+  const applied=jobs.filter(j=>j.appliedAt).sort((a,b)=>(b.appliedAt||"").localeCompare(a.appliedAt||"")).slice(0,12);
+  const fields=["تقنية المعلومات","إدارة المبيعات"].concat(((s.settings&&s.settings.fields&&s.settings.fields.list)||[]).map(f=>f.name));
+  const skillsDone=Object.values(((s.settings||{}).skills||{}).done||{}).filter(Boolean).length;
+  const quizzes=Object.values(s.quizzes||{}),qs=quizzes.reduce((a,q)=>[a[0]+(+q.score||0),a[1]+(+q.total||0)],[0,0]);
+  const en=Object.values(s.enTests||{}).sort((a,b)=>(b.at||"").localeCompare(a.at||""))[0];
+  const ls=Object.values(s.lessons||{}),lsDone=ls.filter(l=>l.done);
+  const acts=Object.values(s.activities||{}),wk=Date.now()-7*864e5,actsWeek=acts.filter(a=>Date.parse(a.at)>wk).length;
+  const plan=Object.values(s.plan||{}),planDone=plan.filter(x=>x.done).length;
+  return ["— ملخص وضعي الحالي من تطبيق «مساري» —",
+    "الاسم: "+(p.name||"غير مذكور")+(p.city?" · المدينة: "+p.city:""),
+    "المجالات المستهدفة: "+fields.join("، "),
+    "نبذتي المهنية: "+(p.text||"لم أكتبها بعد"),
+    "الوظائف في قائمتي: "+jobs.length+" (جديدة "+(by.new||0)+"، تقدّمت "+(by.applied||0)+"، مقابلة/اختبار "+(by.interview||0)+"، عروض "+(by.offer||0)+"، مرفوضة "+(by.rejected||0)+")",
+    applied.length?"آخر طلباتي: "+applied.map(j=>j.title+" — "+(j.company||"")+" ("+String(j.appliedAt).slice(0,10)+"، الحالة: "+(j.status||"")+")").join("؛ "):"لم أسجّل أي تقديم بعد",
+    "المهارات التي أتقنتها في التطبيق: "+skillsDone+(qs[1]?" · متوسط نتائج اختبارات المحاور: "+Math.round(qs[0]/qs[1]*100)+"٪ في "+qs[1]+" سؤال":""),
+    "مستوى الإنجليزية: "+(en?en.level+" (اختبار "+String(en.at).slice(0,10)+")":"لم أختبره بعد"),
+    "الدروس: أنهيت "+lsDone.length+" من "+ls.length+(lsDone.length?" (آخرها: "+lsDone.slice(-3).map(l=>l.title).join("، ")+")":""),
+    plan.length?"خطة المراجعة: أنجزت "+planDone+" من "+plan.length+" جلسة":"لا توجد خطة مراجعة",
+    "عدد أنشطتي في آخر 7 أيام: "+actsWeek,
+    "اليوم: "+new Date().toLocaleDateString("ar-OM",{weekday:"long",day:"numeric",month:"long",year:"numeric"})].join("\n");
+}
+const QUICK=[
+  ["خطة أسبوعي","ضع لي خطة عملية لهذا الأسبوع يومًا بيوم: كم وظيفة أقدّم، وماذا أتعلم، ومتى، بناءً على وضعي الحالي."],
+  ["حلّل طلباتي","حلّل طلباتي ونتائجها، وقل لي ما الذي يجب أن أغيّره لأحصل على مقابلات أكثر."],
+  ["ماذا أتعلم بعد؟","ما المهارات أو الشهادات التي يجب أن أركز عليها الآن لأزيد فرصي في المجالين، ولماذا، وبأي ترتيب؟"],
+  ["حسّن سيرتي","راجع نبذتي المهنية، واقترح ملخصًا احترافيًا للسيرة الذاتية بالعربية والإنجليزية، و5 إنجازات بصياغة قوية."],
+  ["استعد لمقابلة","جهّزني لمقابلة قادمة: أهم 10 أسئلة متوقعة في مجالي مع نقاط إجابة مختصرة مناسبة لخبرتي."],
+  ["حفّزني","أشعر بالكسل والإحباط من البحث. أعطني خطوات صغيرة وعملية أبدأ بها اليوم، دون كلام عام."]];
+function renderThread(el){
+  const t=Object.entries(S().advisor||{}).map(([id,v])=>Object.assign({id},v)).sort((a,b)=>(a.at||"").localeCompare(b.at||"")).slice(-12);
+  el.innerHTML=t.length?t.map(x=>'<div class="msg a" dir="auto">'+esc(x.q)+'</div><div class="msg q adv-a" dir="auto">'+esc(x.a)+'</div>').join(""):'<div class="note">اسأل مستشارك عن أي شيء في مسارك المهني. يرى ملخص وضعك في التطبيق: طلباتك ومهاراتك ومستواك، فتكون نصائحه خاصة بك.</div>';
+  el.scrollTop=el.scrollHeight;
+}
+function openAdvisor(){
+  const m=L.modal('<div class="sheet-h"><h2>مستشارك المهني</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="chips adv-q">'+QUICK.map((q,i)=>'<button class="chip" data-q="'+i+'" type="button">'+esc(q[0])+'</button>').join("")+'</div>'+
+    '<div class="chat adv-thread" id="advThread"></div>'+
+    '<label for="advIn">سؤالك<textarea id="advIn" rows="3" dir="auto" placeholder="مثال: هل أقدّم على وظيفة تطلب خبرة 5 سنوات وأنا عندي 3؟"></textarea></label>'+
+    '<div class="row"><button class="btn pri" id="advSend" type="button">اسأل المستشار</button><button class="btn ghost" id="advClear" type="button">مسح المحادثة</button></div>');
+  const el=m.el,th=el.querySelector("#advThread");renderThread(th);
+  const ask=async q=>{q=q.trim();if(!q)return;
+    const hist=Object.values(S().advisor||{}).sort((a,b)=>(a.at||"").localeCompare(b.at||"")).slice(-3).map(x=>"سؤالي السابق: "+x.q+"\nإجابتك: "+String(x.a).slice(0,900)).join("\n\n");
+    const p="أنت مستشاري المهني الشخصي، خبير في سوق العمل في سلطنة عُمان والخليج، وفي التوظيف في تقنية المعلومات وحوكمتها وإدارة المبيعات، وفي التطوير الذاتي. انصحني بصدق وبشكل عملي ومحدد بناءً على وضعي، وإذا كان في سؤالي افتراض خاطئ فصحّحه. لا تخترع وظائف أو أرقامًا أو أسماء جهات غير مؤكدة. اكتب بالعربية بنقاط قصيرة وخطوات قابلة للتنفيذ، بدون Markdown.\n\n"+snapshot()+(hist?"\n\n— آخر ما تحدثنا عنه —\n"+hist:"")+"\n\nسؤالي الآن: "+q;
+    try{const r=await L.sample(p);L.write("advisor",L.genId(),{q,a:r.text.trim(),at:now()});L.write("activities",L.genId(),{text:"استشرت المستشار المهني: "+q.slice(0,60),kind:"advisor",at:now()});el.querySelector("#advIn").value="";renderThread(th)}catch(e){}};
+  el.querySelector("#advSend").addEventListener("click",()=>ask(el.querySelector("#advIn").value));
+  el.querySelector(".adv-q").addEventListener("click",e=>{const b=e.target.closest("[data-q]");if(b)ask(QUICK[+b.dataset.q][1])});
+  el.querySelector("#advClear").addEventListener("click",e=>{const b=e.currentTarget;if(b.dataset.c!=="1"){b.dataset.c="1";b.textContent="اضغط للتأكيد";return}Object.keys(S().advisor||{}).forEach(id=>L.remove("advisor",id));renderThread(th);b.dataset.c="";b.textContent="مسح المحادثة"});
+}
+window.MasariAdvisor=openAdvisor;
+
+/* ---------- mount ---------- */
+document.addEventListener("DOMContentLoaded",()=>{
+  mountMyDetails();mountContacts();
+  const fab=document.createElement("button");fab.id="advisorFab";fab.type="button";fab.setAttribute("aria-label","المستشار المهني");
+  fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-4 12.7V18h8v-2.3A7 7 0 0 0 12 3z"/><path d="M9.5 21h5M10 10.5l1.5 1.5 3-3"/></svg><span>المستشار</span>';
+  fab.addEventListener("click",openAdvisor);document.body.appendChild(fab);
+  window.claude.use("db").then(db=>{if(!db)return;db.collection("contacts").onSnapshot(renderContacts);db.collection("jobs").onSnapshot(renderContacts)});
+});
+})();
+
+/* Masari UX: pull-to-refresh, swipe between pages, keyboard shortcuts, marquee, 3D tilt */
+(function(){
+"use strict";
+const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+const tabs=()=>[...document.querySelectorAll("nav.tabs button[data-tab]")];
+const curIdx=()=>tabs().findIndex(b=>b.getAttribute("aria-selected")==="true");
+const anySheet=()=>!!document.querySelector(".sheet-bg");
+let lastIdx=Math.max(0,curIdx());
+
+/* ---- page transitions ---- */
+function animateSection(dir){
+  if(reduce)return;const sec=document.querySelector("main section:not([hidden])");if(!sec)return;
+  sec.classList.remove("slide-n","slide-p");void sec.offsetWidth;sec.classList.add(dir>0?"slide-n":"slide-p");
+  setTimeout(()=>sec.classList.remove("slide-n","slide-p"),400);
+}
+document.addEventListener("click",e=>{const b=e.target.closest("nav.tabs button[data-tab]");if(!b)return;
+  const i=tabs().indexOf(b);if(i!==lastIdx){animateSection(i>lastIdx?1:-1);lastIdx=i}setTimeout(measureAll,60)});
+function go(i){const t=tabs();if(i<0||i>=t.length)return false;t[i].click();return true}
+
+/* ---- swipe between pages ---- */
+const NOSWIPE=".chips,input,textarea,select,.sheet-bg,.ai,.cefr,.lesson-body,[data-noswipe],nav.tabs";
+let sx=0,sy=0,st=0,sw=false;
+document.addEventListener("touchstart",e=>{sw=false;if(e.touches.length!==1||anySheet())return;if(e.target.closest(NOSWIPE))return;
+  sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();sw=true},{passive:true});
+document.addEventListener("touchend",e=>{if(!sw)return;sw=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+  if(Math.abs(dx)>70&&Math.abs(dy)<50&&Date.now()-st<700){const i=curIdx();go(dx>0?i+1:i-1)}},{passive:true});
+
+/* ---- pull to refresh ---- */
+const ptr=document.createElement("div");ptr.id="ptr";ptr.setAttribute("aria-hidden","true");
+ptr.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>';
+document.addEventListener("DOMContentLoaded",()=>document.body.appendChild(ptr));
+let py=null,pull=0,busy=false;
+const setPull=v=>{ptr.style.transform="translateY("+(v-70)+"px)";ptr.style.opacity=String(Math.min(1,v/60))};
+document.addEventListener("touchstart",e=>{if(busy||anySheet()||window.scrollY>2||e.touches.length!==1)return;if(e.target.closest("input,textarea,select,.chips"))return;
+  py=e.touches[0].clientY;pull=0;ptr.classList.remove("back","ready","spin")},{passive:true});
+document.addEventListener("touchmove",e=>{if(py==null)return;const d=e.touches[0].clientY-py;
+  if(d<=0||window.scrollY>2){if(pull){pull=0;setPull(0)}return}
+  pull=Math.min(d*.55,120);setPull(pull);ptr.classList.toggle("ready",pull>72)},{passive:true});
+document.addEventListener("touchend",async()=>{if(py==null)return;py=null;
+  if(pull>72&&!busy){busy=true;ptr.classList.add("spin");ptr.classList.remove("ready");setPull(80);
+    try{if(window.MasariSync)await window.MasariSync(true)}catch(err){}
+    busy=false}
+  ptr.classList.remove("spin","ready");ptr.classList.add("back");setPull(0);pull=0},{passive:true});
+
+/* ---- keyboard (MacBook) ---- */
+document.addEventListener("keydown",e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey||anySheet())return;if(e.target.closest("input,textarea,select,[contenteditable]"))return;
+  if(/^[1-6]$/.test(e.key)){go(+e.key-1);e.preventDefault()}
+  else if(e.key==="ArrowLeft"){go(curIdx()+1);e.preventDefault()}
+  else if(e.key==="ArrowRight"){go(curIdx()-1);e.preventDefault()}
+  else if(e.key==="r"||e.key==="R"||e.key==="ر"){window.MasariSync&&window.MasariSync(true)}
+  else if(e.key==="n"||e.key==="N"){const b=document.getElementById("addJobBtn");if(b&&!b.hidden)b.click()}
+});
+
+/* ---- tap header to scroll to top ---- */
+document.addEventListener("click",e=>{if(e.target.closest("header.top h1"))window.scrollTo({top:0,behavior:reduce?"auto":"smooth"})});
+
+/* ---- marquee for long titles ---- */
+const MQ="#jobList .card h3, .hub-cell .hub-l, .lrow .t > b, .card.doc .t > b, .wrow .t > b, #ivJob, .lesson-today > b";
+function wrap(root){
+  root.querySelectorAll(MQ).forEach(el=>{if(el.dataset.mq||el.tagName==="SELECT")return;el.dataset.mq="1";
+    const s=document.createElement("span");s.className="mq-in";while(el.firstChild)s.appendChild(el.firstChild);el.appendChild(s);el.classList.add("mq")});
+}
+function measureAll(){
+  document.querySelectorAll(".mq").forEach(el=>{const inn=el.firstElementChild;if(!inn||!el.offsetParent){return}
+    const over=inn.scrollWidth-el.clientWidth;
+    if(over>6&&!reduce){const rtl=getComputedStyle(inn).direction==="rtl";el.style.setProperty("--mq",(rtl?over:-over)+"px");el.style.setProperty("--mqd",Math.min(18,Math.max(5,over/22+3)).toFixed(1)+"s");el.classList.add("run")}
+    else el.classList.remove("run")});
+}
+let raf=0;
+const schedule=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;wrap(document);measureAll()})};
+new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener("resize",schedule);
+document.addEventListener("DOMContentLoaded",schedule);
+
+/* ---- subtle 3D tilt on job cards (mouse / trackpad) ---- */
+if(!reduce&&window.matchMedia&&matchMedia("(hover:hover) and (pointer:fine)").matches){
+  document.addEventListener("pointermove",e=>{const c=e.target.closest&&e.target.closest("#jobList article.card");
+    document.querySelectorAll("#jobList article.card[data-tilt]").forEach(x=>{if(x!==c){x.style.transform="";delete x.dataset.tilt}});
+    if(!c)return;const r=c.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-.5,py2=(e.clientY-r.top)/r.height-.5;
+    c.dataset.tilt="1";c.style.transform="perspective(900px) rotateX("+(-py2*4).toFixed(2)+"deg) rotateY("+(px*5).toFixed(2)+"deg) translateZ(0)"});
+}
+
+/* ---- first-run gesture hint ---- */
+document.addEventListener("DOMContentLoaded",()=>{let seen=false;try{seen=localStorage.getItem("masari-hint")==="1"}catch(e){}
+  if(seen||!("ontouchstart" in window))return;
+  setTimeout(()=>{const h=document.createElement("div");h.className="swipe-hint";h.textContent="اسحب يمينًا ويسارًا للتنقل، واسحب للأسفل للتحديث";document.body.appendChild(h);
+    setTimeout(()=>h.remove(),4500);try{localStorage.setItem("masari-hint","1")}catch(e){}},1500)});
 })();
 
 </script>
