@@ -1,0 +1,435 @@
+{
+ "updatedAt": "2026-11-02T06:00:00Z",
+ "lessons": [
+  {
+   "id": "it-001",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "أساسي",
+   "topic": "مفاهيم الحوكمة",
+   "title": "الفرق بين حوكمة تقنية المعلومات وإدارتها",
+   "summary": "الحوكمة تحدد الاتجاه وتراقب، والإدارة تخطط وتنفّذ. هذا أول سؤال في أغلب مقابلات الحوكمة.",
+   "body": "١) الحوكمة (Governance): مسؤولية مجلس الإدارة والإدارة العليا. تُجيب عن سؤال: هل نعمل الأشياء الصحيحة؟\n٢) الإدارة (Management): مسؤولية المدير التنفيذي وفرق التقنية. تُجيب عن سؤال: هل نعمل الأشياء بالطريقة الصحيحة؟\n\nنموذج EDM في معيار ISO/IEC 38500 يلخّص عمل الحوكمة في ثلاث مهام:\n• التقييم (Evaluate): تقييم الاستخدام الحالي والمستقبلي للتقنية.\n• التوجيه (Direct): توجيه إعداد الخطط والسياسات وتنفيذها.\n• المراقبة (Monitor): مراقبة الأداء والالتزام بالسياسات.\n\nوفي إطار COBIT 2019 يظهر الفصل نفسه: مجال الحوكمة واحد هو EDM، ومجالات الإدارة أربعة: APO وBAI وDSS وMEA.\n\nمثال عملي: قرار «الانتقال إلى الحوسبة السحابية خلال سنتين بميزانية محددة» قرار حوكمة. أما اختيار المزوّد وتنفيذ النقل وإدارة الخدمة يوميًا فهي أعمال إدارة.\n\nجملة جاهزة للمقابلة:\n«Governance sets direction and monitors performance, while management plans, builds, runs and monitors activities in line with that direction.»",
+   "quiz": [
+    {
+     "q": "أيّ مما يلي يُعد من أعمال الحوكمة لا الإدارة؟",
+     "o": [
+      "تثبيت جدار حماية جديد",
+      "اعتماد مستوى المخاطر المقبول للمؤسسة",
+      "متابعة تذاكر الدعم الفني",
+      "اختيار برنامج النسخ الاحتياطي"
+     ],
+     "a": 1,
+     "x": "تحديد شهية المخاطر قرار توجيهي يتخذه المجلس أو الإدارة العليا، أما البقية فأعمال تنفيذية."
+    },
+    {
+     "q": "ماذا تعني الحروف EDM في نموذج حوكمة التقنية؟",
+     "o": [
+      "Execute, Deliver, Maintain",
+      "Evaluate, Direct, Monitor",
+      "Enable, Design, Manage",
+      "Estimate, Decide, Measure"
+     ],
+     "a": 1,
+     "x": "Evaluate, Direct, Monitor هي مهام جهة الحوكمة في ISO/IEC 38500 وفي مجال EDM في COBIT."
+    },
+    {
+     "q": "كم عدد مجالات الإدارة (Management) في COBIT 2019؟",
+     "o": [
+      "مجال واحد",
+      "ثلاثة",
+      "أربعة",
+      "خمسة"
+     ],
+     "a": 2,
+     "x": "أربعة: APO وBAI وDSS وMEA، إضافة إلى مجال حوكمة واحد هو EDM."
+    }
+   ],
+   "sources": [
+    {
+     "title": "ISO/IEC 38500:2024 — Governance of IT for the organization",
+     "url": "https://www.iso.org/standard/81684.html"
+    },
+    {
+     "title": "ISACA — COBIT",
+     "url": "https://www.isaca.org/resources/cobit"
+    }
+   ]
+  },
+  {
+   "id": "it-002",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "COBIT 2019",
+   "title": "خريطة COBIT 2019: الأهداف الأربعون في خمسة مجالات",
+   "summary": "احفظ توزيع الأهداف الأربعين على المجالات الخمسة، فهو أساس أي سؤال عن COBIT.",
+   "body": "يضم COBIT 2019 أربعين هدفًا للحوكمة والإدارة (Governance and Management Objectives) موزعة على خمسة مجالات:\n\n• EDM — Evaluate, Direct and Monitor: خمسة أهداف (حوكمة).\n• APO — Align, Plan and Organize: أربعة عشر هدفًا، مثل إدارة الاستراتيجية والمخاطر والموردين.\n• BAI — Build, Acquire and Implement: أحد عشر هدفًا، مثل إدارة البرامج والتغيير والمتطلبات.\n• DSS — Deliver, Service and Support: ستة أهداف، مثل إدارة العمليات والحوادث والاستمرارية والأمن.\n• MEA — Monitor, Evaluate and Assess: أربعة أهداف، مثل مراقبة الأداء والالتزام والضمان.\nالمجموع: 5 + 14 + 11 + 6 + 4 = 40.\n\nمفاهيم يجب أن تعرفها:\n• نظام الحوكمة (Governance System) يُبنى من مكوّنات (Components)، مثل العمليات والهياكل التنظيمية والسياسات والمعلومات والثقافة والمهارات والخدمات والبنية التحتية.\n• عوامل التصميم (Design Factors) تُستخدم لتكييف نظام الحوكمة مع المؤسسة، مثل استراتيجية المؤسسة وحجمها ومخاطرها ومتطلبات الالتزام.\n• مستويات القدرة (Capability Levels) تقيس نضج العمليات من 0 إلى 5.\n\nطريقة حفظ سريعة: «5-14-11-6-4».",
+   "quiz": [
+    {
+     "q": "إلى أي مجال ينتمي هدف إدارة الحوادث وطلبات الخدمة؟",
+     "o": [
+      "APO",
+      "BAI",
+      "DSS",
+      "MEA"
+     ],
+     "a": 2,
+     "x": "تشغيل الخدمة ودعمها، ومنه إدارة الحوادث، يقع في DSS (Deliver, Service and Support)."
+    },
+    {
+     "q": "كم عدد أهداف مجال APO؟",
+     "o": [
+      "5",
+      "11",
+      "14",
+      "6"
+     ],
+     "a": 2,
+     "x": "APO هو أكبر المجالات، وفيه 14 هدفًا."
+    },
+    {
+     "q": "ما الذي يُستخدم لتكييف نظام الحوكمة حسب ظروف المؤسسة؟",
+     "o": [
+      "مستويات القدرة",
+      "عوامل التصميم (Design Factors)",
+      "مجال MEA",
+      "مصفوفة RACI"
+     ],
+     "a": 1,
+     "x": "عوامل التصميم تحدد أولويات نظام الحوكمة وطريقة تخصيصه لكل مؤسسة."
+    }
+   ],
+   "sources": [
+    {
+     "title": "ISACA — COBIT",
+     "url": "https://www.isaca.org/resources/cobit"
+    }
+   ]
+  },
+  {
+   "id": "it-003",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "ITIL 4",
+   "title": "ITIL 4: نظام قيمة الخدمة والمبادئ التوجيهية السبعة",
+   "summary": "المبادئ السبعة والأبعاد الأربعة تُسأل كثيرًا في مقابلات إدارة الخدمات وفي اختبار ITIL 4 Foundation.",
+   "body": "نظام قيمة الخدمة (Service Value System — SVS) في ITIL 4 يتكون من خمسة عناصر:\nالمبادئ التوجيهية، والحوكمة، وسلسلة قيمة الخدمة (Service Value Chain)، والممارسات (Practices)، والتحسين المستمر.\n\nالمبادئ التوجيهية السبعة (Guiding Principles):\n١. Focus on value — ركّز على القيمة.\n٢. Start where you are — ابدأ من حيث أنت.\n٣. Progress iteratively with feedback — تقدّم بخطوات متكررة مع التغذية الراجعة.\n٤. Collaborate and promote visibility — تعاون وعزّز الشفافية.\n٥. Think and work holistically — فكّر واعمل بشمولية.\n٦. Keep it simple and practical — اجعلها بسيطة وعملية.\n٧. Optimize and automate — حسّن ثم أتمِت.\n\nالأبعاد الأربعة لإدارة الخدمة (Four Dimensions):\nالمؤسسات والأفراد، المعلومات والتقنية، الشركاء والموردون، تدفقات القيمة والعمليات.\n\nأنشطة سلسلة القيمة الستة: Plan، Improve، Engage، Design and transition، Obtain/build، Deliver and support.\n\nملاحظة للمقابلة: في المبدأ السابع الترتيب مهم. تحسّن العملية أولًا ثم تؤتمتها، لأن أتمتة عملية سيئة تضاعف المشكلة.",
+   "quiz": [
+    {
+     "q": "أيّ مما يلي ليس من المبادئ التوجيهية السبعة في ITIL 4؟",
+     "o": [
+      "Focus on value",
+      "Start where you are",
+      "Automate first",
+      "Keep it simple and practical"
+     ],
+     "a": 2,
+     "x": "المبدأ الصحيح هو Optimize and automate، أي التحسين قبل الأتمتة."
+    },
+    {
+     "q": "«الشركاء والموردون» هو:",
+     "o": [
+      "مبدأ توجيهي",
+      "بُعد من الأبعاد الأربعة",
+      "نشاط في سلسلة القيمة",
+      "ممارسة"
+     ],
+     "a": 1,
+     "x": "Partners and suppliers أحد الأبعاد الأربعة لإدارة الخدمة."
+    },
+    {
+     "q": "أي نشاط في سلسلة القيمة يتعامل مع فهم احتياجات أصحاب المصلحة والتواصل معهم؟",
+     "o": [
+      "Engage",
+      "Obtain/build",
+      "Plan",
+      "Deliver and support"
+     ],
+     "a": 0,
+     "x": "Engage مسؤول عن العلاقة والتواصل مع أصحاب المصلحة."
+    }
+   ],
+   "sources": [
+    {
+     "title": "AXELOS / PeopleCert — ITIL 4",
+     "url": "https://www.axelos.com/certifications/itil-service-management"
+    }
+   ]
+  },
+  {
+   "id": "it-004",
+   "date": "2026-11-02",
+   "track": "it",
+   "level": "متوسط",
+   "topic": "ISO/IEC 27001:2022",
+   "title": "ISO/IEC 27001:2022: الضوابط الـ93 في أربعة محاور",
+   "summary": "إصدار 2022 أعاد ترتيب ضوابط الملحق A في 93 ضابطًا ضمن 4 محاور بدل 114 ضابطًا في 14 مجالًا.",
+   "body": "معيار ISO/IEC 27001 يحدد متطلبات نظام إدارة أمن المعلومات (ISMS). الملحق A في إصدار 2022 يضم 93 ضابطًا (Controls) في أربعة محاور (Themes):\n• ضوابط تنظيمية (Organizational): 37 ضابطًا، مثل السياسات والأدوار وإدارة الأصول والموردين.\n• ضوابط الأفراد (People): 8 ضوابط، مثل التوعية والتدريب وشروط التوظيف.\n• ضوابط مادية (Physical): 14 ضابطًا، مثل أمن المكاتب والمعدات والمحيط.\n• ضوابط تقنية (Technological): 34 ضابطًا، مثل التحكم في الوصول والتشفير والنسخ الاحتياطي والتسجيل والمراقبة.\nالمجموع: 37 + 8 + 14 + 34 = 93.\n\nمن الضوابط الجديدة في 2022: استخبارات التهديدات (Threat intelligence)، وأمن المعلومات عند استخدام الخدمات السحابية، والإعداد الآمن (Configuration management)، ومنع تسرب البيانات (Data leakage prevention).\n\nمصطلحات مهمة:\n• بيان قابلية التطبيق (Statement of Applicability — SoA): وثيقة توضح الضوابط المطبقة والمستبعدة مع مبرر كل منها.\n• دورة PDCA: Plan-Do-Check-Act، أساس التحسين المستمر لنظام الإدارة.\n• تقييم المخاطر ومعالجتها (Risk assessment and treatment) هو قلب المعيار.",
+   "quiz": [
+    {
+     "q": "كم عدد ضوابط الملحق A في ISO/IEC 27001:2022؟",
+     "o": [
+      "114",
+      "93",
+      "40",
+      "34"
+     ],
+     "a": 1,
+     "x": "93 ضابطًا. الرقم 114 كان في إصدار 2013."
+    },
+    {
+     "q": "أكبر محور من حيث عدد الضوابط هو:",
+     "o": [
+      "التقنية",
+      "المادية",
+      "التنظيمية",
+      "الأفراد"
+     ],
+     "a": 2,
+     "x": "المحور التنظيمي فيه 37 ضابطًا، ثم التقني بـ34 ضابطًا."
+    },
+    {
+     "q": "ما الوثيقة التي تبيّن الضوابط المطبقة والمستبعدة ومبرراتها؟",
+     "o": [
+      "Risk Register",
+      "Statement of Applicability",
+      "Business Impact Analysis",
+      "SLA"
+     ],
+     "a": 1,
+     "x": "بيان قابلية التطبيق (SoA) مطلب أساسي في المعيار."
+    }
+   ],
+   "sources": [
+    {
+     "title": "ISO — ISO/IEC 27001 Information security management systems",
+     "url": "https://www.iso.org/standard/27001"
+    }
+   ]
+  },
+  {
+   "id": "en-001",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1",
+   "topic": "Professional emails",
+   "title": "Follow-up email after applying for a job",
+   "summary": "رسالة متابعة قصيرة ومهذبة بعد التقديم بأسبوع إلى أسبوعين تزيد فرصة ملاحظة طلبك.",
+   "body": "متى ترسلها؟ بعد 7 إلى 10 أيام عمل من التقديم إذا لم يصلك رد.\n\nنموذج:\nSubject: Follow-up on my application – IT Governance Specialist\n\nDear Ms. Al Balushi,\n\nI hope you are well. I applied for the IT Governance Specialist position on 20 October and wanted to follow up on my application.\nI remain very interested in this role, especially because of my experience with COBIT and ITIL practices.\nPlease let me know if you need any further information from me.\n\nThank you for your time and consideration.\n\nKind regards,\n[Your Name]\n+968 XXXX XXXX\n\nعبارات مفيدة:\n• I wanted to follow up on… — أردت متابعة…\n• I remain very interested in… — ما زلت مهتمًا جدًا بـ…\n• Please let me know if… — أرجو إبلاغي إذا…\n• Thank you for your time and consideration. — شكرًا لوقتكم واهتمامكم.\n\nأخطاء شائعة:\n✗ I want to ask about my application. (مباشرة أكثر من اللازم)\n✓ I wanted to follow up on my application. (أكثر لباقة؛ الماضي هنا للتلطيف)\n✗ Waiting your reply.\n✓ I look forward to hearing from you.",
+   "quiz": [
+    {
+     "q": "Choose the most polite opening:",
+     "o": [
+      "I want to know what happened to my application.",
+      "I wanted to follow up on my application.",
+      "Why didn't you reply to my application?",
+      "Answer me about the job."
+     ],
+     "a": 1,
+     "x": "I wanted to follow up… مهذبة ومهنية، والماضي فيها للتلطيف."
+    },
+    {
+     "q": "Complete: I look forward to ___ from you.",
+     "o": [
+      "hear",
+      "hearing",
+      "heard",
+      "be hearing"
+     ],
+     "a": 1,
+     "x": "بعد look forward to يأتي الفعل بصيغة -ing لأن to هنا حرف جر."
+    },
+    {
+     "q": "The best closing for a formal email is:",
+     "o": [
+      "Bye",
+      "Kind regards,",
+      "See ya",
+      "Thanks bro"
+     ],
+     "a": 1,
+     "x": "Kind regards أو Best regards هي الخاتمة المناسبة للرسائل الرسمية."
+    }
+   ],
+   "sources": [
+    {
+     "title": "British Council — LearnEnglish: Business English",
+     "url": "https://learnenglish.britishcouncil.org/"
+    },
+    {
+     "title": "BBC Learning English",
+     "url": "https://www.bbc.co.uk/learningenglish"
+    }
+   ]
+  },
+  {
+   "id": "en-002",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B1",
+   "topic": "Grammar for interviews",
+   "title": "Present perfect vs past simple when talking about experience",
+   "summary": "في المقابلات تستخدم الزمنين كثيرًا، والخلط بينهما من أشهر أخطاء المتحدثين بالعربية.",
+   "body": "القاعدة:\n• Past simple: لحدث انتهى في وقت محدد في الماضي.\n  I worked at Omantel from 2019 to 2022.\n  I implemented a new backup system last year.\n• Present perfect: لخبرة حتى الآن دون تحديد وقت، أو لشيء بدأ في الماضي ومستمر.\n  I have worked in IT for eight years. (وما زلت)\n  I have managed teams of up to ten people.\n  I have never failed an audit.\n\nكلمات مع present perfect: for، since، ever، never، already، so far.\nكلمات مع past simple: yesterday، last year، in 2020، ago، when I was…\n\nجمل جاهزة للمقابلة:\n• I have worked in IT support and governance for X years.\n• In my last job, I led a project that reduced incidents by 30%.\n• I have recently completed a course in COBIT 2019.\n\nخطأ شائع:\n✗ I have worked there in 2020.\n✓ I worked there in 2020. (لأن 2020 وقت محدد)",
+   "quiz": [
+    {
+     "q": "Choose the correct sentence:",
+     "o": [
+      "I have joined the company in 2021.",
+      "I joined the company in 2021.",
+      "I am joining the company in 2021 (past).",
+      "I join the company in 2021."
+     ],
+     "a": 1,
+     "x": "in 2021 وقت محدد في الماضي، لذا نستخدم past simple."
+    },
+    {
+     "q": "I ___ in sales for ten years (and I still work in sales).",
+     "o": [
+      "worked",
+      "have worked",
+      "work",
+      "was working"
+     ],
+     "a": 1,
+     "x": "خبرة مستمرة حتى الآن مع for، لذا present perfect."
+    },
+    {
+     "q": "Last month I ___ my ITIL 4 Foundation exam.",
+     "o": [
+      "have passed",
+      "passed",
+      "pass",
+      "have been passing"
+     ],
+     "a": 1,
+     "x": "last month وقت محدد منتهٍ، لذا past simple."
+    }
+   ],
+   "sources": [
+    {
+     "title": "British Council — Present perfect (grammar)",
+     "url": "https://learnenglish.britishcouncil.org/"
+    },
+    {
+     "title": "Cambridge Write & Improve (تصحيح كتابة مجاني)",
+     "url": "https://writeandimprove.com/"
+    }
+   ]
+  },
+  {
+   "id": "en-003",
+   "date": "2026-11-02",
+   "track": "en",
+   "level": "B2",
+   "topic": "IT governance vocabulary",
+   "title": "20 essential IT governance terms in English",
+   "summary": "مفردات تحتاجها في المقابلات والتقارير والاجتماعات في وظائف الحوكمة والمخاطر والالتزام.",
+   "body": "• stakeholder — صاحب مصلحة\n• alignment (business–IT alignment) — المواءمة بين الأعمال والتقنية\n• accountability — المساءلة\n• responsibility — المسؤولية (التنفيذ)\n• risk appetite — شهية المخاطر (مستوى المخاطر المقبول)\n• risk register — سجل المخاطر\n• mitigate a risk — الحدّ من خطر\n• control objective — هدف الرقابة\n• compliance — الالتزام\n• audit finding — ملاحظة تدقيق\n• remediation plan — خطة المعالجة\n• key performance indicator (KPI) — مؤشر أداء رئيسي\n• key risk indicator (KRI) — مؤشر خطر رئيسي\n• service level agreement (SLA) — اتفاقية مستوى الخدمة\n• segregation of duties — فصل المهام\n• business continuity — استمرارية الأعمال\n• recovery time objective (RTO) — الزمن المستهدف للاستعادة\n• steering committee — اللجنة التوجيهية\n• policy / standard / procedure — سياسة / معيار / إجراء\n• roadmap — خارطة طريق\n\nجمل تطبيقية:\n• We need to mitigate this risk before the next audit.\n• The steering committee approved the IT roadmap for 2027.\n• Our RTO for the core banking system is four hours.\n• The remediation plan addresses all high-priority audit findings.",
+   "quiz": [
+    {
+     "q": "«Segregation of duties» means:",
+     "o": [
+      "توزيع الرواتب",
+      "فصل المهام لمنع تعارض الصلاحيات",
+      "تقسيم الفريق إلى أقسام",
+      "إلغاء المهام المكررة"
+     ],
+     "a": 1,
+     "x": "فصل المهام ضابط رقابي يمنع أن يتحكم شخص واحد في عملية حساسة من بدايتها لنهايتها."
+    },
+    {
+     "q": "The maximum acceptable time to restore a system is the:",
+     "o": [
+      "RPO",
+      "KPI",
+      "RTO",
+      "SLA"
+     ],
+     "a": 2,
+     "x": "RTO هو الزمن المستهدف للاستعادة. أما RPO فهو أقصى قدر مقبول من فقدان البيانات."
+    },
+    {
+     "q": "Complete: We must ___ the risk by adding a second approval step.",
+     "o": [
+      "mitigate",
+      "migrate",
+      "motivate",
+      "mediate"
+     ],
+     "a": 0,
+     "x": "mitigate a risk = تخفيف الخطر."
+    }
+   ],
+   "sources": [
+    {
+     "title": "ISACA — COBIT",
+     "url": "https://www.isaca.org/resources/cobit"
+    },
+    {
+     "title": "BBC Learning English",
+     "url": "https://www.bbc.co.uk/learningenglish"
+    }
+   ]
+  }
+ ],
+ "resources": [
+  {
+   "track": "en",
+   "title": "British Council — LearnEnglish",
+   "desc": "دروس قواعد ومفردات واستماع مجانية مرتبة حسب المستوى، ومنها الإنجليزية للأعمال.",
+   "url": "https://learnenglish.britishcouncil.org/"
+  },
+  {
+   "track": "en",
+   "title": "BBC Learning English",
+   "desc": "دروس قصيرة يومية بالفيديو والصوت، ونطق، ومفردات الأخبار.",
+   "url": "https://www.bbc.co.uk/learningenglish"
+  },
+  {
+   "track": "en",
+   "title": "Cambridge — Write & Improve",
+   "desc": "تكتب نصًا فتحصل على تصحيح وتقدير لمستواك حسب CEFR مجانًا.",
+   "url": "https://writeandimprove.com/"
+  },
+  {
+   "track": "it",
+   "title": "ISACA — COBIT",
+   "desc": "الجهة المالكة لإطار COBIT وشهادات CISA وCGEIT وCRISC.",
+   "url": "https://www.isaca.org/resources/cobit"
+  },
+  {
+   "track": "it",
+   "title": "ITIL 4 (AXELOS / PeopleCert)",
+   "desc": "الجهة الرسمية لإطار ITIL 4 وشهاداته.",
+   "url": "https://www.axelos.com/certifications/itil-service-management"
+  },
+  {
+   "track": "it",
+   "title": "ISO — معايير الحوكمة والأمن",
+   "desc": "الصفحات الرسمية لمعايير ISO/IEC 38500 وISO/IEC 27001.",
+   "url": "https://www.iso.org/standard/27001"
+  },
+  {
+   "track": "it",
+   "title": "Microsoft Learn",
+   "desc": "مسارات تعلّم مجانية في Azure وMicrosoft 365 والأمن، مع شهادات معتمدة.",
+   "url": "https://learn.microsoft.com/training/"
+  },
+  {
+   "track": "it",
+   "title": "Cisco Networking Academy",
+   "desc": "دورات مجانية في الشبكات والأمن السيبراني، وتمهّد لشهادة CCNA.",
+   "url": "https://www.netacad.com/"
+  }
+ ],
+ "tips": [
+  {
+   "date": "2026-11-02",
+   "text": "اليوم بداية جديدة لتطبيقك. لا تحاول إنجاز كل شيء مرة واحدة؛ خطوة صغيرة يوميًا تكفي لتصنع فرقًا كبيرًا خلال شهر.",
+   "action": "أنهِ درس «الفرق بين حوكمة تقنية المعلومات وإدارتها» واختبر نفسك فيه"
+  }
+ ]
+}
