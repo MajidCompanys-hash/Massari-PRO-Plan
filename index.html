@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="app-version" content="3.1">
-<script>window.MASARI_VERSION="3.1";window.MASARI_BUILD="2 نوفمبر 2026";</script>
+<meta name="app-version" content="3.3">
+<script>window.MASARI_VERSION="3.3";window.MASARI_BUILD="2 نوفمبر 2026";</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -109,12 +109,13 @@ function parseLoose(t){t=String(t||"").trim();const f=t.match(/```(?:json)?\s*([
 
 /* ---------- Claude bridge (copy the request, paste the answer) ---------- */
 const CLAUDE_URL="https://claude.ai/new";
-function bridge(prompt,{json=false,signal,title}={}){
+function bridge(prompt,{json=false,signal,title,note}={}){
   return new Promise((resolve,reject)=>{
     const full=prompt+(json?"\n\nمهم: أعد JSON صالحًا فقط داخل كتلة كود واحدة، بدون أي شرح قبلها أو بعدها.":"\n\nاكتب الرد النهائي فقط.");
     let done=false;
     const m=modal(
       '<div class="sheet-h"><h2>'+esc(title||"اسأل Claude")+'</h2><button class="btn ghost" data-x type="button">إلغاء</button></div>'+
+      (note?'<div class="ap-how">'+esc(note)+'</div>':'')+
       '<ol class="lx-steps"><li><b>انسخ الطلب وافتح Claude</b><span class="note">يُنسخ الطلب تلقائيًا، الصقه في محادثة جديدة.</span>'+
       '<div class="row"><a class="btn pri" id="lxGo" href="'+CLAUDE_URL+'" target="_blank" rel="noopener">انسخ وافتح Claude</a><button class="btn" id="lxCopy" type="button">نسخ فقط</button><span id="lxCopied" class="note"></span></div>'+
       '<details><summary class="note">عرض الطلب</summary><textarea id="lxPrompt" rows="6" readonly dir="auto">'+esc(full)+'</textarea></details></li>'+
@@ -150,7 +151,7 @@ async function sample(input,opts={}){
   try{opts.onText&&opts.onText({text,delta:text})}catch(e){}
   return {text,truncated:false};
 }
-sample.json=async(input,opts={})=>{const p=flatten(input);const t=await bridge(p,{json:true,signal:opts.signal,title:guessTitle(p)});return parseLoose(t)};
+sample.json=async(input,opts={})=>{const p=flatten(input);const t=await bridge(p,{json:true,signal:opts.signal,title:opts.title||guessTitle(p),note:opts.note});return parseLoose(t)};
 sample.limits=async()=>({});
 
 /* ---------- window.claude shim ---------- */
@@ -187,7 +188,7 @@ function importJobs(arr,opt){opt=opt||{};
     if((url&&(urls.has(url)||seen.has(url)))||keys.has(key)||seen.has(id))continue;
     if(S.jobs&&S.jobs[id])continue;
     seen.add(id);if(url)seen.add(url);
-    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),applyEmail:String(x.applyEmail||""),howToApply:String(x.howToApply||""),notes:"",status:"new",foundAt:String(x.foundAt||"").slice(0,10)||todayISO(),addedAt:new Date().toISOString()});
+    write("jobs",id,{title:String(x.title),company:String(x.company||""),location:String(x.location||""),field:fk.includes(x.field)?x.field:"other",source:String(x.source||""),postedAt:String(x.postedAt||"").slice(0,10),deadline:x.deadline?String(x.deadline).slice(0,10):"",url,description:String(x.description||""),applyEmail:String(x.applyEmail||""),howToApply:String(x.howToApply||""),contactName:String(x.contactName||""),contactPhone:String(x.contactPhone||""),notes:String(x.notes||""),status:"new",foundAt:String(x.foundAt||"").slice(0,10)||todayISO(),addedAt:new Date().toISOString()});
     urls.add(url);keys.add(key);n++}
   if(n)write("activities",genId(),{text:(opt.feed?"وصلت "+n+" وظيفة جديدة من البحث اليومي":"استوردت "+n+" وظيفة جديدة من Claude"),kind:"search",at:new Date().toISOString()});
   meta.seen=[...seen].slice(-3000);meta.lastJobsImport=new Date().toISOString();saveMeta();
@@ -586,6 +587,21 @@ input,textarea,select{font-size:16px!important}
 img,svg{-webkit-user-drag:none;user-drag:none}
 .app-ver{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
 .app-ver b{color:var(--accent);font-size:13px}
+.ig-bar{display:grid;grid-template-columns:1.4fr 1fr;gap:8px}
+@media (max-width:420px){.ig-bar{grid-template-columns:1fr}}
+.ig-btn{width:100%;justify-content:center;font-weight:600;color:var(--ink);background:linear-gradient(135deg,rgba(214,41,118,.10),rgba(250,126,30,.10));border-color:rgba(214,41,118,.25)}
+.ig-btn svg{color:#d62976}
+.src-btn{justify-content:center;font-weight:600;position:relative}
+.src-btn svg{color:var(--accent)}
+.src-new{background:var(--bad);color:#fff;font-size:11px;border-radius:999px;padding:1px 7px;margin-inline-start:4px}
+.src-g{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.src-row{display:flex;gap:10px;align-items:center;padding-block:6px}
+.src-row .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.src-k{font-size:11px;font-weight:700;border-radius:8px;padding:3px 7px;flex:none;background:var(--accent-soft);color:var(--accent)}
+.src-k.k-instagram{background:rgba(214,41,118,.12);color:#c1356f}
+.src-k.k-whatsapp{background:var(--ok-soft);color:var(--ok)}
+.src-auto{font-size:11.5px;color:var(--muted)}
+.src-auto.on{color:var(--ok);font-weight:600}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -1971,6 +1987,115 @@ document.addEventListener("DOMContentLoaded",()=>{
   fab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 0 0-4 12.7V18h8v-2.3A7 7 0 0 0 12 3z"/><path d="M9.5 21h5M10 10.5l1.5 1.5 3-3"/></svg><span>المستشار</span>';
   fab.addEventListener("click",openAdvisor);document.body.appendChild(fab);
   window.claude.use("db").then(db=>{if(!db)return;db.collection("contacts").onSnapshot(renderContacts);db.collection("jobs").onSnapshot(renderContacts)});
+});
+})();
+
+/* Masari 3.2: add a job from an Instagram / WhatsApp / screenshot ad */
+(function(){
+"use strict";
+const L=window.MasariLocal;if(!L)return;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function openImport(){
+  const m=L.modal('<div class="sheet-h"><h2>أضف وظيفة من إعلان</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="note">من إنستغرام أو واتساب أو تيليجرام أو صورة إعلان في صحيفة.</div>'+
+    '<ol class="lx-steps"><li><b>خذ لقطة شاشة للإعلان</b><span class="note">أو انسخ نص المنشور والصقه في الخانة.</span></li>'+
+    '<li><b>معلومات المنشور (اختيارية)</b>'+
+      '<label for="igText">نص الإعلان<textarea id="igText" rows="4" dir="auto" placeholder="الصق نص المنشور هنا إن وُجد"></textarea></label>'+
+      '<div class="grid2"><label for="igAcc">اسم الحساب<input id="igAcc" dir="ltr" placeholder="@oman_jobs"></label><label for="igLink">رابط المنشور<input id="igLink" type="url" dir="ltr" placeholder="https://instagram.com/p/…"></label></div></li>'+
+    '<li><b>استخرج الوظيفة مع Claude</b><span class="note">في محادثة Claude الصق الطلب، وأرفق لقطة الشاشة من الصور، ثم أرسل.</span>'+
+      '<div class="row"><button class="btn pri" id="igGo" type="button">استخرج مع Claude</button></div></li></ol>');
+  const el=m.el;
+  el.querySelector("#igGo").addEventListener("click",async()=>{
+    const txt=el.querySelector("#igText").value.trim(),acc=el.querySelector("#igAcc").value.trim().replace(/^@/,""),link=el.querySelector("#igLink").value.trim();
+    const p="استخرج بيانات إعلان الوظيفة من لقطة الشاشة المرفقة"+(txt?" ومن النص التالي":"")+". الإعلان منشور في إنستغرام أو واتساب أو مصدر مشابه في سلطنة عُمان أو الخليج.\n"+
+      (txt?"\nنص الإعلان:\n"+txt+"\n":"")+(acc?"\nالحساب الناشر: @"+acc:"")+(link?"\nرابط المنشور: "+link:"")+
+      "\n\nالقواعد: لا تخترع أي معلومة غير موجودة في الإعلان، واترك الحقل نصًا فارغًا إن لم يُذكر. إذا كان في الإعلان أكثر من وظيفة فاجعل كل وظيفة عنصرًا مستقلًا. اكتب أرقام الهاتف بالأرقام الإنجليزية مع رمز الدولة إن وُجد. إذا لم تجد صورة أو نصًا فأعد مصفوفة فارغة.\n"+
+      'أعد JSON فقط: [{"title":"المسمى الوظيفي","company":"الجهة","location":"المدينة أو الدولة بالعربية","field":"it لتقنية المعلومات والحاسب، أو sales للمبيعات، أو other","postedAt":"YYYY-MM-DD أو فارغ","deadline":"YYYY-MM-DD أو فارغ","applyEmail":"","contactName":"","contactPhone":"","url":"رابط التقديم إن وُجد","howToApply":"طريقة التقديم في سطر بالعربية","description":"ملخص المتطلبات بالعربية في سطرين"}]';
+    let arr;
+    try{arr=await L.sample.json(p,{title:"استخراج إعلان وظيفة",note:"لا تنسَ: أرفق لقطة شاشة الإعلان في محادثة Claude مع الطلب."})}catch(e){return}
+    const list=(Array.isArray(arr)?arr:[arr]).filter(x=>x&&x.title);
+    if(!list.length){L.toast("لم يجد Claude وظيفة في الإعلان. تأكد من إرفاق الصورة.");return}
+    const today=L.todayISO(),ids=[];
+    const jobs=list.map(x=>{const id="ig-"+L.genId();ids.push(id);return Object.assign({},x,{id,source:"إنستغرام"+(acc?" · @"+acc:""),url:x.url||link||"",postedAt:x.postedAt||today,foundAt:today,notes:link&&x.url&&x.url!==link?"المنشور: "+link:""})});
+    const n=L.importJobs(jobs);m.close();
+    if(!n){L.toast("هذه الوظيفة موجودة في قائمتك.");return}
+    L.toast("أُضيفت "+n+(n===1?" وظيفة":" وظائف")+". راجع البيانات ثم قدّم");
+    const chip=document.querySelector('#statusChips .chip[data-s="today"]');if(chip)chip.click();
+    setTimeout(()=>{const b=document.querySelector('#jobList article[data-id="'+ids[0]+'"] [data-act="edit"]');if(b){b.closest("article").scrollIntoView({block:"center"});b.click()}},350);
+  });
+}
+window.MasariImport=openImport;
+document.addEventListener("DOMContentLoaded",()=>{
+  const hub=document.getElementById("todayHub");if(!hub||document.getElementById("igBar"))return;
+  const bar=document.createElement("div");bar.id="igBar";bar.className="ig-bar";
+  bar.innerHTML='<button class="btn ig-btn" id="igAdd" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>أضف وظيفة من إنستغرام أو صورة</button>';
+  hub.after(bar);bar.querySelector("#igAdd").addEventListener("click",openImport);
+});
+})();
+
+/* Masari 3.3: job sources page + app-icon badge for new jobs */
+(function(){
+"use strict";
+const L=window.MasariLocal;if(!L)return;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const S=()=>L.S();
+async function loadSources(){
+  if(location.protocol==="file:")return;
+  try{const r=await fetch("feed/sources.json",{cache:"no-store"});if(!r.ok)return;const j=await r.json();
+    const cur=(S().settings||{}).sources;if(!cur||JSON.stringify(cur.groups)!==JSON.stringify(j.groups))L.write("settings","sources",{groups:j.groups||[],updatedAt:j.updatedAt||""})}catch(e){}
+}
+const KIND={instagram:"إنستغرام",whatsapp:"واتساب",telegram:"تيليجرام",x:"X",web:"موقع"};
+function kindOf(url){url=String(url||"");return /instagram\.com/.test(url)?"instagram":/whatsapp\.com|wa\.me/.test(url)?"whatsapp":/t\.me|telegram/.test(url)?"telegram":/x\.com|twitter\.com/.test(url)?"x":"web"}
+function srcRow(it,mine,id){
+  return '<div class="src-row"'+(id?' data-sid="'+esc(id)+'"':'')+'><span class="src-k k-'+esc(it.kind||kindOf(it.url))+'">'+esc(KIND[it.kind||kindOf(it.url)]||"موقع")+'</span><div class="t"><b>'+esc(it.name)+'</b>'+(it.note?'<span class="note">'+esc(it.note)+'</span>':'')+
+    '<span class="src-auto'+(it.auto?" on":"")+'">'+(it.auto?"يُفحص تلقائيًا 4 مرات يوميًا":mine?"حسابك: أضف إعلاناته بزر «من إنستغرام أو صورة»":"تتابعه بنفسك")+'</span></div>'+
+    (it.url?'<a class="btn" href="'+esc(it.url)+'" target="_blank" rel="noopener">فتح</a>':'')+(mine?'<button class="btn ghost danger" data-sdel type="button" aria-label="حذف">×</button>':'')+'</div>';
+}
+function badgeSupported(){return "setAppBadge" in navigator}
+function openSources(){
+  const groups=((S().settings||{}).sources||{}).groups||[];
+  const mine=Object.entries(S().mySources||{}).map(([id,v])=>Object.assign({id},v));
+  const autoN=groups.reduce((a,g)=>a+(g.items||[]).filter(i=>i.auto).length,0);
+  const perm=("Notification" in window)?Notification.permission:"unsupported";
+  const m=L.modal('<div class="sheet-h"><h2>مصادر الوظائف</h2><button class="btn ghost" data-x type="button">إغلاق</button></div>'+
+    '<div class="ap-how"><b>'+autoN+' مصدرًا تُفحص تلقائيًا</b> الساعة 6:49 و10:47 و2:47 و6:47، وتصل الوظائف الجديدة إلى «وصلت اليوم».</div>'+
+    (groups.length?groups.map(g=>'<div class="src-g"><b>'+esc(g.name)+'</b>'+(g.items||[]).map(it=>srcRow(it,false)).join("")+'</div>').join(""):'<div class="note">تظهر قائمة المصادر بعد أول اتصال بالإنترنت.</div>')+
+    '<div class="src-g"><div class="row" style="justify-content:space-between"><b>حساباتي</b></div>'+(mine.length?mine.map(it=>srcRow(it,true,it.id)).join(""):'<span class="note">أضف حسابات إنستغرام أو قنوات واتساب وتيليجرام التي تتابعها لتصل إليها بسرعة.</span>')+
+      '<div class="grid2"><label for="msName">الاسم<input id="msName" placeholder="وظائف الخليج"></label><label for="msUrl">الرابط أو اسم الحساب<input id="msUrl" dir="ltr" placeholder="@account أو https://"></label></div>'+
+      '<div class="row"><button class="btn" id="msAdd" type="button">+ إضافة حساب</button></div>'+
+      '<span class="note">لإضافته إلى البحث التلقائي، أرسله إلى Claude في المحادثة. إذا وُجد له مصدر عام يُضاف إلى القائمة أعلاه، فيصلك جديده تلقائيًا.</span></div>'+
+    '<div class="src-g"><b>التنبيهات</b>'+
+      '<span class="note">بعد كل جولة بحث يصلك إشعار من تطبيق Claude فيه عدد الوظائف الجديدة وأسماؤها. تأكد أن إشعارات تطبيق Claude مفعّلة في إعدادات الآيفون.</span>'+
+      (badgeSupported()?'<div class="row"><button class="btn'+(perm==="granted"?"":" pri")+'" id="badgeOn" type="button">'+(perm==="granted"?"شارة الأيقونة مفعّلة ✓":"فعّل عدد الوظائف الجديدة على أيقونة التطبيق")+'</button></div><span class="note">يظهر رقم أحمر على أيقونة «مساري» بعدد الوظائف الجديدة التي لم تطّلع عليها.</span>':'<span class="note">شارة الأيقونة تعمل عند تثبيت التطبيق على الشاشة الرئيسية في iOS 16.4 أو أحدث.</span>')+
+    '</div>');
+  const el=m.el;
+  el.querySelector("#msAdd").addEventListener("click",()=>{let name=el.querySelector("#msName").value.trim(),url=el.querySelector("#msUrl").value.trim();
+    if(!url&&!name){L.toast("اكتب اسم الحساب أو رابطه");return}
+    if(/^@?[\w.]+$/.test(url)&&!/^https?:/.test(url)){const h=url.replace(/^@/,"");url="https://www.instagram.com/"+h+"/";if(!name)name="@"+h}
+    L.write("mySources",L.genId(),{name:name||url,url,kind:kindOf(url),at:new Date().toISOString()});m.close();openSources()});
+  el.addEventListener("click",e=>{const d=e.target.closest("[data-sdel]");if(!d)return;if(d.dataset.c!=="1"){d.dataset.c="1";d.textContent="تأكيد";return}L.remove("mySources",d.closest("[data-sid]").dataset.sid);m.close();openSources()});
+  const bo=el.querySelector("#badgeOn");
+  if(bo)bo.addEventListener("click",async()=>{try{const p=await Notification.requestPermission();if(p==="granted"){bo.textContent="شارة الأيقونة مفعّلة ✓";bo.classList.remove("pri");updateBadge()}else L.toast("لم يُسمح بالإشعارات. فعّلها من إعدادات الآيفون ← مساري.")}catch(err){L.toast("الشارة غير مدعومة في هذا الجهاز")}});
+}
+window.MasariSources=openSources;
+
+/* app-icon badge: new jobs not yet seen */
+function unseen(){const seenAt=Date.parse(L.meta.jobsSeenAt||0)||0;return Object.values(S().jobs||{}).filter(j=>j.status==="new"&&Date.parse(j.addedAt||0)>seenAt).length}
+function updateBadge(){const n=unseen();const b=document.getElementById("srcNew");if(b){b.textContent=n?n+" جديدة":"";b.hidden=!n}
+  try{if(badgeSupported()&&("Notification" in window)&&Notification.permission==="granted"){n?navigator.setAppBadge(n):navigator.clearAppBadge()}}catch(e){}}
+function markSeen(){const jobsTab=document.querySelector('nav.tabs button[data-tab="jobs"][aria-selected="true"]');
+  if(jobsTab&&document.visibilityState==="visible"){setTimeout(()=>{L.meta.jobsSeenAt=new Date().toISOString();L.saveMeta();updateBadge()},4000)}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")markSeen()});
+document.addEventListener("click",e=>{if(e.target.closest('nav.tabs button[data-tab="jobs"]'))markSeen()});
+
+document.addEventListener("DOMContentLoaded",()=>{
+  const bar=document.getElementById("igBar");
+  if(bar&&!document.getElementById("srcBtn")){const b=document.createElement("button");b.className="btn src-btn";b.id="srcBtn";b.type="button";
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>مصادر الوظائف<span class="src-new" id="srcNew" hidden></span>';
+    b.addEventListener("click",openSources);bar.appendChild(b)}
+  loadSources();
+  window.claude.use("db").then(db=>{if(db)db.collection("jobs").onSnapshot(updateBadge)});
+  L.loaded.then(markSeen);
 });
 })();
 

@@ -1,0 +1,106 @@
+{
+ "updatedAt": "2026-11-02T07:30:00Z",
+ "note": "المصادر التي تغطيها مهام البحث في Claude. auto=true يعني أنها تُفحص تلقائيًا 4 مرات يوميًا.",
+ "groups": [
+  {
+   "name": "مواقع التوظيف",
+   "items": [
+    {
+     "name": "GulfTalent عُمان",
+     "url": "https://www.gulftalent.com/oman/jobs",
+     "note": "وظائف الشركات في عُمان والخليج",
+     "auto": true
+    },
+    {
+     "name": "Bayt عُمان",
+     "url": "https://www.bayt.com/en/oman/jobs/",
+     "note": "أكبر موقع وظائف في الخليج",
+     "auto": true
+    },
+    {
+     "name": "NaukriGulf عُمان",
+     "url": "https://www.naukrigulf.com/jobs-in-oman",
+     "note": "وظائف الشركات في عُمان",
+     "auto": true
+    },
+    {
+     "name": "Indeed عُمان",
+     "url": "https://om.indeed.com/",
+     "note": "محرك بحث وظائف",
+     "auto": true
+    },
+    {
+     "name": "LinkedIn وظائف عُمان",
+     "url": "https://www.linkedin.com/jobs/jobs-in-oman/",
+     "note": "وظائف الشركات وصفحاتها",
+     "auto": true
+    }
+   ]
+  },
+  {
+   "name": "الجهات الحكومية",
+   "items": [
+    {
+     "name": "وزارة العمل",
+     "url": "https://www.mol.gov.om/",
+     "note": "إعلانات الوظائف الحكومية وملاحقها، والتقديم عبر بوابة الوزارة",
+     "auto": true
+    }
+   ]
+  },
+  {
+   "name": "الصحف والأخبار",
+   "items": [
+    {
+     "name": "جريدة عُمان",
+     "url": "https://www.omandaily.om/",
+     "note": "تنشر إعلانات وزارة العمل والاختبارات",
+     "auto": true
+    },
+    {
+     "name": "وكالة الأنباء العُمانية",
+     "url": "https://omannews.gov.om/",
+     "note": "الأخبار الرسمية والإعلانات الحكومية",
+     "auto": true
+    },
+    {
+     "name": "Times of Oman",
+     "url": "https://timesofoman.com/",
+     "note": "أخبار التوظيف بالإنجليزية",
+     "auto": true
+    },
+    {
+     "name": "Oman Observer",
+     "url": "https://www.omanobserver.om/",
+     "note": "أخبار التوظيف بالإنجليزية",
+     "auto": true
+    },
+    {
+     "name": "Muscat Daily",
+     "url": "https://www.muscatdaily.com/",
+     "note": "أخبار التوظيف بالإنجليزية",
+     "auto": true
+    }
+   ]
+  },
+  {
+   "name": "حسابات التواصل",
+   "items": [
+    {
+     "name": "منصة مسار @masar_dev",
+     "url": "https://www.instagram.com/masar_dev/",
+     "kind": "instagram",
+     "note": "إعلاناتها الحكومية تصلك تلقائيًا من مصادرها الأصلية. أما إعلانات الشركات الخاصة فأضفها بزر «من إنستغرام أو صورة».",
+     "auto": false
+    },
+    {
+     "name": "وظائف سلطنة عمان اليوم",
+     "url": "https://www.whatsapp.com/channel/0029VaHUcCN6WaKtyGdn643z",
+     "kind": "whatsapp",
+     "note": "قناة واتساب، تتابعها من تطبيق واتساب",
+     "auto": false
+    }
+   ]
+  }
+ ]
+}
